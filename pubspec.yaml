@@ -1,0 +1,35 @@
+name: campus_sync
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.5.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_svg: ^2.0.10+1
+  http: ^1.2.2
+  shared_preferences: ^2.3.2
+  crypto: ^3.0.5
+  flutter_masked_text2: ^0.9.1
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
+
+  assets:
+  #icons
+   - assets/icons/
+
+  #images
+   - assets/images/
+
+  #fonts
+   - assets/fonts/
