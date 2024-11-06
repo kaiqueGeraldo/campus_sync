@@ -30,9 +30,10 @@ class _ListagemPageState extends State<ListagemPage> {
 
     final response = await http.get(
       Uri.parse(
-          'https://campussyncapi-cvgwgqawd2etfqfa.canadacentral-01.azurewebsites.net/api/${widget.endpoint}?universidadeId=$universidadeId'),
+          'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api/${widget.endpoint}?universidadeId=$universidadeId'),
       headers: {'Content-Type': 'application/json'},
     );
+
 
     if (response.statusCode == 200) {
       return json.decode(response.body);
