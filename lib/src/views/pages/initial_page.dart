@@ -32,7 +32,7 @@ class _InitialPageState extends State<InitialPage> {
       drawer: Drawer(
         backgroundColor: AppColors.backgroundWhiteColor,
         child: FutureBuilder<User>(
-          future: null, //controller.fetchUserData(),
+          future: controller.fetchUserData(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
