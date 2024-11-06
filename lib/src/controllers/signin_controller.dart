@@ -39,9 +39,10 @@ class SignInController {
   Future<void> _handleResponse(response) async {
     if (response.statusCode == 200) {
       var usuarioEncontrado = json.decode(response.body);
+
       await _saveUserData(usuarioEncontrado);
       _showSuccessDialog(usuarioEncontrado['nome'], usuarioEncontrado['cpf'],
-          usuarioEncontrado['universidadeId']);
+          usuarioEncontrado['universidadeId'].toString());
     } else if (response.statusCode == 404) {
       _showAccountNotFoundDialog();
     } else {

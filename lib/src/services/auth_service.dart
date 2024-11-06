@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 
 class AuthService {
   static const String _baseUrl =
-      'https://campussyncapi-cvgwgqawd2etfqfa.canadacentral-01.azurewebsites.net/api';
+      'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api';
 
   Future<http.Response> login(
     String email,

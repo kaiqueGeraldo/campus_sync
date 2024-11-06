@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 class CustomAlertDialog extends StatelessWidget {
   final String title;
   final String content;
+  final String? cancelText;
+  final VoidCallback? onCancel;
   final String confirmText;
   final VoidCallback onConfirm;
   final bool barrierDismissible;
@@ -12,6 +14,8 @@ class CustomAlertDialog extends StatelessWidget {
     super.key,
     required this.title,
     required this.content,
+    this.cancelText,
+    this.onCancel,
     required this.confirmText,
     required this.onConfirm,
     this.barrierDismissible = true,
@@ -27,6 +31,16 @@ class CustomAlertDialog extends StatelessWidget {
       title: Text(title),
       content: Text(content),
       actions: [
+        if (cancelText != null)
+          TextButton(
+            onPressed: onCancel ?? () => Navigator.of(context).pop(),
+            child: Text(
+              cancelText!,
+              style: const TextStyle(
+                color: AppColors.buttonColor,
+              ),
+            ),
+          ),
         TextButton(
           onPressed: onConfirm,
           child: Text(

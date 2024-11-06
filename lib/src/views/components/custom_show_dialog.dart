@@ -1,3 +1,4 @@
+import 'package:campus_sync/src/views/components/custom_alert_dialog.dart';
 import 'package:flutter/material.dart';
 
 void customShowDialog({
@@ -12,20 +13,13 @@ void customShowDialog({
   showDialog(
     context: context,
     builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text(title),
-        content: Text(content),
-        actions: [
-          if (cancelText != null)
-            TextButton(
-              onPressed: onCancel ?? () => Navigator.of(context).pop(),
-              child: Text(cancelText),
-            ),
-          TextButton(
-            onPressed: onConfirm,
-            child: Text(confirmText),
-          ),
-        ],
+      return CustomAlertDialog(
+        title: title,
+        content: content,
+        cancelText: cancelText,
+        onCancel: onCancel,
+        confirmText: confirmText,
+        onConfirm: onConfirm!,
       );
     },
   );

@@ -46,6 +46,7 @@ class SignInPage extends StatelessWidget {
                         controller: controller.emailController,
                         hintText: 'Email',
                         keyboardType: TextInputType.emailAddress,
+                        maxLength: 50,
                       ),
                       const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
@@ -59,6 +60,7 @@ class SignInPage extends StatelessWidget {
                             onSuffixIconPressed:
                                 controller.togglePasswordVisibility,
                             keyboardType: TextInputType.text,
+                            maxLength: 30,
                           );
                         },
                       ),
@@ -81,26 +83,7 @@ class SignInPage extends StatelessWidget {
                           return CustomButton(
                             text: 'Sign In',
                             isLoading: isLoading,
-                            onPressed: () {
-                              if (controller.emailController.text ==
-                                      'adm@cs.com' &&
-                                  controller.passwordController.text ==
-                                      'adm123') {
-                                Navigator.of(context).pushNamedAndRemoveUntil(
-                                  '/initial',
-                                  (Route<dynamic> route) => false,
-                                  arguments: {
-                                    'userCpf': 00000000000,
-                                    'userNome': 'adm',
-                                    'userEmail':
-                                        controller.emailController.text,
-                                    'universidadeId': 1,
-                                  },
-                                );
-                              } else {
-                                controller.login;
-                              }
-                            },
+                            onPressed: controller.login,
                           );
                         },
                       ),

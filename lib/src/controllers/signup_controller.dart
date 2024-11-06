@@ -1,18 +1,22 @@
 import 'dart:convert';
+import 'package:campus_sync/src/services/api_service.dart';
 import 'package:campus_sync/src/services/auth_service.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SignUpController {
   final BuildContext context;
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final TextEditingController usernameController = TextEditingController();
-  final TextEditingController cpfController = TextEditingController();
+  final TextEditingController cpfController =
+      MaskedTextController(mask: '000.000.000-00');
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final ValueNotifier<bool> obscurePassword = ValueNotifier(true);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
 
@@ -27,9 +31,11 @@ class SignUpController {
 
     isLoading.value = true;
 
+    final cleanCpf = cpfController.text.replaceAll('.', '').replaceAll('-', '');
+
     try {
       final response = await AuthService().register(
-        cpfController.text,
+        cleanCpf,
         usernameController.text,
         emailController.text,
         passwordController.text,
@@ -43,11 +49,29 @@ class SignUpController {
   }
 
   Future<void> _handleResponse(response) async {
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200) {
       var usuarioRegistrado = json.decode(response.body);
       await _saveUserData(usuarioRegistrado);
       _showSuccessDialog(usuarioRegistrado['nome'], usuarioRegistrado['cpf'],
-          usuarioRegistrado['universidadeId']);
+          usuarioRegistrado['universidadeId'].toString());
+    } else if (await ApiService().checkCpfExists(cpfController.text) &&
+        await ApiService().checkEmailExists(emailController.text)) {
+      customShowDialog(
+        context: context,
+        title: 'Conta já registrada!',
+        content:
+            'Já existe uma conta com esses dados regitrada no nosso app! Deseja ir para o login?',
+        cancelText: 'Não',
+        onCancel: () => Navigator.pop(context),
+        confirmText: 'Sim',
+        onConfirm: () {
+          Navigator.popUntil(context, (Route<dynamic> route) => false);
+        },
+      );
+    } else if (await ApiService().checkCpfExists(cpfController.text)) {
+      CustomSnackbar.show(context, 'CPF já registrado! Tente novamente.');
+    } else if (await ApiService().checkEmailExists(emailController.text)) {
+      CustomSnackbar.show(context, 'Email já registrado! Tente novamente.');
     } else {
       CustomSnackbar.show(
           context, 'Erro ao registrar. Verifique os dados e tente novamente.');

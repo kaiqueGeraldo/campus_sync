@@ -1,5 +1,6 @@
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 class CustomInputText extends StatelessWidget {
   final TextEditingController controller;
@@ -8,6 +9,7 @@ class CustomInputText extends StatelessWidget {
   final bool obscureText;
   final VoidCallback? onSuffixIconPressed;
   final String? Function(String?)? validator;
+  final int? maxLength;
 
   const CustomInputText({
     required this.controller,
@@ -17,6 +19,7 @@ class CustomInputText extends StatelessWidget {
     this.obscureText = false,
     this.onSuffixIconPressed,
     this.validator,
+    this.maxLength,
     super.key,
   });
 
@@ -26,6 +29,8 @@ class CustomInputText extends StatelessWidget {
       controller: controller,
       obscureText: obscureText,
       validator: validator,
+      maxLength: maxLength,
+      maxLengthEnforcement: MaxLengthEnforcement.none,
       style: const TextStyle(color: AppColors.textColor),
       decoration: InputDecoration(
         hintText: hintText,
@@ -38,6 +43,7 @@ class CustomInputText extends StatelessWidget {
           borderSide: BorderSide(color: AppColors.textColor),
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
+        counterText: '',
         suffixIcon: isPassword
             ? IconButton(
                 color: AppColors.textColor,

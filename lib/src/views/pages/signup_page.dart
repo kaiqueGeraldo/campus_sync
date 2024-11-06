@@ -48,6 +48,7 @@ class SignUpPage extends StatelessWidget {
                         controller: controller.usernameController,
                         hintText: 'Username',
                         keyboardType: TextInputType.name,
+                        maxLength: 50,
                       ),
                       const SizedBox(height: 20),
                       CustomInputText(
@@ -60,6 +61,7 @@ class SignUpPage extends StatelessWidget {
                         controller: controller.emailController,
                         hintText: 'Email',
                         keyboardType: TextInputType.emailAddress,
+                        maxLength: 50,
                       ),
                       const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
@@ -73,6 +75,7 @@ class SignUpPage extends StatelessWidget {
                             onSuffixIconPressed:
                                 controller.togglePasswordVisibility,
                             keyboardType: TextInputType.text,
+                            maxLength: 30,
                           );
                         },
                       ),
@@ -86,6 +89,7 @@ class SignUpPage extends StatelessWidget {
                             isPassword: false,
                             obscureText: obscure,
                             keyboardType: TextInputType.text,
+                            maxLength: 30,
                           );
                         },
                       ),

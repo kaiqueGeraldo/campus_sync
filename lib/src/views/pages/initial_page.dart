@@ -60,25 +60,23 @@ class _InitialPageState extends State<InitialPage> {
                     title: const Text('Home'),
                     onTap: () => Navigator.pop(context),
                   ),
-                  ...drawerMenuItems
-                      .map(
-                        (item) => ListTile(
-                          leading: Icon(item.icon),
-                          title: Text(item.title),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EntidadePage(
-                                  titulo: item.title,
-                                  endpoint: item.endpoint,
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      )
-                      .toList(),
+                  ...drawerMenuItems.map(
+                    (item) => ListTile(
+                      leading: Icon(item.icon),
+                      title: Text(item.title),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EntidadePage(
+                              titulo: item.title,
+                              endpoint: item.endpoint,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ],
               );
             } else {

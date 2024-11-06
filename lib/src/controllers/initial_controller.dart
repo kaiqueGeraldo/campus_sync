@@ -32,11 +32,7 @@ class InitialController {
       confirmText: 'Sim',
       onConfirm: () async {
         final prefs = await SharedPreferences.getInstance();
-        await prefs.remove('userCpf');
-        await prefs.remove('userNome');
-        await prefs.remove('userEmail');
-        await prefs.remove('userPassword');
-        await prefs.remove('userToken');
+        await prefs.clear();
 
         Navigator.pushNamedAndRemoveUntil(
             context, '/signin', (Route<dynamic> route) => false);
