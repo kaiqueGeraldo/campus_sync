@@ -1,11 +1,11 @@
-import 'package:campus_sync/src/controllers/initial_controller.dart';
+import 'package:campus_sync/src/controllers/main/initial_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
-import 'package:campus_sync/src/models/pages/initial_page/drawer_menu_item.dart';
-import 'package:campus_sync/src/models/user.dart';
-import 'package:campus_sync/src/views/pages/about_page.dart';
-import 'package:campus_sync/src/views/pages/entidade_page.dart';
-import 'package:campus_sync/src/views/pages/home_page.dart';
-import 'package:campus_sync/src/views/pages/menu_page.dart';
+import 'package:campus_sync/src/models/initial_page/drawer_menu_item.dart';
+import 'package:campus_sync/src/models/user/user.dart';
+import 'package:campus_sync/src/views/pages/main/about_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/entidade_page.dart';
+import 'package:campus_sync/src/views/pages/main/home_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu_page.dart';
 import 'package:flutter/material.dart';
 
 class InitialPage extends StatefulWidget {

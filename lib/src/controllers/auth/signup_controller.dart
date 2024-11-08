@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:campus_sync/route_generate.dart';
+import 'package:campus_sync/src/routes/route_generate.dart';
 import 'package:campus_sync/src/services/api_service.dart';
 import 'package:campus_sync/src/services/auth_service.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';

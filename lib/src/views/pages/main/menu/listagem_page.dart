@@ -1,4 +1,4 @@
-import 'package:campus_sync/src/controllers/listagem_controller.dart';
+import 'package:campus_sync/src/controllers/main/menu/listagem_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:flutter/material.dart';
 

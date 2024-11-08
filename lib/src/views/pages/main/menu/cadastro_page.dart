@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:campus_sync/src/controllers/cadastro_controller.dart';
+import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 
 class CadastroPage extends StatefulWidget {

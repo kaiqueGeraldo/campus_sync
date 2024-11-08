@@ -1,7 +1,7 @@
-import 'package:campus_sync/src/views/pages/forgot_password_page.dart';
-import 'package:campus_sync/src/views/pages/initial_page.dart';
-import 'package:campus_sync/src/views/pages/signin_page.dart';
-import 'package:campus_sync/src/views/pages/signup_page.dart';
+import 'package:campus_sync/src/views/pages/auth/forgot_password_page.dart';
+import 'package:campus_sync/src/views/pages/main/initial_page.dart';
+import 'package:campus_sync/src/views/pages/auth/signin_page.dart';
+import 'package:campus_sync/src/views/pages/auth/signup_page.dart';
 import 'package:flutter/material.dart';
 
 class RouteGenerate {

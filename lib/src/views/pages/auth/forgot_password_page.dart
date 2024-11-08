@@ -1,4 +1,4 @@
-import 'package:campus_sync/src/controllers/forgot_password_controller.dart';
+import 'package:campus_sync/src/controllers/auth/forgot_password_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:campus_sync/src/views/components/custom_input_text.dart';

@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:campus_sync/src/views/pages/initial_page.dart';
-import 'package:campus_sync/src/views/pages/signin_page.dart';
+import 'package:campus_sync/src/views/pages/main/initial_page.dart';
+import 'package:campus_sync/src/views/pages/auth/signin_page.dart';
 
 class SplashScreenController {
   final ValueNotifier<bool> showText = ValueNotifier(false);

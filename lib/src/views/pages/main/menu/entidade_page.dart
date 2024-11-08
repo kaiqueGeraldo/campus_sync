@@ -1,7 +1,7 @@
-import 'package:campus_sync/src/controllers/entidade_controller.dart';
+import 'package:campus_sync/src/controllers/main/menu/entidade_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
-import 'package:campus_sync/src/views/pages/cadastro_page.dart';
-import 'package:campus_sync/src/views/pages/listagem_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/cadastro_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/listagem_page.dart';
 import 'package:flutter/material.dart';
 
 class EntidadePage extends StatelessWidget {

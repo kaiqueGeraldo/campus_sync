@@ -1,4 +1,4 @@
-import 'package:campus_sync/src/models/pessoa.dart';
+import 'package:campus_sync/src/models/university/pessoa.dart';
 
 class Funcionario extends Pessoa {
   final String cargo;

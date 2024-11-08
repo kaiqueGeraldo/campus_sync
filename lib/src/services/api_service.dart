@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:campus_sync/src/models/user.dart';
+import 'package:campus_sync/src/models/user/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {

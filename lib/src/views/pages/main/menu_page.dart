@@ -1,5 +1,5 @@
 import 'package:campus_sync/src/models/colors/colors.dart';
-import 'package:campus_sync/src/views/pages/entidade_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/entidade_page.dart';
 import 'package:flutter/material.dart';
 
 class MenuPage extends StatefulWidget {

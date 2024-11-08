@@ -1,10 +1,10 @@
-import 'package:campus_sync/src/models/pessoa.dart';
+import 'package:campus_sync/src/models/university/pessoa.dart';
 
-class Professor extends Pessoa {
-  final String formacoes;
-  final double salario;
+class Estudante extends Pessoa {
+  final String cpf;
+  final String numEstudante;
 
-  Professor({
+  Estudante({
     required super.id,
     required super.nome,
     required super.email,
@@ -12,12 +12,12 @@ class Professor extends Pessoa {
     required super.enderecoId,
     required super.dataNascimento,
     required super.urlImagePerfil,
-    required this.formacoes,
-    required this.salario,
+    required this.cpf,
+    required this.numEstudante,
   });
 
-  factory Professor.fromJson(Map<String, dynamic> json) {
-    return Professor(
+  factory Estudante.fromJson(Map<String, dynamic> json) {
+    return Estudante(
       id: json['id'],
       nome: json['nome'],
       email: json['email'],
@@ -25,8 +25,8 @@ class Professor extends Pessoa {
       enderecoId: json['enderecoId'],
       dataNascimento: DateTime.parse(json['dataNascimento']),
       urlImagePerfil: json['urlImagePerfil'],
-      formacoes: json['formacoes'],
-      salario: json['salario'].toDouble(),
+      cpf: json['cpf'],
+      numEstudante: json['numEstudante'],
     );
   }
 
@@ -40,8 +40,8 @@ class Professor extends Pessoa {
       'enderecoId': enderecoId,
       'dataNascimento': dataNascimento.toIso8601String(),
       'urlImagePerfil': urlImagePerfil,
-      'formacoes': formacoes,
-      'salario': salario,
+      'cpf': cpf,
+      'numEstudante': numEstudante,
     };
   }
 }

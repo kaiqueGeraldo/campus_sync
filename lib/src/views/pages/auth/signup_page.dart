@@ -1,19 +1,21 @@
-import 'package:campus_sync/src/controllers/signin_controller.dart';
+import 'package:campus_sync/src/controllers/auth/signup_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:campus_sync/src/views/components/custom_input_text.dart';
 import 'package:campus_sync/src/views/components/custom_social_button.dart';
 import 'package:flutter/material.dart';
 
-class SignInPage extends StatelessWidget {
-  const SignInPage({super.key});
+class SignUpPage extends StatelessWidget {
+  const SignUpPage({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final controller = SignInController(context: context);
+    final controller = SignUpController(context: context);
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
       backgroundColor: AppColors.backgroundBlueColor,
+      appBar: AppBar(),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(30),
@@ -29,7 +31,7 @@ class SignInPage extends StatelessWidget {
                 SizedBox(
                   width: MediaQuery.of(context).size.width,
                   child: const Text(
-                    'Login to your Account',
+                    'Create your Account',
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       fontSize: 20,
@@ -43,10 +45,26 @@ class SignInPage extends StatelessWidget {
                   child: Column(
                     children: [
                       CustomInputText(
+                        controller: controller.usernameController,
+                        hintText: 'Username',
+                        keyboardType: TextInputType.name,
+                        maxLength: 50,
+                        validator: controller.validateUsername,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomInputText(
+                        controller: controller.cpfController,
+                        hintText: 'CPF',
+                        keyboardType: TextInputType.number,
+                        validator: controller.validateCpf,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomInputText(
                         controller: controller.emailController,
                         hintText: 'Email',
                         keyboardType: TextInputType.emailAddress,
                         maxLength: 50,
+                        validator: controller.validateEmail,
                       ),
                       const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
@@ -61,35 +79,70 @@ class SignInPage extends StatelessWidget {
                                 controller.togglePasswordVisibility,
                             keyboardType: TextInputType.text,
                             maxLength: 30,
+                            validator: controller.validatePassword,
                           );
                         },
                       ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          TextButton(
-                            onPressed: controller.navigateToForgotPassword,
-                            child: const Text(
-                              'Forgot Password?',
-                              style: TextStyle(color: AppColors.buttonColor),
-                            ),
-                          ),
-                        ],
+                      const SizedBox(height: 20),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: controller.obscurePassword,
+                        builder: (context, obscure, _) {
+                          return CustomInputText(
+                            controller: controller.confirmPasswordController,
+                            hintText: 'Confirm Password',
+                            isPassword: false,
+                            obscureText: obscure,
+                            keyboardType: TextInputType.text,
+                            maxLength: 30,
+                            validator: controller.validateConfirmPassword,
+                          );
+                        },
                       ),
                       const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
                         valueListenable: controller.isLoading,
                         builder: (context, isLoading, _) {
                           return CustomButton(
-                            text: 'Sign In',
+                            text: 'Sign Up',
                             isLoading: isLoading,
-                            onPressed: controller.login,
+                            onPressed: controller.register,
                           );
                         },
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 20),
+                      const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            child: Divider(
+                              color: AppColors.textColor,
+                              thickness: 1,
+                            ),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(left: 15, right: 15),
+                            child: Text(
+                              'or sign in with',
+                              style: TextStyle(
+                                color: AppColors.textColor,
+                              ),
+                            ),
+                          ),
+                          SizedBox(
+                            width: 20,
+                            child: Divider(
+                              color: AppColors.textColor,
+                              thickness: 1,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 20),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           CustomSocialButton(
                             assetPath: 'assets/icons/icon_google.svg',
@@ -102,24 +155,7 @@ class SignInPage extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 40),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Text(
-                            "Don't have an account?",
-                            style: TextStyle(color: AppColors.textColor),
-                          ),
-                          const SizedBox(width: 10),
-                          GestureDetector(
-                            onTap: controller.navigateToSignUp,
-                            child: const Text(
-                              'Sign Up',
-                              style: TextStyle(color: AppColors.buttonColor),
-                            ),
-                          ),
-                        ],
-                      ),
+                      const SizedBox(height: 20),
                     ],
                   ),
                 ),

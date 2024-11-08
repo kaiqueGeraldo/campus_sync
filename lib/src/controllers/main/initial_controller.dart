@@ -1,9 +1,9 @@
-import 'package:campus_sync/route_generate.dart';
+import 'package:campus_sync/src/routes/route_generate.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:campus_sync/src/models/user.dart';
+import 'package:campus_sync/src/models/user/user.dart';
 import 'package:campus_sync/src/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

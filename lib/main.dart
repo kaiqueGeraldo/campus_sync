@@ -1,4 +1,4 @@
-import 'package:campus_sync/route_generate.dart';
+import 'package:campus_sync/src/routes/route_generate.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/views/pages/splash_screen.dart';
 import 'package:flutter/material.dart';
