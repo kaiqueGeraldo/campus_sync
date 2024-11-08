@@ -1,8 +1,8 @@
 import 'dart:convert';
+import 'package:campus_sync/route_generate.dart';
 import 'package:campus_sync/src/services/auth_service.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
-import 'package:campus_sync/src/views/pages/forgot_password_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -69,8 +69,8 @@ class SignInController {
       confirmText: 'Entrar',
       onConfirm: () {
         Navigator.of(context).pushNamedAndRemoveUntil(
-          '/initial',
-          (Route<dynamic> route) => false,
+          RouteGenerate.routeInitial,
+          (route) => false,
           arguments: {
             'userCpf': cpf,
             'userNome': nome,
@@ -91,20 +91,16 @@ class SignInController {
       confirmText: 'Criar Conta',
       cancelText: 'Cancelar',
       onConfirm: () {
-        Navigator.of(context).pushNamed('/signup');
+        Navigator.of(context).pushNamed(RouteGenerate.routeSignUp);
       },
     );
   }
 
   void navigateToForgotPassword() {
-    Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const ForgotPasswordPage(),
-        ));
+    Navigator.pushNamed(context, RouteGenerate.routeForgotPassword);
   }
 
   void navigateToSignUp() {
-    Navigator.pushNamed(context, '/signup');
+    Navigator.pushNamed(context, RouteGenerate.routeSignUp);
   }
 }

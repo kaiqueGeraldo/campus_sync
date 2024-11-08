@@ -1,7 +1,5 @@
+import 'package:campus_sync/route_generate.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
-import 'package:campus_sync/src/views/pages/initial_page.dart';
-import 'package:campus_sync/src/views/pages/signin_page.dart';
-import 'package:campus_sync/src/views/pages/signup_page.dart';
 import 'package:campus_sync/src/views/pages/splash_screen.dart';
 import 'package:flutter/material.dart';
 
@@ -22,11 +20,7 @@ class MyApp extends StatelessWidget {
           foregroundColor: AppColors.textColor,
         ),
       ),
-      routes: {
-        '/signin': (context) => const SignInPage(),
-        '/signup': (context) => const SignUpPage(),
-        '/initial': (context) => const InitialPage(),
-      },
+      onGenerateRoute: RouteGenerate.generateRoute,
       debugShowCheckedModeBanner: false,
     );
   }

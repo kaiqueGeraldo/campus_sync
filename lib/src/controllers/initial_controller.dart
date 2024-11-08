@@ -1,3 +1,4 @@
+import 'package:campus_sync/route_generate.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
@@ -35,7 +36,10 @@ class InitialController {
         await prefs.clear();
 
         Navigator.pushNamedAndRemoveUntil(
-            context, '/signin', (Route<dynamic> route) => false);
+          context,
+          RouteGenerate.routeSignIn,
+          (route) => false,
+        );
 
         CustomSnackbar.show(
           context,

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:campus_sync/route_generate.dart';
 import 'package:campus_sync/src/services/api_service.dart';
 import 'package:campus_sync/src/services/auth_service.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
@@ -65,7 +66,7 @@ class SignUpController {
         onCancel: () => Navigator.pop(context),
         confirmText: 'Sim',
         onConfirm: () {
-          Navigator.popUntil(context, (Route<dynamic> route) => false);
+          Navigator.popUntil(context, (route) => false);
         },
       );
     } else if (await ApiService().checkCpfExists(cpfController.text)) {
@@ -96,8 +97,8 @@ class SignUpController {
       confirmText: 'Entrar',
       onConfirm: () {
         Navigator.of(context).pushNamedAndRemoveUntil(
-          '/initial',
-          (Route<dynamic> route) => false,
+          RouteGenerate.routeInitial,
+          (route) => false,
           arguments: {
             'userCpf': cpf,
             'userNome': nome,
