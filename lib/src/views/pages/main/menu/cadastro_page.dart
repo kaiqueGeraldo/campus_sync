@@ -1,3 +1,4 @@
+import 'package:campus_sync/src/views/components/custom_input_text_cadastro.dart';
 import 'package:flutter/material.dart';
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
@@ -26,51 +27,19 @@ class _CadastroPageState extends State<CadastroPage> {
     controller.initControllers(widget.initialData);
   }
 
-  Widget _buildDropdown(
-      String field, dynamic value, Function(dynamic) onChanged) {
-    List<DropdownMenuItem<String>> items = [];
-    String labelText =
-        controller.fieldNames[field] ?? field; // Use o nome personalizado
-
-    if (field == 'TipoFacul') {
-      items = const [
-        DropdownMenuItem(value: 'Publica', child: Text('Pública')),
-        DropdownMenuItem(value: 'Privada', child: Text('Privada')),
-        DropdownMenuItem(value: 'Militar', child: Text('Militar')),
-      ];
-    } else if (field == 'PeriodoCurso') {
-      items = const [
-        DropdownMenuItem(value: 'Manha', child: Text('Manhã')),
-        DropdownMenuItem(value: 'Tarde', child: Text('Tarde')),
-        DropdownMenuItem(value: 'Noite', child: Text('Noite')),
-      ];
-    }
-
-    return DropdownButtonFormField<String>(
-      value: value,
-      items: items,
-      onChanged: (newValue) {
-        setState(() {
-          onChanged(newValue);
-        });
-      },
-      decoration: InputDecoration(labelText: labelText),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Por favor, selecione uma opção';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildTextInput(String field) {
+  Widget _buildDropdown(String field) {
+    List<DropdownMenuItem<String>> items = controller.getDropdownItems(field);
     String labelText = controller.fieldNames[field] ?? field;
-
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: TextFormField(
-        controller: controller.controllers[field],
+      padding: const EdgeInsets.only(bottom: 16),
+      child: DropdownButtonFormField<String>(
+        value: controller.dropdownValues[field],
+        items: items,
+        onChanged: (newValue) {
+          setState(() {
+            controller.dropdownValues[field] = newValue;
+          });
+        },
         decoration: InputDecoration(
           labelText: labelText,
           labelStyle: const TextStyle(color: AppColors.backgroundBlueColor),
@@ -86,9 +55,14 @@ class _CadastroPageState extends State<CadastroPage> {
             borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
         ),
+        dropdownColor: AppColors.lightGreyColor,
+        style: const TextStyle(
+          color: Colors.black,
+          fontSize: 16,
+        ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'Campo ${controller.fieldNames[field]} é obrigatório';
+            return 'Por favor, selecione uma opção';
           }
           return null;
         },
@@ -96,8 +70,31 @@ class _CadastroPageState extends State<CadastroPage> {
     );
   }
 
+  Widget _buildTextInput(String field) {
+    String labelText = controller.fieldNames[field] ?? field;
+
+    TextInputType keyboardType = controller.getKeyboardType(field);
+    int? maxLength = controller.getMaxLength(field);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: CustomInputTextCadastro(
+        controller: controller.controllers[field] as TextEditingController,
+        labelText: labelText,
+        keyboardType: keyboardType,
+        maxLength: maxLength,
+      ),
+    );
+  }
+
+  bool isDadosEntidadeExpanded = true;
+  bool isEnderecoExpanded = false;
+
   @override
   Widget build(BuildContext context) {
+    final hasEnderecoFields = controller.controllers.keys
+        .any((field) => controller.isEnderecoField(field));
+
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       appBar: AppBar(
@@ -108,67 +105,140 @@ class _CadastroPageState extends State<CadastroPage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Dados ${widget.endpoint}'.toUpperCase(),
-                    style: const TextStyle(fontSize: 20),
+              Card(
+                color: AppColors.textColor,
+                margin: const EdgeInsets.only(bottom: 16),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ExpansionTile(
+                  backgroundColor: AppColors.textColor,
+                  iconColor: isDadosEntidadeExpanded
+                      ? AppColors.buttonColor
+                      : Colors.black,
+                  leading: Icon(
+                    Icons.cases_rounded,
+                    color: isDadosEntidadeExpanded
+                        ? AppColors.buttonColor
+                        : Colors.black,
                   ),
-                  const Icon(Icons.featured_play_list_outlined),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Form(
-                key: controller.formKey,
-                child: Column(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  initiallyExpanded: isDadosEntidadeExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isDadosEntidadeExpanded = expanded;
+                    });
+                  },
+                  title: Text(
+                    'Dados ${widget.endpoint}',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: isDadosEntidadeExpanded
+                          ? AppColors.buttonColor
+                          : Colors.black,
+                    ),
+                  ),
                   children: [
-                    ...controller.controllers.keys.map((field) {
-                      if (controller.isDropdownField(field)) {
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: _buildDropdown(
-                            field,
-                            controller.dropdownValues[field],
-                            (value) {
-                              setState(() {
-                                controller.dropdownValues[field] = value;
-                              });
-                            },
-                          ),
-                        );
-                      } else {
-                        return _buildTextInput(field);
-                      }
-                    }),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: 300,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: const ButtonStyle(
-                          elevation: WidgetStatePropertyAll(4),
-                          backgroundColor:
-                              WidgetStatePropertyAll(AppColors.buttonColor),
-                          foregroundColor:
-                              WidgetStatePropertyAll(AppColors.textColor),
-                          shape: WidgetStatePropertyAll(
-                            RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.all(Radius.circular(10)),
-                            ),
-                          ),
-                        ),
-                        onPressed: () {
-                          controller.cadastrar(context, widget.endpoint);
-                        },
-                        child: const Text(
-                          'Cadastrar',
-                          style: TextStyle(fontSize: 15),
-                        ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          ...controller.controllers.keys
+                              .where(
+                                  (field) => !controller.isEnderecoField(field))
+                              .map((field) => _buildTextInput(field)),
+                          ...controller.dropdownValues.keys
+                              .where(
+                                  (field) => !controller.isEnderecoField(field))
+                              .map((field) => _buildDropdown(field)),
+                        ],
                       ),
                     ),
                   ],
+                ),
+              ),
+              if (hasEnderecoFields)
+                Card(
+                  color: AppColors.textColor,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: ExpansionTile(
+                    iconColor: isEnderecoExpanded
+                        ? AppColors.buttonColor
+                        : Colors.black,
+                    leading: Icon(
+                      Icons.home_rounded,
+                      color: isEnderecoExpanded
+                          ? AppColors.buttonColor
+                          : Colors.black,
+                    ),
+                    backgroundColor: AppColors.textColor,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    initiallyExpanded: isEnderecoExpanded,
+                    onExpansionChanged: (expanded) {
+                      setState(() {
+                        isEnderecoExpanded = expanded;
+                      });
+                    },
+                    title: Text(
+                      'Endereço',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: isEnderecoExpanded
+                            ? AppColors.buttonColor
+                            : Colors.black,
+                      ),
+                    ),
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ...controller.controllers.keys
+                                .where((field) =>
+                                    controller.isEnderecoField(field))
+                                .map((field) => _buildTextInput(field)),
+                            ...controller.dropdownValues.keys
+                                .where((field) =>
+                                    controller.isEnderecoField(field))
+                                .map((field) => _buildDropdown(field)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              SizedBox(
+                width: 300,
+                height: 50,
+                child: ElevatedButton(
+                  style: const ButtonStyle(
+                    elevation: WidgetStatePropertyAll(4),
+                    backgroundColor:
+                        WidgetStatePropertyAll(AppColors.buttonColor),
+                    foregroundColor:
+                        WidgetStatePropertyAll(AppColors.textColor),
+                    shape: WidgetStatePropertyAll(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(10)),
+                      ),
+                    ),
+                  ),
+                  onPressed: () {
+                    controller.cadastrar(context, widget.endpoint);
+                  },
+                  child: const Text(
+                    'Cadastrar',
+                    style: TextStyle(fontSize: 15),
+                  ),
                 ),
               ),
             ],

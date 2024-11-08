@@ -84,7 +84,7 @@ class EntidadeController {
             'EnderecoEstado': '',
             'EnderecoCEP': null,
             'TipoFacul': 'Privada',
-            'UniversidadeId': universidadeId,
+            'UniversidadeId': loadUniversidadeId(),
           },
           'Estudantes': {
             'Nome': '',
@@ -172,9 +172,10 @@ class EntidadeController {
 
   Future<void> loadUniversidadeId() async {
     final prefs = await SharedPreferences.getInstance();
-    universidadeId = prefs.getString('universidadeId');
-    if (universidadeId != null) {
-      initialData['UniversidadeId'] = universidadeId;
+    String? universidadeId = prefs.getString('universidadeId');
+
+    if (universidadeId == null) {
+      throw Exception('Erro: Universidade não identificada.');
     }
   }
 }
