@@ -1,8 +1,6 @@
+import 'package:campus_sync/src/controllers/splash_screen_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
-import 'package:campus_sync/src/views/pages/initial_page.dart';
-import 'package:campus_sync/src/views/pages/signin_page.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -12,36 +10,18 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  bool _loggedIn = false;
-  // ignore: unused_field
-  bool _finishedSplash = false;
-  bool _showText = false;
+  final SplashScreenController _controller = SplashScreenController();
 
   @override
   void initState() {
     super.initState();
-    checkIfLoggedIn();
-    _startSplashAnimation();
+    _controller.checkIfLoggedInAndNavigate(context);
   }
 
-  Future<void> checkIfLoggedIn() async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('userToken');
-    _loggedIn = token != null;
-  }
-
-  void _startSplashAnimation() async {
-    await Future.delayed(const Duration(seconds: 4));
-    setState(() => _finishedSplash = true);
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) =>
-            _loggedIn ? const InitialPage() : const SignInPage(),
-      ),
-    );
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -67,27 +47,28 @@ class _SplashScreenState extends State<SplashScreen> {
                       height: 400,
                     ),
                   ),
-                  AnimatedOpacity(
-                    opacity: _showText ? 1.0 : 0.0,
-                    duration: const Duration(seconds: 1),
-                    child: const Text(
-                      'CampusSync',
-                      style: TextStyle(
-                        fontSize: 50,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textColor,
-                      ),
-                    ),
+                  ValueListenableBuilder<bool>(
+                    valueListenable: _controller.showText,
+                    builder: (context, showText, child) {
+                      return AnimatedOpacity(
+                        opacity: showText ? 1.0 : 0.0,
+                        duration: const Duration(seconds: 1),
+                        child: const Text(
+                          'CampusSync',
+                          style: TextStyle(
+                            fontSize: 50,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textColor,
+                          ),
+                        ),
+                      );
+                    },
                   ),
                 ],
               ),
             );
           },
-          onEnd: () {
-            setState(() {
-              _showText = true;
-            });
-          },
+          onEnd: () => _controller.showText.value = true,
         ),
       ),
     );

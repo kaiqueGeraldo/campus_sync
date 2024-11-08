@@ -1,9 +1,6 @@
+import 'package:campus_sync/src/controllers/listagem_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-
-import 'package:shared_preferences/shared_preferences.dart';
 
 class ListagemPage extends StatefulWidget {
   final String endpoint;
@@ -20,26 +17,14 @@ class ListagemPage extends StatefulWidget {
 }
 
 class _ListagemPageState extends State<ListagemPage> {
-  Future<List<dynamic>> _listar() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? universidadeId = prefs.getString('universidadeId');
+  late ListagemController _controller;
+  late Future<List<dynamic>> _futureList;
 
-    if (universidadeId == null) {
-      throw Exception('Erro: Universidade não identificada.');
-    }
-
-    final response = await http.get(
-      Uri.parse(
-          'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api/${widget.endpoint}?universidadeId=$universidadeId'),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Falha ao carregar dados');
-    }
+  @override
+  void initState() {
+    super.initState();
+    _controller = ListagemController();
+    _futureList = _controller.listar(widget.endpoint);
   }
 
   @override
@@ -50,7 +35,7 @@ class _ListagemPageState extends State<ListagemPage> {
         title: Text('Listagem de ${widget.endpoint}'),
       ),
       body: FutureBuilder<List<dynamic>>(
-        future: _listar(),
+        future: _futureList,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
@@ -71,14 +56,12 @@ class _ListagemPageState extends State<ListagemPage> {
               final item = items[index];
 
               final titleField = widget.fieldMapping['title'] ?? 'nome';
-              final subtitleField1 = widget.fieldMapping['subtitle1'] ?? 'cpf';
-              final subtitleField2 =
-                  widget.fieldMapping['subtitle2'] ?? 'email';
 
               return ListTile(
                 title: Text(item[titleField] ?? 'Nome não disponível'),
                 subtitle: Text(
-                    '${item[subtitleField1]?.toString() ?? 'CPF não disponível'}, ${item[subtitleField2] ?? 'Email não disponível'}'),
+                  _controller.getSubtitleText(widget.fieldMapping, item),
+                ),
               );
             },
           );

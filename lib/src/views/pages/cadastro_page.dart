@@ -1,8 +1,6 @@
-import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:campus_sync/src/controllers/cadastro_controller.dart';
+import 'package:campus_sync/src/models/colors/colors.dart';
 
 class CadastroPage extends StatefulWidget {
   final String endpoint;
@@ -19,57 +17,20 @@ class CadastroPage extends StatefulWidget {
 }
 
 class _CadastroPageState extends State<CadastroPage> {
-  final _formKey = GlobalKey<FormState>();
-  final Map<String, TextEditingController> _controllers = {};
-  final Map<String, dynamic> _dropdownValues = {};
-  final bool _focusColor = false;
-
-  // Mapa de nomes personalizados
-  final Map<String, String> fieldNames = {
-    'TipoFacul': 'Tipo de Faculdade',
-    'PeriodoCurso': 'Período do Curso',
-    'Nome': 'Nome',
-    'Email': 'E-mail',
-    'CPF': 'CPF',
-    'NumEstudante': 'N° Estudante',
-    'Formacoes': 'Formações',
-    'Salario': 'Salário',
-    'EnderecoRua': 'Rua',
-    'EnderecoCidade': 'Cidade',
-    'EnderecoEstado': 'Estado',
-    'EnderecoCEP': 'CEP',
-    'UniversidadeId': 'Universidade',
-    'EstudanteId': 'Estudante',
-    'CursoId': 'Curso',
-    'DataMatricula': 'Data da Matrícula',
-    'FaculdadeId': 'Faculdade',
-  };
+  late CadastroController controller;
 
   @override
   void initState() {
     super.initState();
-    _initControllers();
-  }
-
-  void _initControllers() {
-    widget.initialData.forEach((key, value) {
-      if (_isDropdownField(key)) {
-        _dropdownValues[key] = value;
-      } else {
-        _controllers[key] =
-            TextEditingController(text: value?.toString() ?? '');
-      }
-    });
-  }
-
-  bool _isDropdownField(String field) {
-    return field == 'TipoFacul' || field == 'PeriodoCurso';
+    controller = CadastroController();
+    controller.initControllers(widget.initialData);
   }
 
   Widget _buildDropdown(
       String field, dynamic value, Function(dynamic) onChanged) {
     List<DropdownMenuItem<String>> items = [];
-    String labelText = fieldNames[field] ?? field; // Use o nome personalizado
+    String labelText =
+        controller.fieldNames[field] ?? field; // Use o nome personalizado
 
     if (field == 'TipoFacul') {
       items = const [
@@ -104,84 +65,35 @@ class _CadastroPageState extends State<CadastroPage> {
   }
 
   Widget _buildTextInput(String field) {
-    String labelText = fieldNames[field] ?? field.capitalize();
+    String labelText = controller.fieldNames[field] ?? field;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
       child: TextFormField(
-        controller: _controllers[field],
+        controller: controller.controllers[field],
         decoration: InputDecoration(
           labelText: labelText,
-          labelStyle: TextStyle(
-            color: _focusColor
-                ? AppColors.greyColor
-                : AppColors.backgroundBlueColor,
-          ),
+          labelStyle: const TextStyle(color: AppColors.backgroundBlueColor),
           border: const OutlineInputBorder(
             borderRadius: BorderRadius.all(Radius.circular(10)),
             borderSide: BorderSide(color: Colors.black12),
           ),
-          focusedBorder: OutlineInputBorder(
+          focusedBorder: const OutlineInputBorder(
             borderSide: BorderSide(
               width: 1.5,
-              color: _focusColor
-                  ? AppColors.greyColor
-                  : AppColors.backgroundBlueColor,
+              color: AppColors.backgroundBlueColor,
             ),
-            borderRadius: const BorderRadius.all(Radius.circular(12)),
+            borderRadius: BorderRadius.all(Radius.circular(12)),
           ),
         ),
         validator: (value) {
           if (value == null || value.isEmpty) {
-            return 'Campo $field é obrigatório';
+            return 'Campo ${controller.fieldNames[field]} é obrigatório';
           }
           return null;
         },
       ),
     );
-  }
-
-  Future<void> _cadastrar() async {
-    if (_formKey.currentState!.validate()) {
-      final prefs = await SharedPreferences.getInstance();
-      String? universidadeId = prefs.getString('universidadeId');
-
-      if (universidadeId == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Erro: Universidade não identificada.')),
-        );
-        return;
-      }
-
-      final Map<String, dynamic> formData = {};
-      _controllers.forEach((key, controller) {
-        formData[key] = controller.text;
-      });
-      _dropdownValues.forEach((key, value) {
-        formData[key] = value;
-      });
-      formData['UniversidadeId'] = universidadeId;
-
-      final response = await http.post(
-        Uri.parse(
-          'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api/${widget.endpoint}',
-        ),
-        headers: {'Content-Type': 'application/json'},
-        body: json.encode(formData),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cadastro realizado com sucesso!')),
-        );
-        Navigator.pop(context);
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Erro ao cadastrar: ${response.reasonPhrase}')),
-        );
-      }
-    }
   }
 
   @override
@@ -193,8 +105,7 @@ class _CadastroPageState extends State<CadastroPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
           child: Column(
             children: [
               Row(
@@ -209,29 +120,27 @@ class _CadastroPageState extends State<CadastroPage> {
               ),
               const SizedBox(height: 20),
               Form(
-                key: _formKey,
+                key: controller.formKey,
                 child: Column(
                   children: [
-                    ..._controllers.keys.map(
-                      (field) {
-                        if (_isDropdownField(field)) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16.0),
-                            child: _buildDropdown(
-                              field,
-                              _dropdownValues[field],
-                              (value) {
-                                setState(() {
-                                  _dropdownValues[field] = value;
-                                });
-                              },
-                            ),
-                          );
-                        } else {
-                          return _buildTextInput(field);
-                        }
-                      },
-                    ),
+                    ...controller.controllers.keys.map((field) {
+                      if (controller.isDropdownField(field)) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16.0),
+                          child: _buildDropdown(
+                            field,
+                            controller.dropdownValues[field],
+                            (value) {
+                              setState(() {
+                                controller.dropdownValues[field] = value;
+                              });
+                            },
+                          ),
+                        );
+                      } else {
+                        return _buildTextInput(field);
+                      }
+                    }),
                     const SizedBox(height: 20),
                     SizedBox(
                       width: 300,
@@ -250,7 +159,9 @@ class _CadastroPageState extends State<CadastroPage> {
                             ),
                           ),
                         ),
-                        onPressed: _cadastrar,
+                        onPressed: () {
+                          controller.cadastrar(context, widget.endpoint);
+                        },
                         child: const Text(
                           'Cadastrar',
                           style: TextStyle(fontSize: 15),
@@ -265,11 +176,5 @@ class _CadastroPageState extends State<CadastroPage> {
         ),
       ),
     );
-  }
-}
-
-extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1).toLowerCase()}";
   }
 }

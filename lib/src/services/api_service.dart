@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:campus_sync/src/models/user.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String _baseUrl =
@@ -29,8 +30,17 @@ class ApiService {
 
   // Verificar se o CPF já existe
   Future<bool> checkCpfExists(String cpf) async {
+    cpf = cpf.replaceAll(RegExp(r'\D'), '');
+
     final response = await http.get(Uri.parse('$_baseUrl/Users/$cpf'));
-    return response.statusCode == 200;
+
+    if (response.statusCode == 200) {
+      return true;
+    } else if (response.statusCode == 404) {
+      return false;
+    } else {
+      throw Exception('Erro ao verificar o CPF: ${response.statusCode}');
+    }
   }
 
 // Verificar se o email já existe (filtrando manualmente no cliente)
@@ -43,7 +53,6 @@ class ApiService {
     if (response.statusCode == 200) {
       final List<dynamic> users = jsonDecode(response.body);
 
-      // Filtrar pelo email no cliente
       final user = users.firstWhere(
         (u) => u['email'] == email,
         orElse: () => null,
@@ -67,5 +76,43 @@ class ApiService {
       }),
     );
     return response.statusCode == 200;
+  }
+
+  // cadastrar entidade
+  Future<http.Response?> cadastrarDados(
+      String endpoint, Map<String, dynamic> formData) async {
+    try {
+      final response = await http.post(
+        Uri.parse('$_baseUrl$endpoint'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(formData),
+      );
+      return response;
+    } catch (e) {
+      // ignore: avoid_print
+      print('Erro ao conectar com a API: $e');
+      return null;
+    }
+  }
+
+  // listar entidades
+  Future<List<dynamic>> listarDados(String endpoint) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? universidadeId = prefs.getString('universidadeId');
+
+    if (universidadeId == null) {
+      throw Exception('Erro: Universidade não identificada.');
+    }
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/$endpoint?universidadeId=$universidadeId'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Falha ao carregar dados');
+    }
   }
 }

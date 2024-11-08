@@ -59,9 +59,12 @@ class _AboutPageState extends State<AboutPage>
           style: TextStyle(fontSize: 15),
         ),
         GestureDetector(
-          child: const Text(
-            'https://youtube.com',
-            style: TextStyle(color: AppColors.buttonColor, fontSize: 15),
+          child: TextButton(
+            onPressed: () {},
+            child: const Text(
+              'https://youtube.com',
+              style: TextStyle(color: AppColors.buttonColor, fontSize: 15),
+            ),
           ),
         ),
       ],

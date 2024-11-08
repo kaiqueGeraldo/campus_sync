@@ -49,12 +49,14 @@ class SignUpPage extends StatelessWidget {
                         hintText: 'Username',
                         keyboardType: TextInputType.name,
                         maxLength: 50,
+                        validator: controller.validateUsername,
                       ),
                       const SizedBox(height: 20),
                       CustomInputText(
                         controller: controller.cpfController,
                         hintText: 'CPF',
                         keyboardType: TextInputType.number,
+                        validator: controller.validateCpf,
                       ),
                       const SizedBox(height: 20),
                       CustomInputText(
@@ -62,6 +64,7 @@ class SignUpPage extends StatelessWidget {
                         hintText: 'Email',
                         keyboardType: TextInputType.emailAddress,
                         maxLength: 50,
+                        validator: controller.validateEmail,
                       ),
                       const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
@@ -76,6 +79,7 @@ class SignUpPage extends StatelessWidget {
                                 controller.togglePasswordVisibility,
                             keyboardType: TextInputType.text,
                             maxLength: 30,
+                            validator: controller.validatePassword,
                           );
                         },
                       ),
@@ -90,6 +94,7 @@ class SignUpPage extends StatelessWidget {
                             obscureText: obscure,
                             keyboardType: TextInputType.text,
                             maxLength: 30,
+                            validator: controller.validateConfirmPassword,
                           );
                         },
                       ),
