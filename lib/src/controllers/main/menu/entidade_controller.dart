@@ -8,9 +8,11 @@ class EntidadeController {
   late Map<String, String> fieldMapping;
   String? universidadeId;
 
-  EntidadeController(this.endpoint) {
+   EntidadeController(this.endpoint);
+
+  Future<void> initialize() async {
     _initializeFieldMappings();
-    _initializeInitialData();
+    await _initializeInitialData();
   }
 
   void _initializeFieldMappings() {
@@ -45,6 +47,11 @@ class EntidadeController {
             'subtitle1': 'mensalidade',
             'subtitle2': 'faculdade',
           },
+          'Turma': {
+            'title': 'nome',
+            'subtitle1': 'periodo',
+            'subtitle2': 'capacidadeMaxima',
+          },
           'Universidades': {
             'title': 'nomeUniversidade',
             'subtitle1': 'sigla',
@@ -69,7 +76,8 @@ class EntidadeController {
         {};
   }
 
-  void _initializeInitialData() {
+  Future<void> _initializeInitialData() async {
+    final universidadeId = await loadUniversidadeId();
     initialData = {
           'Matriculas': {
             'EstudanteId': null,
@@ -84,7 +92,7 @@ class EntidadeController {
             'EnderecoEstado': '',
             'EnderecoCEP': null,
             'TipoFacul': 'Privada',
-            'UniversidadeId': loadUniversidadeId(),
+            'UniversidadeId': universidadeId,
           },
           'Estudantes': {
             'Nome': '',
@@ -120,6 +128,12 @@ class EntidadeController {
             'Descricao': '',
             'Mensalidade': null,
             'FaculdadeId': null,
+          },
+          'Turma': {
+            'Nome': '',
+            'PeriodoTurma': 'Manhã',
+            'CapacidadeMaxima': null,
+            'CursoId': null,
           },
           'Universidades': {
             'Nome': '',
@@ -170,12 +184,8 @@ class EntidadeController {
     );
   }
 
-  Future<void> loadUniversidadeId() async {
+  Future<String?> loadUniversidadeId() async {
     final prefs = await SharedPreferences.getInstance();
-    String? universidadeId = prefs.getString('universidadeId');
-
-    if (universidadeId == null) {
-      throw Exception('Erro: Universidade não identificada.');
-    }
+    return prefs.getString('universidadeId');
   }
 }

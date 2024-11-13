@@ -23,21 +23,24 @@ class _CadastroPageState extends State<CadastroPage> {
   @override
   void initState() {
     super.initState();
+    print('Initial Data: ${widget.initialData}');
     controller = CadastroController();
     controller.initControllers(widget.initialData);
   }
 
   Widget _buildDropdown(String field) {
-    List<DropdownMenuItem<String>> items = controller.getDropdownItems(field);
+    List<DropdownMenuItem<int>> items = controller.getDropdownItems(field);
     String labelText = controller.fieldNames[field] ?? field;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<String>(
-        value: controller.dropdownValues[field],
+      child: DropdownButtonFormField<int>(
+        value: controller.dropdownValues[field] as int?,
         items: items,
         onChanged: (newValue) {
           setState(() {
             controller.dropdownValues[field] = newValue;
+            print('Dropdown $field updated to $newValue');
           });
         },
         decoration: InputDecoration(
@@ -61,7 +64,7 @@ class _CadastroPageState extends State<CadastroPage> {
           fontSize: 16,
         ),
         validator: (value) {
-          if (value == null || value.isEmpty) {
+          if (value == null) {
             return 'Por favor, selecione uma opção';
           }
           return null;
@@ -106,14 +109,14 @@ class _CadastroPageState extends State<CadastroPage> {
           child: Column(
             children: [
               Card(
-                color: AppColors.textColor,
+                color: AppColors.lightGreyColor,
                 margin: const EdgeInsets.only(bottom: 16),
                 elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: ExpansionTile(
-                  backgroundColor: AppColors.textColor,
+                  backgroundColor: AppColors.lightGreyColor,
                   iconColor: isDadosEntidadeExpanded
                       ? AppColors.buttonColor
                       : Colors.black,
@@ -123,7 +126,8 @@ class _CadastroPageState extends State<CadastroPage> {
                         ? AppColors.buttonColor
                         : Colors.black,
                   ),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10)),
                   initiallyExpanded: isDadosEntidadeExpanded,
                   onExpansionChanged: (expanded) {
                     setState(() {
@@ -143,18 +147,20 @@ class _CadastroPageState extends State<CadastroPage> {
                   children: [
                     Padding(
                       padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ...controller.controllers.keys
-                              .where(
-                                  (field) => !controller.isEnderecoField(field))
-                              .map((field) => _buildTextInput(field)),
-                          ...controller.dropdownValues.keys
-                              .where(
-                                  (field) => !controller.isEnderecoField(field))
-                              .map((field) => _buildDropdown(field)),
-                        ],
+                      child: Form(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ...controller.controllers.keys
+                                .where((field) =>
+                                    !controller.isEnderecoField(field))
+                                .map((field) => _buildTextInput(field)),
+                            ...controller.dropdownValues.keys
+                                .where((field) =>
+                                    !controller.isEnderecoField(field))
+                                .map((field) => _buildDropdown(field)),
+                          ],
+                        ),
                       ),
                     ),
                   ],
@@ -162,7 +168,7 @@ class _CadastroPageState extends State<CadastroPage> {
               ),
               if (hasEnderecoFields)
                 Card(
-                  color: AppColors.textColor,
+                  color: AppColors.lightGreyColor,
                   margin: const EdgeInsets.only(bottom: 16),
                   elevation: 4,
                   shape: RoundedRectangleBorder(
@@ -178,8 +184,9 @@ class _CadastroPageState extends State<CadastroPage> {
                           ? AppColors.buttonColor
                           : Colors.black,
                     ),
-                    backgroundColor: AppColors.textColor,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    backgroundColor: AppColors.lightGreyColor,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10)),
                     initiallyExpanded: isEnderecoExpanded,
                     onExpansionChanged: (expanded) {
                       setState(() {
@@ -199,18 +206,20 @@ class _CadastroPageState extends State<CadastroPage> {
                     children: [
                       Padding(
                         padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ...controller.controllers.keys
-                                .where((field) =>
-                                    controller.isEnderecoField(field))
-                                .map((field) => _buildTextInput(field)),
-                            ...controller.dropdownValues.keys
-                                .where((field) =>
-                                    controller.isEnderecoField(field))
-                                .map((field) => _buildDropdown(field)),
-                          ],
+                        child: Form(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ...controller.controllers.keys
+                                  .where((field) =>
+                                      controller.isEnderecoField(field))
+                                  .map((field) => _buildTextInput(field)),
+                              ...controller.dropdownValues.keys
+                                  .where((field) =>
+                                      controller.isEnderecoField(field))
+                                  .map((field) => _buildDropdown(field)),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -241,6 +250,7 @@ class _CadastroPageState extends State<CadastroPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 20),
             ],
           ),
         ),

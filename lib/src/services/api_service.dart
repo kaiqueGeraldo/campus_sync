@@ -83,7 +83,7 @@ class ApiService {
       String endpoint, Map<String, dynamic> formData) async {
     try {
       final response = await http.post(
-        Uri.parse('$_baseUrl$endpoint'),
+        Uri.parse('$_baseUrl/$endpoint'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(formData),
       );

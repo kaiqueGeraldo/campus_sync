@@ -15,50 +15,70 @@ class EntidadePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhiteColor,
-      appBar: AppBar(
-        title: Text(titulo),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(15),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Expanded(
-              child: GestureDetector(
-                onTap: () => _controller.navigateToCadastroPage(
-                  context,
-                  CadastroPage(
-                    endpoint: endpoint,
-                    initialData: _controller.initialData,
+    return FutureBuilder<void>(
+      future: _controller.initialize(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(color: AppColors.buttonColor),
+            ),
+          );
+        } else if (snapshot.hasError) {
+          return Scaffold(
+            appBar: AppBar(title: Text(titulo)),
+            body: Center(
+              child: Text('Erro: ${snapshot.error}'),
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: AppColors.backgroundWhiteColor,
+          appBar: AppBar(
+            title: Text(titulo),
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(15),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _controller.navigateToCadastroPage(
+                      context,
+                      CadastroPage(
+                        endpoint: endpoint,
+                        initialData: _controller.initialData,
+                      ),
+                    ),
+                    child: _buildOptionContainer(
+                      icon: Icons.add,
+                      label: 'Cadastrar',
+                    ),
                   ),
                 ),
-                child: _buildOptionContainer(
-                  icon: Icons.add,
-                  label: 'Cadastrar',
-                ),
-              ),
-            ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: GestureDetector(
-                onTap: () => _controller.navigateToListagemPage(
-                  context,
-                  ListagemPage(
-                    endpoint: endpoint,
-                    fieldMapping: _controller.fieldMapping,
+                const SizedBox(width: 20),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: () => _controller.navigateToListagemPage(
+                      context,
+                      ListagemPage(
+                        endpoint: endpoint,
+                        fieldMapping: _controller.fieldMapping,
+                      ),
+                    ),
+                    child: _buildOptionContainer(
+                      icon: Icons.format_list_bulleted_outlined,
+                      label: 'Listar',
+                    ),
                   ),
                 ),
-                child: _buildOptionContainer(
-                  icon: Icons.format_list_bulleted_outlined,
-                  label: 'Listar',
-                ),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
