@@ -4,14 +4,14 @@ import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 
+final formKeyPassword = GlobalKey<FormState>();
+
 class ForgotPasswordController {
   final BuildContext context;
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-  final TextEditingController confirmCPFController =
-      MaskedTextController(mask: '000.000.000-00');
+  final formKey = formKeyPassword;
+  final TextEditingController confirmCPFController = MaskedTextController(mask: '000.000.000-00');
   final TextEditingController novaSenhaController = TextEditingController();
-  final TextEditingController confirmNovaSenhaController =
-      TextEditingController();
+  final TextEditingController confirmNovaSenhaController = TextEditingController();
   final ValueNotifier<bool> verSenha = ValueNotifier(true);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
 

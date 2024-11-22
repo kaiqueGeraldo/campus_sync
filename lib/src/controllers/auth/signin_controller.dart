@@ -6,9 +6,11 @@ import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+final formKeySignIn = GlobalKey<FormState>();
+
 class SignInController {
   final BuildContext context;
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final formKey = formKeySignIn;
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final ValueNotifier<bool> obscurePassword = ValueNotifier(true);

@@ -13,7 +13,7 @@ class _MenuPageState extends State<MenuPage> {
   final List<Map<String, dynamic>> menuItems = [
     {
       'titulo': 'Faculdades',
-      'endpoint': 'Faculdades',
+      'endpoint': 'Faculdades/register-faculty',
       'icon': Icons.cast_for_education,
     },
     {
@@ -33,7 +33,7 @@ class _MenuPageState extends State<MenuPage> {
     },
     {
       'titulo': 'Turmas',
-      'endpoint': 'Turmas',
+      'endpoint': 'Turma',
       'icon': Icons.people_outline,
     },
     {

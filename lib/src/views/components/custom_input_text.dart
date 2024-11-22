@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 class CustomInputText extends StatelessWidget {
   final TextEditingController controller;
+  final TextInputType keyboardType;
   final String hintText;
   final bool isPassword;
   final bool obscureText;
@@ -14,7 +15,7 @@ class CustomInputText extends StatelessWidget {
   const CustomInputText({
     required this.controller,
     required this.hintText,
-    required TextInputType keyboardType,
+    required this.keyboardType,
     this.isPassword = false,
     this.obscureText = false,
     this.onSuffixIconPressed,
@@ -27,6 +28,7 @@ class CustomInputText extends StatelessWidget {
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
+      keyboardType: keyboardType,
       obscureText: obscureText,
       validator: validator,
       maxLength: maxLength,

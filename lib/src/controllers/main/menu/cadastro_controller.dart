@@ -81,7 +81,9 @@ class CadastroController {
   }
 
   bool isDropdownField(String field) {
-    return field == 'TipoFacul' || field == 'PeriodoCurso' || field == 'PeriodoTurma';
+    return field == 'TipoFacul' ||
+        field == 'PeriodoCurso' ||
+        field == 'PeriodoTurma';
   }
 
   List<DropdownMenuItem<int>> getDropdownItems(String field) {
@@ -117,32 +119,39 @@ class CadastroController {
       return;
     }
 
+    // Formata os dados do formulário
     final Map<String, dynamic> formData = _formatFormData(universidadeId);
 
-    print('Dados enviados para API: $formData');
-
+    // Chama o método de cadastro na API
     final response = await ApiService().cadastrarDados(endpoint, formData);
-    if (response != null && response.statusCode == 201) {
+
+    if (response != null &&
+        (response.statusCode == 200 || response.statusCode == 201)) {
       CustomSnackbar.show(context, 'Cadastro realizado com sucesso!');
       Navigator.pop(context);
     } else {
-      CustomSnackbar.show(
-          context, 'Erro ao cadastrar: ${response?.reasonPhrase}');
+      CustomSnackbar.show(context,
+          'Erro ao cadastrar: ${response?.reasonPhrase ?? 'Desconhecido'}');
     }
   }
 
   Map<String, dynamic> _formatFormData(String universidadeId) {
     final Map<String, dynamic> formData = {};
 
+    // Obtém dados dos controllers
     controllers.forEach((key, controller) {
       formData[key] = controller.text;
     });
 
+    // Obtém valores dos dropdowns
     dropdownValues.forEach((key, value) {
       formData[key] = value;
     });
 
+    // Adiciona o ID da universidade
     formData['universidadeId'] = int.parse(universidadeId);
+
+    // Mapeia os campos para o formato esperado pela API
     formData['faculdadeId'] = formData.remove('FaculdadeId');
     formData['estudanteId'] = formData.remove('EstudanteId');
     formData['turmaId'] = formData.remove('TurmaId');
@@ -157,6 +166,7 @@ class CadastroController {
     formData['periodo'] = formData.remove('PeriodoTurma');
     formData['capacidadeMaxima'] = formData.remove('CapacidadeMaxima');
 
+    // Adiciona o endereço como um objeto aninhado
     formData['endereco'] = {
       'rua': formData.remove('EnderecoRua') ?? '',
       'cidade': formData.remove('EnderecoCidade') ?? '',

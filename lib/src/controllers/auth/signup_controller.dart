@@ -8,16 +8,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+final formKeySignUp = GlobalKey<FormState>();
+
 class SignUpController {
   final BuildContext context;
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final formKey = formKeySignUp;
   final TextEditingController usernameController = TextEditingController();
-  final TextEditingController cpfController =
-      MaskedTextController(mask: '000.000.000-00');
+  final TextEditingController cpfController = MaskedTextController(mask: '000.000.000-00');
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
   final ValueNotifier<bool> obscurePassword = ValueNotifier(true);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
 
@@ -129,8 +129,10 @@ class SignUpController {
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
       return 'O campo Email é obrigatório!';
-    } else if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
-      return 'Email inválido';
+    } else if (!RegExp(
+            r'^[a-zA-Z0-9._%+-]+@(gmail\.com|hotmail\.com|outlook\.com)$')
+        .hasMatch(value)) {
+      return 'Email inválido. Somente Gmail, Hotmail ou Outlook são permitidos.';
     }
     return null;
   }

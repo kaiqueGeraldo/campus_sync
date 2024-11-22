@@ -26,6 +26,7 @@ class _CadastroPageState extends State<CadastroPage> {
     print('Initial Data: ${widget.initialData}');
     controller = CadastroController();
     controller.initControllers(widget.initialData);
+    print('Initial Data: ${widget.initialData}');
   }
 
   Widget _buildDropdown(String field) {

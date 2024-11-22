@@ -78,18 +78,23 @@ class ApiService {
     return response.statusCode == 200;
   }
 
-  // cadastrar entidade
   Future<http.Response?> cadastrarDados(
-      String endpoint, Map<String, dynamic> formData) async {
+      String endpoint, Map<String, dynamic> formData,
+      {String? faculdadeId}) async {
     try {
+      // Define a URL dependendo se há um `faculdadeId`
+      final url = faculdadeId != null
+          ? '$_baseUrl/$endpoint/$faculdadeId'
+          : '$_baseUrl/$endpoint';
+
       final response = await http.post(
-        Uri.parse('$_baseUrl/$endpoint'),
+        Uri.parse(url),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(formData),
       );
+
       return response;
     } catch (e) {
-      // ignore: avoid_print
       print('Erro ao conectar com a API: $e');
       return null;
     }
@@ -113,6 +118,19 @@ class ApiService {
       return json.decode(response.body);
     } else {
       throw Exception('Falha ao carregar dados');
+    }
+  }
+
+  Future<List<dynamic>> listarFaculdades() async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/Faculdades'),
+      headers: {'Content-Type': 'application/json'},
+    );
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as List<dynamic>;
+    } else {
+      throw Exception('Erro ao listar faculdades: ${response.reasonPhrase}');
     }
   }
 }
