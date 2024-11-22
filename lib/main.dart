@@ -1,10 +1,19 @@
+import 'package:campus_sync/src/connectivity/connectivity_service.dart';
 import 'package:campus_sync/src/routes/route_generate.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/views/pages/splash_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => ConnectivityService()),
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -13,7 +22,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      home: const SplashScreen(),
       theme: ThemeData(
         appBarTheme: const AppBarTheme(
           backgroundColor: AppColors.backgroundBlueColor,
@@ -22,6 +30,7 @@ class MyApp extends StatelessWidget {
       ),
       onGenerateRoute: RouteGenerate.generateRoute,
       debugShowCheckedModeBanner: false,
+      home: const SplashScreen(),
     );
   }
 }
