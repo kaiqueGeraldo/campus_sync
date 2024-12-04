@@ -1,5 +1,9 @@
 import 'package:campus_sync/src/controllers/main/menu/entidade_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_colaborador_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_curso_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_estudante_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_faculdade_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/listagem_page.dart';
 import 'package:flutter/material.dart';
@@ -45,13 +49,13 @@ class EntidadePage extends StatelessWidget {
               children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _controller.navigateToCadastroPage(
-                      context,
-                      CadastroPage(
-                        endpoint: endpoint,
-                        initialData: _controller.initialData,
-                      ),
-                    ),
+                    onTap: () {
+                      // Redireciona para o cadastro específico
+                      _controller.navigateToCadastroPage(
+                        context,
+                        _getCadastroPage(context),
+                      );
+                    },
                     child: _buildOptionContainer(
                       icon: Icons.add,
                       label: 'Cadastrar',
@@ -61,13 +65,16 @@ class EntidadePage extends StatelessWidget {
                 const SizedBox(width: 20),
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _controller.navigateToListagemPage(
-                      context,
-                      ListagemPage(
-                        endpoint: endpoint,
-                        fieldMapping: _controller.fieldMapping,
-                      ),
-                    ),
+                    onTap: () {
+                      // Redireciona para a página de listagem
+                      _controller.navigateToListagemPage(
+                        context,
+                        ListagemPage(
+                          endpoint: endpoint,
+                          fieldMapping: _controller.fieldMapping,
+                        ),
+                      );
+                    },
                     child: _buildOptionContainer(
                       icon: Icons.format_list_bulleted_outlined,
                       label: 'Listar',
@@ -80,6 +87,37 @@ class EntidadePage extends StatelessWidget {
         );
       },
     );
+  }
+
+  // Função que retorna a página de cadastro de acordo com o endpoint
+  Widget _getCadastroPage(BuildContext context) {
+    switch (endpoint) {
+      case 'Faculdades':
+        return CadastroFaculdadePage(
+          endpoint: endpoint,
+          initialData: _controller.initialData,
+        );
+      case 'Estudantes':
+        return CadastroEstudantePage(
+          endpoint: endpoint,
+          initialData: _controller.initialData,
+        );
+      case 'Colaboradores':
+        return CadastroColaboradorPage(
+          endpoint: endpoint,
+          initialData: _controller.initialData,
+        );
+      case 'Cursos':
+        return CadastroCursoPage(
+          endpoint: endpoint,
+          initialData: _controller.initialData,
+        );
+      default:
+        return const CadastroPage(
+          endpoint: 'default',
+          initialData: {},
+        );
+    }
   }
 
   Widget _buildOptionContainer(

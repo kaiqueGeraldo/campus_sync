@@ -13,7 +13,7 @@ class _MenuPageState extends State<MenuPage> {
   final List<Map<String, dynamic>> menuItems = [
     {
       'titulo': 'Faculdades',
-      'endpoint': 'Faculdades/register-faculty',
+      'endpoint': 'Faculdades',
       'icon': Icons.cast_for_education,
     },
     {
@@ -22,43 +22,18 @@ class _MenuPageState extends State<MenuPage> {
       'icon': Icons.co_present_outlined,
     },
     {
-      'titulo': 'Disciplinas',
-      'endpoint': 'Disciplinas',
-      'icon': Icons.library_books_outlined,
-    },
-    {
-      'titulo': 'Matriculas',
-      'endpoint': 'Matriculas',
-      'icon': Icons.assessment_outlined,
-    },
-    {
-      'titulo': 'Turmas',
-      'endpoint': 'Turma',
-      'icon': Icons.people_outline,
-    },
-    {
-      'titulo': 'Presença',
-      'endpoint': 'Users',
-      'icon': Icons.route_outlined,
-    },
-    {
       'titulo': 'Estudantes',
       'endpoint': 'Estudantes',
       'icon': Icons.person_outline,
     },
     {
-      'titulo': 'Professores',
-      'endpoint': 'Professores',
-      'icon': Icons.theater_comedy_outlined,
-    },
-    {
-      'titulo': 'Funcionarios',
-      'endpoint': 'Funcionarios',
+      'titulo': 'Colaboradores',
+      'endpoint': 'Colaboradores',
       'icon': Icons.spatial_audio_off_outlined,
     },
     {
       'titulo': 'Configurações',
-      'endpoint': 'Universidades',
+      'endpoint': 'Config',
       'icon': Icons.settings_outlined,
     },
   ];
@@ -67,27 +42,45 @@ class _MenuPageState extends State<MenuPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
-      body: GridView.builder(
+      body: Padding(
         padding: const EdgeInsetsDirectional.all(15),
-        itemCount: menuItems.length,
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 1.5,
-          crossAxisSpacing: 20,
-          mainAxisSpacing: 20,
+        child: Column(
+          children: [
+            buildMenuItem(menuItems[0]['titulo'], menuItems[0]['endpoint'],
+                menuItems[0]['icon'],
+                isFullWidth: true, height: 140),
+            const SizedBox(height: 20),
+            Expanded(
+              child: GridView.builder(
+                itemCount: menuItems.length - 1,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  childAspectRatio: 1.5,
+                  crossAxisSpacing: 20,
+                  mainAxisSpacing: 20,
+                ),
+                itemBuilder: (context, index) {
+                  return buildMenuItem(
+                    menuItems[index + 1]['titulo'],
+                    menuItems[index + 1]['endpoint'],
+                    menuItems[index + 1]['icon'],
+                  );
+                },
+              ),
+            ),
+          ],
         ),
-        itemBuilder: (context, index) {
-          return buildMenuItem(
-            menuItems[index]['titulo'],
-            menuItems[index]['endpoint'],
-            menuItems[index]['icon'],
-          );
-        },
       ),
     );
   }
 
-  Widget buildMenuItem(String titulo, String endpoint, IconData icon) {
+  Widget buildMenuItem(
+    String titulo,
+    String endpoint,
+    IconData icon, {
+    bool isFullWidth = false,
+    double? height,
+  }) {
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -101,6 +94,8 @@ class _MenuPageState extends State<MenuPage> {
         );
       },
       child: Container(
+        width: isFullWidth ? double.infinity : null,
+        height: height ?? (isFullWidth ? height : null),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(10),
           color: AppColors.lightGreyColor,

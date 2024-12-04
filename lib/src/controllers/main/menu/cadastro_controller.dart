@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class CadastroController {
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+  final List<String> cursosSelecionados = [];
+  final List<int> cursosOferecidos = []; // Armazena os IDs dos cursos
   final Map<String, TextEditingController> controllers = {};
   final Map<String, dynamic> dropdownValues = {};
   final Map<String, String> fieldNames = {
@@ -40,19 +42,39 @@ class CadastroController {
     initialData.forEach((key, value) {
       if (isDropdownField(key)) {
         dropdownValues[key] = value is int ? value : null;
+      } else if (key == 'CursosOferecidos') {
+        cursosOferecidos.clear();
+        if (value is List) {
+          cursosOferecidos.addAll(value.map<int>((e) => e as int));
+        }
       } else {
-        controllers[key] = _getMaskedController(key, value ?? '');
+        controllers[key] = _getMaskedController(key, value?.toString() ?? '');
       }
     });
   }
 
+  void resetControllers() {
+    controllers.forEach((key, controller) => controller.clear());
+    dropdownValues.clear();
+  }
+
   TextEditingController _getMaskedController(
       String field, String initialValue) {
-    if (field == 'CPF') return MaskedTextController(mask: '000.000.000-00', text: initialValue);
-    if (field == 'Celular') return MaskedTextController(mask: '(00) 00000-0000', text: initialValue);
-    if (field == 'EnderecoCEP') return MaskedTextController(mask: '00000-000', text: initialValue);
-    if (field == 'DataMatricula' || field == 'DataNascimento') return MaskedTextController(mask: '00/00/0000', text: initialValue);
-    return TextEditingController(text: initialValue);
+    switch (field) {
+      case 'CPF':
+        return MaskedTextController(mask: '000.000.000-00', text: initialValue);
+      case 'Celular':
+      case 'Telefone':
+        return MaskedTextController(
+            mask: '(00) 00000-0000', text: initialValue);
+      case 'EnderecoCEP':
+        return MaskedTextController(mask: '00000-000', text: initialValue);
+      case 'DataMatricula':
+      case 'DataNascimento':
+        return MaskedTextController(mask: '00/00/0000', text: initialValue);
+      default:
+        return TextEditingController(text: initialValue);
+    }
   }
 
   int? getMaxLength(String field) {
@@ -67,6 +89,7 @@ class CadastroController {
       case 'CPF':
       case 'NumEstudante':
       case 'Celular':
+      case 'Telefone':
       case 'EnderecoCEP':
       case 'Mensalidade':
       case 'DataMatricula':
@@ -87,27 +110,29 @@ class CadastroController {
   }
 
   List<DropdownMenuItem<int>> getDropdownItems(String field) {
-    if (field == 'TipoFacul') {
-      return const [
-        DropdownMenuItem(value: 1, child: Text('Pública')),
-        DropdownMenuItem(value: 2, child: Text('Privada')),
-        DropdownMenuItem(value: 3, child: Text('Militar')),
-      ];
-    } else if (field == 'PeriodoCurso') {
-      return const [
-        DropdownMenuItem(value: 1, child: Text('Manhã')),
-        DropdownMenuItem(value: 2, child: Text('Tarde')),
-        DropdownMenuItem(value: 3, child: Text('Noite')),
-      ];
-    } else if (field == 'PeriodoTurma') {
-      return const [
-        DropdownMenuItem(value: 1, child: Text('Manhã')),
-        DropdownMenuItem(value: 2, child: Text('Tarde')),
-        DropdownMenuItem(value: 3, child: Text('Noite')),
-        DropdownMenuItem(value: 4, child: Text('Integral')),
-      ];
+    switch (field) {
+      case 'TipoFacul':
+        return const [
+          DropdownMenuItem(value: 1, child: Text('Pública')),
+          DropdownMenuItem(value: 2, child: Text('Privada')),
+          DropdownMenuItem(value: 3, child: Text('Militar')),
+        ];
+      case 'PeriodoCurso':
+        return const [
+          DropdownMenuItem(value: 1, child: Text('Manhã')),
+          DropdownMenuItem(value: 2, child: Text('Tarde')),
+          DropdownMenuItem(value: 3, child: Text('Noite')),
+        ];
+      case 'PeriodoTurma':
+        return const [
+          DropdownMenuItem(value: 1, child: Text('Manhã')),
+          DropdownMenuItem(value: 2, child: Text('Tarde')),
+          DropdownMenuItem(value: 3, child: Text('Noite')),
+          DropdownMenuItem(value: 4, child: Text('Integral')),
+        ];
+      default:
+        return [];
     }
-    return [];
   }
 
   Future<void> cadastrar(BuildContext context, String endpoint) async {
@@ -119,10 +144,7 @@ class CadastroController {
       return;
     }
 
-    // Formata os dados do formulário
     final Map<String, dynamic> formData = _formatFormData(universidadeId);
-
-    // Chama o método de cadastro na API
     final response = await ApiService().cadastrarDados(endpoint, formData);
 
     if (response != null &&
@@ -138,20 +160,16 @@ class CadastroController {
   Map<String, dynamic> _formatFormData(String universidadeId) {
     final Map<String, dynamic> formData = {};
 
-    // Obtém dados dos controllers
     controllers.forEach((key, controller) {
       formData[key] = controller.text;
     });
 
-    // Obtém valores dos dropdowns
     dropdownValues.forEach((key, value) {
       formData[key] = value;
     });
 
-    // Adiciona o ID da universidade
     formData['universidadeId'] = int.parse(universidadeId);
 
-    // Mapeia os campos para o formato esperado pela API
     formData['faculdadeId'] = formData.remove('FaculdadeId');
     formData['estudanteId'] = formData.remove('EstudanteId');
     formData['turmaId'] = formData.remove('TurmaId');
@@ -165,8 +183,8 @@ class CadastroController {
     formData['numEstudante'] = formData.remove('NumEstudante');
     formData['periodo'] = formData.remove('PeriodoTurma');
     formData['capacidadeMaxima'] = formData.remove('CapacidadeMaxima');
+    formData['cursosOferecidos'] = cursosSelecionados.join(',');
 
-    // Adiciona o endereço como um objeto aninhado
     formData['endereco'] = {
       'rua': formData.remove('EnderecoRua') ?? '',
       'cidade': formData.remove('EnderecoCidade') ?? '',
@@ -178,6 +196,6 @@ class CadastroController {
   }
 
   bool isEnderecoField(String field) {
-    return field.startsWith('Endereco'); // Identifica campos de endereço
+    return field.startsWith('Endereco');
   }
 }

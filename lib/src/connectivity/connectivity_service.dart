@@ -11,12 +11,12 @@ class ConnectivityService with ChangeNotifier {
   bool get isCheckingConnection => _isCheckingConnection;
 
   ConnectivityService() {
-    _initConnectivity();
+    initConnectivity();
     _connectivitySubscription =
         Connectivity().onConnectivityChanged.listen(_updateConnectionStatus);
   }
 
-  Future<void> _initConnectivity() async {
+  Future<void> initConnectivity() async {
     _isCheckingConnection = true;
     notifyListeners();
 
@@ -29,12 +29,14 @@ class ConnectivityService with ChangeNotifier {
     }
   }
 
-  void _updateConnectionStatus(List<ConnectivityResult> result) {
-    _isConnected = result == ConnectivityResult.mobile ||
-        result == ConnectivityResult.wifi;
-    _isCheckingConnection = false;
-    notifyListeners();
-  }
+  void _updateConnectionStatus(List<ConnectivityResult> results) {
+  _isConnected = results.any((result) =>
+      result == ConnectivityResult.mobile ||
+      result == ConnectivityResult.wifi);
+  _isCheckingConnection = false;
+  notifyListeners();
+}
+
 
   @override
   void dispose() {

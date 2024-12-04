@@ -1,3 +1,5 @@
+import 'package:campus_sync/src/connectivity/connectivity_service.dart';
+import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/initial_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/models/initial_page/drawer_menu_item.dart';
@@ -7,6 +9,7 @@ import 'package:campus_sync/src/views/pages/main/menu/entidade_page.dart';
 import 'package:campus_sync/src/views/pages/main/home_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu_page.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class InitialPage extends StatefulWidget {
   const InitialPage({super.key});
@@ -27,6 +30,17 @@ class _InitialPageState extends State<InitialPage> {
   @override
   Widget build(BuildContext context) {
     final controller = InitialController(context: context);
+        final connectivityService = Provider.of<ConnectivityService>(context);
+
+    if (connectivityService.isCheckingConnection) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (!connectivityService.isConnected) {
+      return OfflinePage(onRetry: () {}, isLoading: false);
+    }
 
     return Scaffold(
       drawer: Drawer(
