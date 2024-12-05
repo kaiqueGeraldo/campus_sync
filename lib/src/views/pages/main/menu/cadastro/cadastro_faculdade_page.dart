@@ -1,6 +1,8 @@
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/views/components/custom_input_text_cadastro.dart';
+import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
+import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
 
 class CadastroFaculdadePage extends StatefulWidget {
@@ -269,8 +271,12 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
         ),
         if (_courseController.text.isNotEmpty && filteredCursos.isNotEmpty)
           Card(
-            color: AppColors.lightGreyColor,
-            margin: const EdgeInsets.only(top: 8),
+            color: AppColors.backgroundWhiteColor,
+            shape: const RoundedRectangleBorder(
+                borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8))),
+            margin: const EdgeInsets.only(top: 5),
             child: ConstrainedBox(
               constraints: const BoxConstraints(
                 maxHeight: 200,
@@ -309,14 +315,22 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
             children: cursosOferecidos.map((curso) {
               return ConstrainedBox(
                 constraints: const BoxConstraints(
-                  minWidth: 80,
-                  maxWidth: 120,
+                  maxWidth: 110,
                 ),
                 child: Chip(
-                  label: Text(
-                    curso,
-                    overflow: TextOverflow.ellipsis,
-                    maxLines: 1,
+                  label: GestureDetector(
+                    onTap: () {
+                      CustomSnackbar.show(
+                        context,
+                        curso,
+                        backgroundColor: AppColors.socialButtonColor,
+                      );
+                    },
+                    child: Text(
+                      curso,
+                      overflow: TextOverflow.ellipsis,
+                      maxLines: 1,
+                    ),
                   ),
                   backgroundColor: AppColors.lightGreyColor,
                   deleteIcon: const Icon(Icons.close, color: Colors.red),
@@ -325,6 +339,15 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
               );
             }).toList(),
           ),
+          if (cursosOferecidos.length > 1)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: _removeAllCurso,
+                child: const Text('Remover tudo',
+                    style: TextStyle(color: AppColors.buttonColor)),
+              ),
+            )
         ],
       ),
     );
@@ -344,6 +367,22 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
     setState(() {
       cursosOferecidos.remove(curso);
     });
+  }
+
+  void _removeAllCurso() {
+    customShowDialog(
+        context: context,
+        title: 'Confirmar Exclusão',
+        content: 'Tem certeza que deseja remover todos os itens da lista?',
+        cancelText: 'Não',
+        onCancel: () => Navigator.pop(context),
+        confirmText: 'Sim',
+        onConfirm: () {
+          setState(() {
+            cursosOferecidos.clear();
+          });
+          Navigator.pop(context);
+        });
   }
 
   void _filterCursos(String query) {

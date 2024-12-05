@@ -1,12 +1,9 @@
-import 'package:campus_sync/src/connectivity/connectivity_service.dart';
-import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/auth/signin_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:campus_sync/src/views/components/custom_input_text.dart';
 import 'package:campus_sync/src/views/components/custom_social_button.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 
 class SignInPage extends StatelessWidget {
   const SignInPage({super.key});
@@ -14,17 +11,6 @@ class SignInPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final controller = SignInController(context: context);
-    final connectivityService = Provider.of<ConnectivityService>(context);
-
-    if (connectivityService.isCheckingConnection) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
-    }
-
-    if (!connectivityService.isConnected) {
-      return OfflinePage(onRetry: () {}, isLoading: false);
-    }
 
     return Scaffold(
       backgroundColor: AppColors.backgroundBlueColor,

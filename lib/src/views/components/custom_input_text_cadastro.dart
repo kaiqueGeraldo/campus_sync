@@ -8,6 +8,7 @@ class CustomInputTextCadastro extends StatelessWidget {
   final String? Function(String?)? validator;
   final int? maxLength;
   final TextInputType keyboardType;
+  final bool enabled;
 
   const CustomInputTextCadastro({
     required this.controller,
@@ -15,6 +16,7 @@ class CustomInputTextCadastro extends StatelessWidget {
     required this.keyboardType,
     this.validator,
     this.maxLength,
+    this.enabled = true,
     super.key,
   });
 
@@ -26,6 +28,7 @@ class CustomInputTextCadastro extends StatelessWidget {
       maxLengthEnforcement: MaxLengthEnforcement.none,
       maxLength: maxLength,
       keyboardType: keyboardType,
+      enabled: enabled,
       decoration: InputDecoration(
         label: Text(labelText),
         floatingLabelStyle:

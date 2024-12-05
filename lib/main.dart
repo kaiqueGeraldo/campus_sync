@@ -12,7 +12,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => ConnectivityService()),
       ],
       child: const MyApp(),
-    ),
+    ), 
   );
 }
 
