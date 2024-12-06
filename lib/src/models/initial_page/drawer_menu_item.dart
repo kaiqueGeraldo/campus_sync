@@ -13,4 +13,5 @@ final List<DrawerMenuItem> drawerMenuItems = [
   const DrawerMenuItem(title: 'Estudantes', icon: Icons.person_outline, endpoint: 'Estudantes'),
   const DrawerMenuItem(title: 'Colaboradores', icon: Icons.spatial_audio_off_outlined, endpoint: 'Colaboradores'),
   const DrawerMenuItem(title: 'Configurações', icon: Icons.settings_outlined, endpoint: 'Configuracoes'),
+  const DrawerMenuItem(title: 'Universidade', icon: Icons.school_outlined, endpoint: 'Universidade'),
 ];

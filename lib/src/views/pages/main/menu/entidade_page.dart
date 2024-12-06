@@ -1,10 +1,14 @@
 import 'package:campus_sync/src/controllers/main/menu/entidade_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/models/initial_page/drawer_menu_item.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_colaborador_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_curso_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_estudante_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_faculdade_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/editar/atualizar_dados_universidade_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/editar/atualizar_foto_universidade_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/editar/entidade_configuracoes_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/listagem_page.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +17,11 @@ class EntidadePage extends StatelessWidget {
   final String endpoint;
   late final EntidadeController _controller;
 
-  EntidadePage({super.key, required this.titulo, required this.endpoint}) {
+  EntidadePage({
+    super.key,
+    required this.titulo,
+    required this.endpoint,
+  }) {
     _controller = EntidadeController(endpoint);
   }
 
@@ -44,43 +52,114 @@ class EntidadePage extends StatelessWidget {
           ),
           body: Padding(
             padding: const EdgeInsets.all(15),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Stack(
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      // Redireciona para o cadastro específico
-                      _controller.navigateToCadastroPage(
-                        context,
-                        _getCadastroPage(context),
-                      );
-                    },
-                    child: _buildOptionContainer(
-                      icon: Icons.add,
-                      label: 'Cadastrar',
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () {
-                      // Redireciona para a página de listagem
-                      _controller.navigateToListagemPage(
-                        context,
-                        ListagemPage(
-                          endpoint: endpoint,
-                          fieldMapping: _controller.fieldMapping,
+                if (endpoint == 'Configuracoes')
+                  Column(
+                    children: [
+                      ...drawerMenuItems
+                          .where((item) => item.endpoint != 'Configuracoes')
+                          .map(
+                            (item) => Card(
+                              margin: const EdgeInsets.symmetric(vertical: 8),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              color: AppColors.lightGreyColor,
+                              elevation: 4,
+                              child: ListTile(
+                                leading: Icon(item.icon),
+                                title: Text(item.title),
+                                onTap: () async {
+                                  if (item.endpoint == 'Universidade') {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => EntidadePage(
+                                          titulo: 'Configurar Universidade',
+                                          endpoint: 'Universidade',
+                                        ),
+                                      ),
+                                    );
+                                  } else {
+                                    List<Map<String, dynamic>> itens =
+                                        await _controller
+                                            .carregarItens(item.endpoint);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            EntidadeConfiguracoesPage(
+                                          itens: itens,
+                                          titulo: item.title,
+                                          onEditar: (item) {},
+                                          onExcluir: (item) {},
+                                        ),
+                                      ),
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                    ],
+                  )
+                else
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            _controller.navigateToCadastroPage(
+                              context,
+                              _getCadastroPage(context),
+                            );
+                          },
+                          child: _buildOptionContainer(
+                            icon: endpoint == 'Universidade'
+                                ? Icons.account_box_outlined
+                                : Icons.add,
+                            label: endpoint == 'Universidade'
+                                ? 'Dados da Empresa'
+                                : 'Cadastrar',
+                          ),
                         ),
-                      );
-                    },
-                    child: _buildOptionContainer(
-                      icon: Icons.format_list_bulleted_outlined,
-                      label: 'Listar',
-                    ),
+                      ),
+                      const SizedBox(width: 20),
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () {
+                            if (endpoint != 'Universidade') {
+                              _controller.navigateToListagemPage(
+                                context,
+                                ListagemPage(
+                                  endpoint: endpoint,
+                                  fieldMapping: _controller.fieldMapping,
+                                ),
+                              );
+                            } else {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const AtualizarFotoUniversidadePage(),
+                                ),
+                              );
+                            }
+                          },
+                          child: _buildOptionContainer(
+                            icon: endpoint == 'Universidade'
+                                ? Icons.photo_outlined
+                                : Icons.format_list_bulleted_outlined,
+                            label: endpoint == 'Universidade'
+                                ? 'Logo da Empresa'
+                                : 'Listar',
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
               ],
             ),
           ),
@@ -89,7 +168,6 @@ class EntidadePage extends StatelessWidget {
     );
   }
 
-  // Função que retorna a página de cadastro de acordo com o endpoint
   Widget _getCadastroPage(BuildContext context) {
     switch (endpoint) {
       case 'Faculdades':
@@ -109,6 +187,11 @@ class EntidadePage extends StatelessWidget {
         );
       case 'Cursos':
         return CadastroCursoPage(
+          endpoint: endpoint,
+          initialData: _controller.initialData,
+        );
+      case 'Universidade':
+        return AtualizarDadosUniversidadePage(
           endpoint: endpoint,
           initialData: _controller.initialData,
         );

@@ -39,13 +39,14 @@ class _SplashScreenState extends State<SplashScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  SizedBox(
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      fit: BoxFit.fill,
-                      width: 450,
-                      height: 400,
-                    ),
+                  Container(
+                    width: 300,
+                    height: 300,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(200),
+                        image: const DecorationImage(
+                            image: AssetImage('assets/images/logo.png')),
+                        color: Colors.transparent),
                   ),
                   ValueListenableBuilder<bool>(
                     valueListenable: _controller.showText,

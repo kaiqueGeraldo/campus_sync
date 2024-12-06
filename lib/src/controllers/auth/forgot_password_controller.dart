@@ -12,13 +12,18 @@ class ForgotPasswordController {
   final TextEditingController confirmCPFController = MaskedTextController(mask: '000.000.000-00');
   final TextEditingController novaSenhaController = TextEditingController();
   final TextEditingController confirmNovaSenhaController = TextEditingController();
-  final ValueNotifier<bool> verSenha = ValueNotifier(true);
+  final ValueNotifier<bool> obscurePassword = ValueNotifier(true);
+  final ValueNotifier<bool> obscureConfirmPassword = ValueNotifier(true);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
 
   ForgotPasswordController({required this.context});
 
-  void toggleVerSenha() {
-    verSenha.value = !verSenha.value;
+  void togglePasswordVisibility() {
+    obscurePassword.value = !obscurePassword.value;
+  }
+
+  void toggleConfirmPasswordVisibility() {
+    obscureConfirmPassword.value = !obscureConfirmPassword.value;
   }
 
   Future<void> changePassword() async {

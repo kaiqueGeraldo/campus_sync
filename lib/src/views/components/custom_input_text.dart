@@ -11,6 +11,8 @@ class CustomInputText extends StatelessWidget {
   final VoidCallback? onSuffixIconPressed;
   final String? Function(String?)? validator;
   final int? maxLength;
+  final Widget? suffixIcon;
+  final Function(String)? onChanged;
 
   const CustomInputText({
     required this.controller,
@@ -21,6 +23,8 @@ class CustomInputText extends StatelessWidget {
     this.onSuffixIconPressed,
     this.validator,
     this.maxLength,
+    this.suffixIcon,
+    this.onChanged,
     super.key,
   });
 
@@ -33,6 +37,7 @@ class CustomInputText extends StatelessWidget {
       validator: validator,
       maxLength: maxLength,
       maxLengthEnforcement: MaxLengthEnforcement.none,
+      onChanged: onChanged,
       style: const TextStyle(color: AppColors.textColor),
       decoration: InputDecoration(
         hintText: hintText,
@@ -56,7 +61,7 @@ class CustomInputText extends StatelessWidget {
                       : Icons.visibility_outlined,
                 ),
               )
-            : null,
+            : suffixIcon,
       ),
     );
   }

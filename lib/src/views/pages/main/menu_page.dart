@@ -33,7 +33,7 @@ class _MenuPageState extends State<MenuPage> {
     },
     {
       'titulo': 'Configurações',
-      'endpoint': 'Config',
+      'endpoint': 'Configuracoes',
       'icon': Icons.settings_outlined,
     },
   ];

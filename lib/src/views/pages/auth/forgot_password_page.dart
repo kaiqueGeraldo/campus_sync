@@ -24,10 +24,15 @@ class ForgotPasswordPage extends StatelessWidget {
           padding: const EdgeInsets.all(30),
           child: Column(
             children: [
-              const SizedBox(
-                  height: 200,
-                  width: 200,
-                  child: Image(image: AssetImage('assets/images/logo.png'))),
+              Container(
+                width: 200,
+                height: 200,
+                decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(200),
+                    image: const DecorationImage(
+                        image: AssetImage('assets/images/logo.png')),
+                    color: Colors.transparent),
+              ),
               SizedBox(
                 width: MediaQuery.of(context).size.width,
                 child: const Text(
@@ -57,14 +62,15 @@ class ForgotPasswordPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     ValueListenableBuilder(
-                      valueListenable: controller.verSenha,
+                      valueListenable: controller.obscurePassword,
                       builder: (context, value, child) {
                         return CustomInputText(
                           controller: controller.novaSenhaController,
                           obscureText: value,
                           hintText: 'Nova Senha',
                           isPassword: true,
-                          onSuffixIconPressed: controller.toggleVerSenha,
+                          onSuffixIconPressed:
+                              controller.togglePasswordVisibility,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Por favor, insira uma nova senha';
@@ -77,13 +83,15 @@ class ForgotPasswordPage extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     ValueListenableBuilder(
-                      valueListenable: controller.verSenha,
+                      valueListenable: controller.obscureConfirmPassword,
                       builder: (context, value, child) {
                         return CustomInputText(
                           controller: controller.confirmNovaSenhaController,
                           obscureText: value,
                           hintText: 'Confirmar Nova Senha',
-                          isPassword: false,
+                          isPassword: true,
+                          onSuffixIconPressed:
+                              controller.toggleConfirmPasswordVisibility,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
                               return 'Por favor, confirme a nova senha';

@@ -17,7 +17,7 @@ class AppColors {
   static const Color successColor = Color(0xff81c784); // Verde
 
   // Outros
-  static const Color backgroundBlueColor = Color(0xff203240); // Cor de fundo
+  static const Color backgroundBlueColor = Color(0xff233541); // Cor de fundo
   static const Color backgroundWhiteColor = Color(0xffe5e5e5); // Cor de fundo
   static const Color unselectedColor = Color(0xff6d92af); // Cor de fundo
   static const Color socialButtonColor = Color(0xff263948); // Cor de fundo

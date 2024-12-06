@@ -30,7 +30,7 @@ class _InitialPageState extends State<InitialPage> {
   @override
   Widget build(BuildContext context) {
     final controller = InitialController(context: context);
-        final connectivityService = Provider.of<ConnectivityService>(context);
+    final connectivityService = Provider.of<ConnectivityService>(context);
 
     if (connectivityService.isCheckingConnection) {
       return const Scaffold(
@@ -74,23 +74,25 @@ class _InitialPageState extends State<InitialPage> {
                     title: const Text('Home'),
                     onTap: () => Navigator.pop(context),
                   ),
-                  ...drawerMenuItems.map(
-                    (item) => ListTile(
-                      leading: Icon(item.icon),
-                      title: Text(item.title),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => EntidadePage(
-                              titulo: item.title,
-                              endpoint: item.endpoint,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+                  ...drawerMenuItems
+                      .where((item) => item.title != 'Universidade')
+                      .map(
+                        (item) => ListTile(
+                          leading: Icon(item.icon),
+                          title: Text(item.title),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => EntidadePage(
+                                  titulo: item.title,
+                                  endpoint: item.endpoint,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                 ],
               );
             } else {

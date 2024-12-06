@@ -21,10 +21,14 @@ class SignInPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(
-                  height: 200,
+                Container(
                   width: 200,
-                  child: Image(image: AssetImage('assets/images/logo.png')),
+                  height: 200,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(200),
+                      image: const DecorationImage(
+                          image: AssetImage('assets/images/logo.png')),
+                      color: Colors.transparent),
                 ),
                 SizedBox(
                   width: MediaQuery.of(context).size.width,

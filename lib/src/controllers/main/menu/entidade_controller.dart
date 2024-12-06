@@ -1,3 +1,4 @@
+import 'package:campus_sync/src/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -118,6 +119,10 @@ class EntidadeController {
         'EnderecoEstado': '',
         'EnderecoCEP': null,
       },
+      'Universidade': {
+        'Nome': '',
+        'CNPJ': '',
+      },
       'Enderecos': {
         'Rua': '',
         'Cidade': '',
@@ -134,6 +139,16 @@ class EntidadeController {
     final formatador = DateFormat('dd/MM/yyyy');
     final dataConvertida = DateTime.parse(data);
     return formatador.format(dataConvertida);
+  }
+
+  Future<List<Map<String, dynamic>>> carregarItens(String endpoint) async {
+    if (['Faculdades', 'Cursos', 'Estudantes', 'Colaboradores']
+        .contains(endpoint)) {
+      final List<dynamic> dados = await ApiService().listarDados(endpoint);
+      return dados.map((item) => item as Map<String, dynamic>).toList();
+    }
+
+    return [];
   }
 
   /// Navega para a página de cadastro.

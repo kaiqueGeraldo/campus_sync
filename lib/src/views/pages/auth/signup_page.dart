@@ -5,13 +5,26 @@ import 'package:campus_sync/src/views/components/custom_input_text.dart';
 import 'package:campus_sync/src/views/components/custom_social_button.dart';
 import 'package:flutter/material.dart';
 
-class SignUpPage extends StatelessWidget {
+class SignUpPage extends StatefulWidget {
   const SignUpPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = SignUpController(context: context);
+  State<SignUpPage> createState() => _SignUpPageState();
+}
 
+class _SignUpPageState extends State<SignUpPage> {
+  late final SignUpController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = SignUpController(context: context);
+    controller.cpfController.addListener(controller.updateCpfNotifier);
+    controller.emailController.addListener(controller.updateEmailNotifier);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: AppColors.backgroundBlueColor,
@@ -23,10 +36,14 @@ class SignUpPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(
-                  height: 200,
+                Container(
                   width: 200,
-                  child: Image(image: AssetImage('assets/images/logo.png')),
+                  height: 200,
+                  decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(200),
+                      image: const DecorationImage(
+                          image: AssetImage('assets/images/logo.png')),
+                      color: Colors.transparent),
                 ),
                 SizedBox(
                   width: MediaQuery.of(context).size.width,
@@ -57,14 +74,23 @@ class SignUpPage extends StatelessWidget {
                         hintText: 'CPF',
                         keyboardType: TextInputType.number,
                         validator: controller.validateCpf,
+                        suffixIcon: controller.buildSuffixIcon(
+                          context: context,
+                          valueListenable: controller.isCpfValid,
+                          textController: controller.cpfController,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       CustomInputText(
                         controller: controller.emailController,
                         hintText: 'Email',
                         keyboardType: TextInputType.emailAddress,
-                        maxLength: 50,
                         validator: controller.validateEmail,
+                        suffixIcon: controller.buildSuffixIcon(
+                          context: context,
+                          valueListenable: controller.isEmailValid,
+                          textController: controller.emailController,
+                        ),
                       ),
                       const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
@@ -85,13 +111,15 @@ class SignUpPage extends StatelessWidget {
                       ),
                       const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
-                        valueListenable: controller.obscurePassword,
+                        valueListenable: controller.obscureConfirmPassword,
                         builder: (context, obscure, _) {
                           return CustomInputText(
                             controller: controller.confirmPasswordController,
                             hintText: 'Confirm Password',
-                            isPassword: false,
+                            isPassword: true,
                             obscureText: obscure,
+                            onSuffixIconPressed:
+                                controller.toggleConfirmPasswordVisibility,
                             keyboardType: TextInputType.text,
                             maxLength: 30,
                             validator: controller.validateConfirmPassword,

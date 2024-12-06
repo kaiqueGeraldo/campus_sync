@@ -121,6 +121,76 @@ class ApiService {
     }
   }
 
+  Future<Map<String, dynamic>> listarDadosConfiguracoes(String endpoint) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? universidadeId = prefs.getString('universidadeId');
+
+    if (universidadeId == null) {
+      throw Exception('Erro: Universidade não identificada.');
+    }
+
+    final response = await http.get(Uri.parse('$_baseUrl/$endpoint'));
+
+    if (response.statusCode == 200) {
+      return jsonDecode(response.body) as Map<String, dynamic>;
+    } else {
+      throw Exception('Erro ao carregar dados: ${response.statusCode}');
+    }
+  }
+
+  Future<void> excluirDadosConfiguracoes(String endpoint, String id) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? universidadeId = prefs.getString('universidadeId');
+
+    if (universidadeId == null) {
+      throw Exception('Erro: Universidade não identificada.');
+    }
+
+    final response = await http.delete(Uri.parse('$_baseUrl/$endpoint/$id'));
+
+    if (response.statusCode == 200 || response.statusCode == 204) {
+      return;
+    } else {
+      throw Exception('Erro ao excluir item: ${response.statusCode}');
+    }
+  }
+
+  Future<void> recriarDadosConfiguracoes(
+      String endpoint, Map<String, dynamic> item) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? universidadeId = prefs.getString('universidadeId');
+
+    if (universidadeId == null) {
+      throw Exception('Erro: Universidade não identificada.');
+    }
+
+    final response = await http.post(
+      Uri.parse('$_baseUrl/$endpoint'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(item),
+    );
+
+    if (response.statusCode == 201 || response.statusCode == 200) {
+      return;
+    } else {
+      throw Exception('Erro ao recriar item: ${response.statusCode}');
+    }
+  }
+
+  Future<int> fetchItemCount(String endpoint) async {
+    try {
+      final response = await http.get(Uri.parse("$_baseUrl/$endpoint"));
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        return data.length;
+      } else {
+        return 0;
+      }
+    } catch (e) {
+      return 0;
+    }
+  }
+
   Future<List<dynamic>> listarFaculdades() async {
     final response = await http.get(
       Uri.parse('$_baseUrl/Faculdades'),

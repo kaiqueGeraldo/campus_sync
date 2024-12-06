@@ -14,17 +14,27 @@ class SignUpController {
   final BuildContext context;
   final formKey = formKeySignUp;
   final TextEditingController usernameController = TextEditingController();
-  final TextEditingController cpfController = MaskedTextController(mask: '000.000.000-00');
+  final TextEditingController cpfController =
+      MaskedTextController(mask: '000.000.000-00');
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final ValueNotifier<bool> obscurePassword = ValueNotifier(true);
+  final ValueNotifier<bool> obscureConfirmPassword = ValueNotifier(true);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
+  final ValueNotifier<bool> isCpfValid = ValueNotifier(false);
+  final ValueNotifier<bool> isEmailValid = ValueNotifier(false);
 
   SignUpController({required this.context});
+  
 
   void togglePasswordVisibility() {
     obscurePassword.value = !obscurePassword.value;
+  }
+
+  void toggleConfirmPasswordVisibility() {
+    obscureConfirmPassword.value = !obscureConfirmPassword.value;
   }
 
   Future<void> register() async {
@@ -110,6 +120,25 @@ class SignUpController {
     );
   }
 
+  Widget buildSuffixIcon({
+    required BuildContext context,
+    required ValueNotifier<bool> valueListenable,
+    required TextEditingController textController,
+  }) {
+    return ValueListenableBuilder<bool>(
+      valueListenable: valueListenable,
+      builder: (context, isValid, _) {
+        if (textController.text.isNotEmpty) {
+          return Icon(
+            isValid ? Icons.check_circle : Icons.error,
+            color: isValid ? Colors.green : Colors.red,
+          );
+        }
+        return const SizedBox.shrink();
+      },
+    );
+  }
+
   String? validateUsername(String? value) {
     if (value == null || value.isEmpty) {
       return 'O campo Username é obrigatório!';
@@ -120,7 +149,7 @@ class SignUpController {
   String? validateCpf(String? value) {
     if (value == null || value.isEmpty) {
       return 'O campo CPF é obrigatório';
-    } else if (!validarCpf(value)) {
+    } else if (!validateCpfLogic(value)) {
       return 'CPF inválido';
     }
     return null;
@@ -135,6 +164,46 @@ class SignUpController {
       return 'Email inválido. Somente Gmail, Hotmail ou Outlook são permitidos.';
     }
     return null;
+  }
+
+  void updateCpfNotifier() {
+    isCpfValid.value = validateCpfLogic(cpfController.text);
+  }
+
+  void updateEmailNotifier() {
+    isEmailValid.value = validateEmailLogic(emailController.text);
+  }
+
+  bool validateCpfLogic(String value) {
+    value = value.replaceAll(RegExp(r'\D'), '');
+
+    if (value.length != 11 || RegExp(r'^(\d)\1*$').hasMatch(value)) {
+      return false;
+    }
+
+    return _isValidCpf(value);
+  }
+
+  bool _isValidCpf(String cpf) {
+    int calculateDigit(List<int> digits, int factor) {
+      int sum = 0;
+      for (final digit in digits) {
+        sum += digit * factor--;
+      }
+      int remainder = (sum * 10) % 11;
+      return remainder == 10 ? 0 : remainder;
+    }
+
+    final digits = cpf.split('').map(int.parse).toList();
+    final digit1 = calculateDigit(digits.sublist(0, 9), 10);
+    final digit2 = calculateDigit(digits.sublist(0, 10), 11);
+
+    return digit1 == digits[9] && digit2 == digits[10];
+  }
+
+  bool validateEmailLogic(String value) {
+    return RegExp(r'^[a-zA-Z0-9._%+-]+@(gmail\.com|hotmail\.com|outlook\.com)$')
+        .hasMatch(value);
   }
 
   String? validatePassword(String? value) {
@@ -161,31 +230,5 @@ class SignUpController {
       return 'As senhas não coincidem';
     }
     return null;
-  }
-
-  bool validarCpf(String cpf) {
-    cpf = cpf.replaceAll(RegExp(r'\D'), '');
-
-    if (cpf.length != 11) {
-      return false;
-    }
-
-    if (RegExp(r'^(\d)\1*$').hasMatch(cpf)) {
-      return false;
-    }
-
-    int soma = 0;
-    for (int i = 0; i < 9; i++) {
-      soma += int.parse(cpf[i]) * (10 - i);
-    }
-    int digito1 = (soma * 10 % 11) % 10;
-
-    soma = 0;
-    for (int i = 0; i < 10; i++) {
-      soma += int.parse(cpf[i]) * (11 - i);
-    }
-    int digito2 = (soma * 10 % 11) % 10;
-
-    return digito1 == int.parse(cpf[9]) && digito2 == int.parse(cpf[10]);
   }
 }
