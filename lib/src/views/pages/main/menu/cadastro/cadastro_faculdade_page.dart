@@ -22,6 +22,8 @@ class CadastroFaculdadePage extends StatefulWidget {
 class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
   late CadastroController controller;
   final TextEditingController _courseController = TextEditingController();
+  final TextEditingController cnpjController = TextEditingController();
+  final ValueNotifier<bool> isCnpjValid = ValueNotifier<bool>(false);
   final List<String> cursosOferecidos = [];
   List<String> filteredCursos = [];
   List<String> cursosDisponiveis = [
@@ -187,9 +189,13 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
 
   Widget _buildTextInput(String field) {
     String labelText = controller.fieldNames[field] ?? field;
-
     TextInputType keyboardType = controller.getKeyboardType(field);
     int? maxLength = controller.getMaxLength(field);
+
+    String? Function(String?)? validator;
+    if (field == 'CNPJ') {
+      validator = validateCnpj;
+    }
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -198,6 +204,28 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
         labelText: labelText,
         keyboardType: keyboardType,
         maxLength: maxLength,
+        validator: validator,
+        suffixIcon: field == 'CNPJ'
+            ? ValueListenableBuilder<bool>(
+                valueListenable: isCnpjValid,
+                builder: (context, isValid, _) {
+                  return controller.controllers[field]!.text.isEmpty
+                      ? const Icon(
+                          Icons.info,
+                          color: Colors.grey,
+                        )
+                      : Icon(
+                          isCnpjValid.value ? Icons.check_circle : Icons.error,
+                          color: isCnpjValid.value ? Colors.green : Colors.red,
+                        );
+                },
+              )
+            : null,
+        onChanged: (value) {
+          setState(() {
+            updateCnpjNotifier();
+          });
+        },
       ),
     );
   }
@@ -391,6 +419,53 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
           .where((curso) => curso.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
+  }
+
+  String? validateCnpj(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'O campo CNPJ é obrigatório';
+    } else if (!validateCnpjLogic(value)) {
+      return 'CNPJ inválido';
+    }
+    return null;
+  }
+
+  void updateCnpjNotifier() {
+    final text = controller.controllers['CNPJ']!.text;
+    isCnpjValid.value = text.isNotEmpty && validateCnpjLogic(text);
+  }
+
+  bool validateCnpjLogic(String value) {
+    value = value.replaceAll(RegExp(r'\D'), '');
+
+    if (value.length != 14 || RegExp(r'^(\d)\1*$').hasMatch(value)) {
+      return false;
+    }
+
+    return _isValidCnpj(value);
+  }
+
+  bool _isValidCnpj(String cnpj) {
+    int calculateDigit(List<int> digits, List<int> weights) {
+      int sum = 0;
+      for (int i = 0; i < digits.length; i++) {
+        sum += digits[i] * weights[i];
+      }
+      int remainder = sum % 11;
+      return remainder < 2 ? 0 : 11 - remainder;
+    }
+
+    final digits = cnpj.split('').map(int.parse).toList();
+
+    final firstCheckDigit = calculateDigit(
+        digits.sublist(0, 12), [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+    if (firstCheckDigit != digits[12]) {
+      return false;
+    }
+
+    final secondCheckDigit = calculateDigit(
+        digits.sublist(0, 13), [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]);
+    return secondCheckDigit == digits[13];
   }
 
   bool isDadosEntidadeExpanded = true;

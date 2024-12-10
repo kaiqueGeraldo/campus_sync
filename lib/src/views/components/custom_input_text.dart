@@ -37,7 +37,11 @@ class CustomInputText extends StatelessWidget {
       validator: validator,
       maxLength: maxLength,
       maxLengthEnforcement: MaxLengthEnforcement.none,
-      onChanged: onChanged,
+      onChanged: (value) {
+        if (onChanged != null) {
+          onChanged!(value);
+        }
+      },
       style: const TextStyle(color: AppColors.textColor),
       decoration: InputDecoration(
         hintText: hintText,

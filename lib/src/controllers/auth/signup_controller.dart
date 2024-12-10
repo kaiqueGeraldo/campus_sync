@@ -14,12 +14,10 @@ class SignUpController {
   final BuildContext context;
   final formKey = formKeySignUp;
   final TextEditingController usernameController = TextEditingController();
-  final TextEditingController cpfController =
-      MaskedTextController(mask: '000.000.000-00');
+  final TextEditingController cpfController = MaskedTextController(mask: '000.000.000-00');
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
   final ValueNotifier<bool> obscurePassword = ValueNotifier(true);
   final ValueNotifier<bool> obscureConfirmPassword = ValueNotifier(true);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
@@ -27,7 +25,6 @@ class SignUpController {
   final ValueNotifier<bool> isEmailValid = ValueNotifier(false);
 
   SignUpController({required this.context});
-  
 
   void togglePasswordVisibility() {
     obscurePassword.value = !obscurePassword.value;
@@ -120,25 +117,6 @@ class SignUpController {
     );
   }
 
-  Widget buildSuffixIcon({
-    required BuildContext context,
-    required ValueNotifier<bool> valueListenable,
-    required TextEditingController textController,
-  }) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: valueListenable,
-      builder: (context, isValid, _) {
-        if (textController.text.isNotEmpty) {
-          return Icon(
-            isValid ? Icons.check_circle : Icons.error,
-            color: isValid ? Colors.green : Colors.red,
-          );
-        }
-        return const SizedBox.shrink();
-      },
-    );
-  }
-
   String? validateUsername(String? value) {
     if (value == null || value.isEmpty) {
       return 'O campo Username é obrigatório!';
@@ -167,20 +145,20 @@ class SignUpController {
   }
 
   void updateCpfNotifier() {
-    isCpfValid.value = validateCpfLogic(cpfController.text);
+    final text = cpfController.text;
+    isCpfValid.value = text.isNotEmpty && validateCpfLogic(text);
   }
 
   void updateEmailNotifier() {
-    isEmailValid.value = validateEmailLogic(emailController.text);
+    final text = emailController.text;
+    isEmailValid.value = text.isNotEmpty && validateEmailLogic(text);
   }
 
   bool validateCpfLogic(String value) {
     value = value.replaceAll(RegExp(r'\D'), '');
-
     if (value.length != 11 || RegExp(r'^(\d)\1*$').hasMatch(value)) {
       return false;
     }
-
     return _isValidCpf(value);
   }
 
@@ -230,5 +208,18 @@ class SignUpController {
       return 'As senhas não coincidem';
     }
     return null;
+  }
+
+  void dispose() {
+    usernameController.dispose();
+    cpfController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    obscurePassword.dispose();
+    obscureConfirmPassword.dispose();
+    isLoading.dispose();
+    isCpfValid.dispose();
+    isEmailValid.dispose();
   }
 }

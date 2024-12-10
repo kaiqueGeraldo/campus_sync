@@ -121,7 +121,8 @@ class ApiService {
     }
   }
 
-  Future<Map<String, dynamic>> listarDadosConfiguracoes(String endpoint) async {
+  Future<Map<String, dynamic>> listarDadosConfiguracoes(
+      String endpoint, String id) async {
     final prefs = await SharedPreferences.getInstance();
     String? universidadeId = prefs.getString('universidadeId');
 
@@ -129,10 +130,16 @@ class ApiService {
       throw Exception('Erro: Universidade não identificada.');
     }
 
-    final response = await http.get(Uri.parse('$_baseUrl/$endpoint'));
+    final url = Uri.parse('$_baseUrl/$endpoint/$id');
+
+    final response = await http.get(url);
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body) as Map<String, dynamic>;
+      try {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } catch (e) {
+        throw Exception('Erro ao decodificar resposta: $e');
+      }
     } else {
       throw Exception('Erro ao carregar dados: ${response.statusCode}');
     }

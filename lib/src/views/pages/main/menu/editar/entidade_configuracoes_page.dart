@@ -4,6 +4,7 @@ import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:campus_sync/src/views/pages/main/menu/editar/editar_item_page.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class EntidadeConfiguracoesPage extends StatefulWidget {
   final List<Map<String, dynamic>> itens;
@@ -38,58 +39,125 @@ class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
     final query = pesquisaController.text.toLowerCase();
     setState(() {
       itensFiltrados = widget.itens.where((item) {
-        final nome =
-            item['nome']?.toLowerCase() ?? ''; // Verifica se 'nome' é null
-        final id = item['id']?.toString() ?? ''; // Verifica se 'id' é null
+        final nome = item['nome']?.toLowerCase() ?? '';
+        final id = item['id']?.toString() ?? '';
         return nome.contains(query) || id.contains(query);
       }).toList();
     });
   }
 
-  Future _verDetalhes(String endpoint, String id) async {
+  Future<void> _verDetalhes(String endpoint, String id) async {
     try {
       final Map<String, dynamic> dados =
-          await ApiService().listarDadosConfiguracoes('$endpoint/$id');
+          await ApiService().listarDadosConfiguracoes(endpoint, id);
 
-      String content;
+      List<Widget> content;
 
       if (endpoint == 'Faculdades') {
-        content = '''
-Nome: ${dados['nome']}
-Tipo: ${dados['tipoString']}
-Universidade: ${dados['universidadeNome']}
-Endereço:
-Rua: ${dados['endereco']['rua']}
-Cidade: ${dados['endereco']['cidade']}
-Estado: ${dados['endereco']['estado']}
-CEP: ${dados['endereco']['cep']}
-''';
+        content = [
+          _buildDetailTile(
+              'Nome', dados['nome'], Icons.cast_for_education_outlined),
+          _buildDetailTile(
+              'Tipo', dados['tipoString'], Icons.apartment_rounded),
+          _buildDetailTile(
+              'Universidade', dados['universidadeNome'], Icons.account_balance),
+          const SizedBox(height: 10),
+          const Text(
+            'Endereço:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          _buildDetailTile(
+              'Rua', dados['endereco']['rua'], Icons.straighten_outlined),
+          _buildDetailTile('Cidade', dados['endereco']['cidade'],
+              Icons.location_city_rounded),
+          _buildDetailTile('Estado', dados['endereco']['estado'],
+              Icons.store_mall_directory_outlined),
+          _buildDetailTile(
+              'CEP', dados['endereco']['cep'], Icons.location_on_outlined),
+        ];
       } else if (endpoint == 'Cursos') {
-        content = '''
-Descrição: ${dados['descricao']}
-Faculdade: ${dados['faculdadeNome']}
-''';
+        content = [
+          _buildDetailTile('Descrição', dados['descricao'], Icons.tag_outlined),
+          _buildDetailTile(
+            'Mensalidade',
+            NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(
+              double.tryParse(dados['mensalidade'].toString()) ?? 0,
+            ),
+            Icons.attach_money_outlined,
+          ),
+          _buildDetailTile('Faculdade', dados['faculdadeNome'],
+              Icons.cast_for_education_outlined),
+        ];
       } else if (endpoint == 'Estudantes') {
-        content = '''
-Nome: ${dados['nome']}
-Email: ${dados['email']}
-Telefone: ${dados['telefone']}
-Endereço:
-Rua: ${dados['endereco']['rua']}
-Cidade: ${dados['endereco']['cidade']}
-Estado: ${dados['endereco']['estado']}
-CEP: ${dados['endereco']['cep']}
-''';
+        content = [
+          _buildDetailTile('Nome', dados['nome'], Icons.tag_outlined),
+          _buildDetailTile('Email', dados['email'], Icons.email),
+          _buildDetailTile('Telefone', dados['telefone'], Icons.phone),
+          const SizedBox(height: 10),
+          const Text(
+            'Endereço:',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          _buildDetailTile(
+              'Rua', dados['endereco']['rua'], Icons.straighten_outlined),
+          _buildDetailTile('Cidade', dados['endereco']['cidade'],
+              Icons.location_city_rounded),
+          _buildDetailTile('Estado', dados['endereco']['estado'],
+              Icons.store_mall_directory_outlined),
+          _buildDetailTile(
+              'CEP', dados['endereco']['cep'], Icons.location_on_outlined),
+        ];
       } else {
-        content = 'Detalhes não disponíveis para este item.';
+        content = [const Text('Detalhes não disponíveis para este item.')];
       }
 
-      customShowDialog(
+      showDialog(
+        barrierDismissible: true,
         context: context,
-        title: 'Detalhes ${widget.titulo}',
-        content: content,
-        confirmText: 'Fechar',
-        onConfirm: () => Navigator.pop(context),
+        builder: (context) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Container(
+            width: MediaQuery.of(context).size.width * 0.8,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.backgroundWhiteColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Text(
+                    'Detalhes ${widget.titulo}',
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: content,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text(
+                      'Fechar',
+                      style: TextStyle(color: AppColors.buttonColor),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       );
     } catch (e) {
       customShowDialog(
@@ -100,6 +168,14 @@ CEP: ${dados['endereco']['cep']}
         onConfirm: () => Navigator.pop(context),
       );
     }
+  }
+
+  Widget _buildDetailTile(String title, String? value, IconData icon) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Text(value ?? 'Não informado'),
+    );
   }
 
   void _confirmarExcluir(Map<String, dynamic> item) {
@@ -179,7 +255,7 @@ CEP: ${dados['endereco']['cep']}
               }
             });
             Navigator.pop(context);
-          },  
+          },
         ),
       ),
     );
@@ -276,7 +352,7 @@ CEP: ${dados['endereco']['cep']}
                             TextButton(
                               onPressed: () {
                                 String id =
-                                    widget.itens[index]['id'].toString();
+                                    itensFiltrados[index]['id'].toString();
                                 _verDetalhes(widget.titulo, id);
                               },
                               child: const Text(

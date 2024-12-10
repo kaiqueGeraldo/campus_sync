@@ -6,6 +6,8 @@ import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro/selecionar_faculdade_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 class CadastroCursoPage extends StatefulWidget {
   final String endpoint;
@@ -262,6 +264,11 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
     TextInputType keyboardType = controller.getKeyboardType(field);
     int? maxLength = controller.getMaxLength(field);
 
+    TextInputFormatter? inputFormatter;
+    if (field == 'Valor') {
+      inputFormatter = _currencyFormatter();
+    }
+
     return Padding(
       padding: customPadding ?? const EdgeInsets.only(bottom: 16),
       child: CustomInputTextCadastro(
@@ -276,8 +283,31 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
           }
           return null;
         },
+        inputFormatters: inputFormatter != null ? [inputFormatter] : null,
       ),
     );
+  }
+
+  TextInputFormatter _currencyFormatter() {
+    return TextInputFormatter.withFunction((oldValue, newValue) {
+      String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
+
+      if (newText.isEmpty) {
+        return const TextEditingValue(
+          text: '',
+          selection: TextSelection.collapsed(offset: 0),
+        );
+      }
+
+      double value = double.tryParse(newText) ?? 0;
+      String formatted = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$')
+          .format(value / 100);
+
+      return TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+    });
   }
 
   Widget _buildDisciplinasInput() {

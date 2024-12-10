@@ -5,13 +5,30 @@ import 'package:campus_sync/src/views/components/custom_input_text.dart';
 import 'package:campus_sync/src/views/components/custom_social_button.dart';
 import 'package:flutter/material.dart';
 
-class SignInPage extends StatelessWidget {
+class SignInPage extends StatefulWidget {
   const SignInPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = SignInController(context: context);
+  State<SignInPage> createState() => _SignInPageState();
+}
 
+class _SignInPageState extends State<SignInPage> {
+  late final SignInController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = SignInController(context: context);
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundBlueColor,
       body: Center(
@@ -33,7 +50,7 @@ class SignInPage extends StatelessWidget {
                 SizedBox(
                   width: MediaQuery.of(context).size.width,
                   child: const Text(
-                    'Login to your Account',
+                    'Entre com sua Conta',
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       fontSize: 20,
@@ -48,7 +65,7 @@ class SignInPage extends StatelessWidget {
                     children: [
                       CustomInputText(
                         controller: controller.emailController,
-                        hintText: 'Email',
+                        hintText: 'E-mail',
                         keyboardType: TextInputType.emailAddress,
                         maxLength: 50,
                       ),
@@ -58,7 +75,7 @@ class SignInPage extends StatelessWidget {
                         builder: (context, obscure, _) {
                           return CustomInputText(
                             controller: controller.passwordController,
-                            hintText: 'Password',
+                            hintText: 'Senha',
                             isPassword: true,
                             obscureText: obscure,
                             onSuffixIconPressed:
@@ -74,7 +91,7 @@ class SignInPage extends StatelessWidget {
                           TextButton(
                             onPressed: controller.navigateToForgotPassword,
                             child: const Text(
-                              'Forgot Password?',
+                              'Esqueceu a senha?',
                               style: TextStyle(color: AppColors.buttonColor),
                             ),
                           ),
@@ -85,7 +102,7 @@ class SignInPage extends StatelessWidget {
                         valueListenable: controller.isLoading,
                         builder: (context, isLoading, _) {
                           return CustomButton(
-                            text: 'Sign In',
+                            text: 'Entrar',
                             isLoading: isLoading,
                             onPressed: controller.login,
                           );
@@ -111,14 +128,14 @@ class SignInPage extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const Text(
-                            "Don't have an account?",
+                            "Não tem uma conta?",
                             style: TextStyle(color: AppColors.textColor),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: 5),
                           GestureDetector(
                             onTap: controller.navigateToSignUp,
                             child: const Text(
-                              'Sign Up',
+                              'Cadastre-se',
                               style: TextStyle(color: AppColors.buttonColor),
                             ),
                           ),

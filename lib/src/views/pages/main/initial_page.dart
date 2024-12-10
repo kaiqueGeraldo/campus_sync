@@ -145,7 +145,7 @@ class _InitialPageState extends State<InitialPage> {
             icon: Icon(Icons.business_outlined),
           ),
           BottomNavigationBarItem(
-            label: 'About',
+            label: 'Sobre o App',
             icon: Icon(Icons.more_vert),
           ),
         ],

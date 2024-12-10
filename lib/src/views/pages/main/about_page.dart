@@ -93,7 +93,7 @@ class _AboutPageState extends State<AboutPage>
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(15),
         child: Column(
           children: List.generate(
             aboutItems.length,

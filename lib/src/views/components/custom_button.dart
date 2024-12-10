@@ -28,26 +28,37 @@ class CustomButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           elevation: 4,
           backgroundColor: backgroundColor,
+          foregroundColor: AppColors.textColor,
+          disabledBackgroundColor: backgroundColor.withOpacity(0.8),
+          disabledForegroundColor: AppColors.textColor.withOpacity(0.6),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
           ),
         ),
         onPressed: isLoading ? null : onPressed,
-        child: isLoading
-            ? const SizedBox(
-                width: 30,
-                height: 30,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              text,
+              style: const TextStyle(
+                fontSize: 15,
+                color: AppColors.textColor,
+              ),
+            ),
+            if (isLoading) const SizedBox(width: 10),
+            if (isLoading)
+              const SizedBox(
+                width: 20,
+                height: 20,
                 child: CircularProgressIndicator(
-                  color: AppColors.buttonColor,
-                ),
-              )
-            : Text(
-                text,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: AppColors.textColor,
+                  color: Colors.white,
+                  strokeWidth: 2,
                 ),
               ),
+          ],
+        ),
       ),
     );
   }

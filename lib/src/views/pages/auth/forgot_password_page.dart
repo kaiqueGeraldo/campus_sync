@@ -4,18 +4,35 @@ import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:campus_sync/src/views/components/custom_input_text.dart';
 import 'package:flutter/material.dart';
 
-class ForgotPasswordPage extends StatelessWidget {
+class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final controller = ForgotPasswordController(context: context);
+  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
+}
 
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+  late final ForgotPasswordController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = ForgotPasswordController(context: context);
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.backgroundBlueColor,
       appBar: AppBar(
         backgroundColor: AppColors.backgroundBlueColor,
-        title: const Text('Forgot Password'),
+        title: const Text('Esqueci minha Senha'),
         titleTextStyle:
             const TextStyle(color: AppColors.textColor, fontSize: 20),
       ),
@@ -36,7 +53,7 @@ class ForgotPasswordPage extends StatelessWidget {
               SizedBox(
                 width: MediaQuery.of(context).size.width,
                 child: const Text(
-                  'Change your Password',
+                  'Altere sua Senha',
                   textAlign: TextAlign.start,
                   style: TextStyle(
                     fontSize: 20,
@@ -107,7 +124,7 @@ class ForgotPasswordPage extends StatelessWidget {
                       valueListenable: controller.isLoading,
                       builder: (context, isLoading, _) {
                         return CustomButton(
-                          text: 'Change Password',
+                          text: 'Alterar Senha',
                           isLoading: isLoading,
                           onPressed: controller.changePassword,
                         );

@@ -19,8 +19,12 @@ class _SignUpPageState extends State<SignUpPage> {
   void initState() {
     super.initState();
     controller = SignUpController(context: context);
-    controller.cpfController.addListener(controller.updateCpfNotifier);
-    controller.emailController.addListener(controller.updateEmailNotifier);
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -48,7 +52,7 @@ class _SignUpPageState extends State<SignUpPage> {
                 SizedBox(
                   width: MediaQuery.of(context).size.width,
                   child: const Text(
-                    'Create your Account',
+                    'Criar sua conta',
                     textAlign: TextAlign.start,
                     style: TextStyle(
                       fontSize: 20,
@@ -63,7 +67,7 @@ class _SignUpPageState extends State<SignUpPage> {
                     children: [
                       CustomInputText(
                         controller: controller.usernameController,
-                        hintText: 'Username',
+                        hintText: 'Nome de usuário',
                         keyboardType: TextInputType.name,
                         maxLength: 50,
                         validator: controller.validateUsername,
@@ -73,24 +77,58 @@ class _SignUpPageState extends State<SignUpPage> {
                         controller: controller.cpfController,
                         hintText: 'CPF',
                         keyboardType: TextInputType.number,
-                        validator: controller.validateCpf,
-                        suffixIcon: controller.buildSuffixIcon(
-                          context: context,
-                          valueListenable: controller.isCpfValid,
-                          textController: controller.cpfController,
-                        ),
+                        validator: (value) {
+                          return controller.isCpfValid.value
+                              ? null
+                              : 'CPF inválido';
+                        },
+                        suffixIcon: controller.cpfController.text.isEmpty
+                            ? const Icon(
+                                Icons.info,
+                                color: Colors.grey,
+                              )
+                            : Icon(
+                                controller.isCpfValid.value
+                                    ? Icons.check_circle
+                                    : Icons.error,
+                                color: controller.isCpfValid.value
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                        onChanged: (value) {
+                          setState(() {
+                            controller.updateCpfNotifier();
+                          });
+                        },
                       ),
                       const SizedBox(height: 20),
                       CustomInputText(
                         controller: controller.emailController,
-                        hintText: 'Email',
+                        hintText: 'E-mail',
                         keyboardType: TextInputType.emailAddress,
-                        validator: controller.validateEmail,
-                        suffixIcon: controller.buildSuffixIcon(
-                          context: context,
-                          valueListenable: controller.isEmailValid,
-                          textController: controller.emailController,
-                        ),
+                        validator: (value) {
+                          return controller.isEmailValid.value
+                              ? null
+                              : 'E-mail inválido';
+                        },
+                        suffixIcon: controller.emailController.text.isEmpty
+                            ? const Icon(
+                                Icons.info,
+                                color: Colors.grey,
+                              )
+                            : Icon(
+                                controller.isEmailValid.value
+                                    ? Icons.check_circle
+                                    : Icons.error,
+                                color: controller.isEmailValid.value
+                                    ? Colors.green
+                                    : Colors.red,
+                              ),
+                        onChanged: (value) {
+                          setState(() {
+                            controller.updateEmailNotifier();
+                          });
+                        },
                       ),
                       const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
@@ -98,7 +136,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         builder: (context, obscure, _) {
                           return CustomInputText(
                             controller: controller.passwordController,
-                            hintText: 'Password',
+                            hintText: 'Senha',
                             isPassword: true,
                             obscureText: obscure,
                             onSuffixIconPressed:
@@ -115,7 +153,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         builder: (context, obscure, _) {
                           return CustomInputText(
                             controller: controller.confirmPasswordController,
-                            hintText: 'Confirm Password',
+                            hintText: 'Confirme a Senha',
                             isPassword: true,
                             obscureText: obscure,
                             onSuffixIconPressed:
@@ -131,7 +169,7 @@ class _SignUpPageState extends State<SignUpPage> {
                         valueListenable: controller.isLoading,
                         builder: (context, isLoading, _) {
                           return CustomButton(
-                            text: 'Sign Up',
+                            text: 'Cadastrar',
                             isLoading: isLoading,
                             onPressed: controller.register,
                           );
@@ -152,7 +190,7 @@ class _SignUpPageState extends State<SignUpPage> {
                           Padding(
                             padding: EdgeInsets.only(left: 15, right: 15),
                             child: Text(
-                              'or sign in with',
+                              'ou entre com',
                               style: TextStyle(
                                 color: AppColors.textColor,
                               ),

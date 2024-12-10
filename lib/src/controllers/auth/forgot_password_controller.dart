@@ -69,5 +69,8 @@ class ForgotPasswordController {
     confirmCPFController.dispose();
     novaSenhaController.dispose();
     confirmNovaSenhaController.dispose();
+    obscurePassword.dispose();
+    obscureConfirmPassword.dispose();
+    isLoading.dispose();
   }
 }

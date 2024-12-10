@@ -93,6 +93,8 @@ class CadastroController {
 
   int? getMaxLength(String field) {
     switch (field) {
+      case 'Valor':
+        return 12;
       default:
         return 50;
     }
@@ -125,78 +127,78 @@ class CadastroController {
         field == 'Cor/Raca/Etnia';
   }
 
-  List<DropdownMenuItem<int>> getDropdownItems(String field, {int? faculdadeId}) {
-  switch (field) {
-    case 'TipoFacul':
-      return const [
-        DropdownMenuItem(value: 1, child: Text('Pública')),
-        DropdownMenuItem(value: 2, child: Text('Privada')),
-        DropdownMenuItem(value: 3, child: Text('Militar')),
-      ];
-    case 'PeriodoCurso':
-      return const [
-        DropdownMenuItem(value: 1, child: Text('Matutino')),
-        DropdownMenuItem(value: 2, child: Text('Vespertino')),
-        DropdownMenuItem(value: 3, child: Text('Noturno')),
-        DropdownMenuItem(value: 4, child: Text('Integral')),
-      ];
-    case 'Turmas':
-      return const [
-        DropdownMenuItem(value: 1, child: Text('1')),
-        DropdownMenuItem(value: 2, child: Text('2')),
-        DropdownMenuItem(value: 3, child: Text('3')),
-      ];
-    case 'EstadoCivil':
-      return const [
-        DropdownMenuItem(value: 1, child: Text('Solteiro')),
-        DropdownMenuItem(value: 2, child: Text('Casado')),
-        DropdownMenuItem(value: 3, child: Text('Divorciado')),
-        DropdownMenuItem(value: 4, child: Text('Viúvo')),
-      ];
-    case 'Nacionalidade':
-      return const [
-        DropdownMenuItem(value: 1, child: Text('Brasileiro')),
-        DropdownMenuItem(value: 2, child: Text('Estrangeiro')),
-      ];
-    case 'Cor/Raca/Etnia':
-      return const [
-        DropdownMenuItem(value: 1, child: Text('Branco')),
-        DropdownMenuItem(value: 2, child: Text('Pardo')),
-        DropdownMenuItem(value: 3, child: Text('Negro')),
-        DropdownMenuItem(value: 4, child: Text('Amarelo')),
-        DropdownMenuItem(value: 5, child: Text('Indígena')),
-      ];
-    case 'Escolaridade':
-      return const [
-        DropdownMenuItem(value: 1, child: Text('Ensino Médio')),
-        DropdownMenuItem(value: 2, child: Text('Graduação')),
-        DropdownMenuItem(value: 3, child: Text('Pós-Graduação')),
-        DropdownMenuItem(value: 4, child: Text('Mestrado')),
-        DropdownMenuItem(value: 5, child: Text('Doutorado')),
-      ];
-    case 'CursosRelacionados':
-      if (faculdadeId == null) {
-        throw ArgumentError(
-            "Para 'CursosRelacionados', o parâmetro 'faculdadeId' é obrigatório.");
-      }
-      final cursos = [
-        {'id': 1, 'nome': 'Curso A', 'faculdadeId': 1},
-        {'id': 2, 'nome': 'Curso B', 'faculdadeId': 2},
-        {'id': 3, 'nome': 'Curso C', 'faculdadeId': 1},
-      ];
+  List<DropdownMenuItem<int>> getDropdownItems(String field,
+      {int? faculdadeId}) {
+    switch (field) {
+      case 'TipoFacul':
+        return const [
+          DropdownMenuItem(value: 1, child: Text('Pública')),
+          DropdownMenuItem(value: 2, child: Text('Privada')),
+          DropdownMenuItem(value: 3, child: Text('Militar')),
+        ];
+      case 'PeriodoCurso':
+        return const [
+          DropdownMenuItem(value: 1, child: Text('Matutino')),
+          DropdownMenuItem(value: 2, child: Text('Vespertino')),
+          DropdownMenuItem(value: 3, child: Text('Noturno')),
+          DropdownMenuItem(value: 4, child: Text('Integral')),
+        ];
+      case 'Turmas':
+        return const [
+          DropdownMenuItem(value: 1, child: Text('1')),
+          DropdownMenuItem(value: 2, child: Text('2')),
+          DropdownMenuItem(value: 3, child: Text('3')),
+        ];
+      case 'EstadoCivil':
+        return const [
+          DropdownMenuItem(value: 1, child: Text('Solteiro')),
+          DropdownMenuItem(value: 2, child: Text('Casado')),
+          DropdownMenuItem(value: 3, child: Text('Divorciado')),
+          DropdownMenuItem(value: 4, child: Text('Viúvo')),
+        ];
+      case 'Nacionalidade':
+        return const [
+          DropdownMenuItem(value: 1, child: Text('Brasileiro')),
+          DropdownMenuItem(value: 2, child: Text('Estrangeiro')),
+        ];
+      case 'Cor/Raca/Etnia':
+        return const [
+          DropdownMenuItem(value: 1, child: Text('Branco')),
+          DropdownMenuItem(value: 2, child: Text('Pardo')),
+          DropdownMenuItem(value: 3, child: Text('Negro')),
+          DropdownMenuItem(value: 4, child: Text('Amarelo')),
+          DropdownMenuItem(value: 5, child: Text('Indígena')),
+        ];
+      case 'Escolaridade':
+        return const [
+          DropdownMenuItem(value: 1, child: Text('Ensino Médio')),
+          DropdownMenuItem(value: 2, child: Text('Graduação')),
+          DropdownMenuItem(value: 3, child: Text('Pós-Graduação')),
+          DropdownMenuItem(value: 4, child: Text('Mestrado')),
+          DropdownMenuItem(value: 5, child: Text('Doutorado')),
+        ];
+      case 'CursosRelacionados':
+        if (faculdadeId == null) {
+          throw ArgumentError(
+              "Para 'CursosRelacionados', o parâmetro 'faculdadeId' é obrigatório.");
+        }
+        final cursos = [
+          {'id': 1, 'nome': 'Curso A', 'faculdadeId': 1},
+          {'id': 2, 'nome': 'Curso B', 'faculdadeId': 2},
+          {'id': 3, 'nome': 'Curso C', 'faculdadeId': 1},
+        ];
 
-      return cursos
-          .where((curso) => curso['faculdadeId'] == faculdadeId)
-          .map((curso) => DropdownMenuItem<int>(
-                value: curso['id'] as int,
-                child: Text(curso['nome'].toString()),
-              ))
-          .toList();
-    default:
-      return [];
+        return cursos
+            .where((curso) => curso['faculdadeId'] == faculdadeId)
+            .map((curso) => DropdownMenuItem<int>(
+                  value: curso['id'] as int,
+                  child: Text(curso['nome'].toString()),
+                ))
+            .toList();
+      default:
+        return [];
+    }
   }
-}
-
 
   Future<void> cadastrar(BuildContext context, String endpoint) async {
     final prefs = await SharedPreferences.getInstance();

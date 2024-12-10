@@ -1,7 +1,9 @@
+import 'package:campus_sync/src/connectivity/offline_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:flutter/material.dart';
 
-class OfflinePage extends StatelessWidget {
+class OfflinePage extends StatefulWidget {
   final VoidCallback onRetry;
   final bool isLoading;
 
@@ -10,6 +12,25 @@ class OfflinePage extends StatelessWidget {
     required this.onRetry,
     required this.isLoading,
   });
+
+  @override
+  State<OfflinePage> createState() => _OfflinePageState();
+}
+
+class _OfflinePageState extends State<OfflinePage> {
+  late final OfflineController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = OfflineController(context: context);
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -29,7 +50,7 @@ class OfflinePage extends StatelessWidget {
                 ),
               ),
               const Text(
-                "Connect to the Internet",
+                "Conecte-se com a Internet",
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -39,37 +60,20 @@ class OfflinePage extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               const Text(
-                "You're offline. Check your connection.",
+                "Você está offline. Verifique sua conexão.",
                 style: TextStyle(fontSize: 16, color: Colors.grey),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: isLoading ? null : onRetry,
-                style: ElevatedButton.styleFrom(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  backgroundColor: AppColors.buttonColor,
-                  foregroundColor: AppColors.textColor,
-                  elevation: 4,
-                ),
-                child: isLoading
-                    ? const SizedBox(
-                        height: 16,
-                        width: 16,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(Colors.white),
-                        ),
-                      )
-                    : const Text(
-                        "TAP TO RETRY",
-                        style: TextStyle(fontSize: 16),
-                      ),
+              ValueListenableBuilder<bool>(
+                valueListenable: controller.isLoading,
+                builder: (context, isLoading, _) {
+                  return CustomButton(
+                    text: 'Clique para recarregar',
+                    isLoading: isLoading,
+                    onPressed: controller.retry,
+                  );
+                },
               ),
             ],
           ),

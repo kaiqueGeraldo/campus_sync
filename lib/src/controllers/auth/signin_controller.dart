@@ -4,7 +4,7 @@ import 'package:campus_sync/src/services/auth_service.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart'; 
 
 final formKeySignIn = GlobalKey<FormState>();
 
@@ -104,5 +104,12 @@ class SignInController {
 
   void navigateToSignUp() {
     Navigator.pushNamed(context, RouteGenerate.routeSignUp);
+  }
+
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    obscurePassword.dispose();
+    isLoading.dispose();
   }
 }

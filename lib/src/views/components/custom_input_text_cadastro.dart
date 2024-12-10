@@ -7,8 +7,11 @@ class CustomInputTextCadastro extends StatelessWidget {
   final String labelText;
   final String? Function(String?)? validator;
   final int? maxLength;
+  final Widget? suffixIcon;
+  final Function(String)? onChanged;
   final TextInputType keyboardType;
   final bool enabled;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomInputTextCadastro({
     required this.controller,
@@ -17,7 +20,10 @@ class CustomInputTextCadastro extends StatelessWidget {
     this.validator,
     this.maxLength,
     this.enabled = true,
+    this.inputFormatters,
     super.key,
+    this.suffixIcon,
+    this.onChanged,
   });
 
   @override
@@ -25,10 +31,16 @@ class CustomInputTextCadastro extends StatelessWidget {
     return TextFormField(
       controller: controller,
       validator: validator,
-      maxLengthEnforcement: MaxLengthEnforcement.none,
+      maxLengthEnforcement: MaxLengthEnforcement.enforced,
       maxLength: maxLength,
       keyboardType: keyboardType,
       enabled: enabled,
+      inputFormatters: inputFormatters,
+      onChanged: (value) {
+        if (onChanged != null) {
+          onChanged!(value);
+        }
+      },
       decoration: InputDecoration(
         label: Text(labelText),
         floatingLabelStyle:
@@ -42,6 +54,7 @@ class CustomInputTextCadastro extends StatelessWidget {
           borderRadius: BorderRadius.all(Radius.circular(12)),
         ),
         counterText: '',
+        suffixIcon: suffixIcon, 
       ),
     );
   }
