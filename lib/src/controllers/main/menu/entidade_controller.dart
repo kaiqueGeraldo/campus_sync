@@ -96,7 +96,7 @@ class EntidadeController {
         'PeriodoCurso': '',
         'Turmas': '',
         'DisciplinasOferecidos': [],
-        'Valor': null,
+        'Mensalidade': null,
       },
       'Colaboradores': {
         'Nome': '',
@@ -122,6 +122,7 @@ class EntidadeController {
       'Universidade': {
         'Nome': '',
         'CNPJ': '',
+        'ContatoInfo': '',
       },
       'Enderecos': {
         'Rua': '',

@@ -58,8 +58,11 @@ class SignInController {
     await prefs.setString('userNome', usuario['nome']);
     await prefs.setString('userEmail', usuario['email']);
     await prefs.setString('userToken', usuario['token']);
-    await prefs.setString(
-        'universidadeId', usuario['universidadeId'].toString());
+    await prefs.setString('userImagem', usuario['urlImagem']);
+    await prefs.setString('userTelefone', usuario['telefone']);
+    await prefs.setString('userUniversidadeNome', usuario['universidadeNome']);
+    await prefs.setString('userUniversidadeCNPJ', usuario['universidadeCNPJ']);
+    await prefs.setString('userUniversidadeContatoInfo', usuario['universidadeContatoInfo']);
   }
 
   void _showSuccessDialog(String nome, String cpf, String universidadeId) {
@@ -77,7 +80,11 @@ class SignInController {
             'userCpf': cpf,
             'userNome': nome,
             'userEmail': emailController.text,
-            'universidadeId': universidadeId,
+            'userImagem': '',
+            'userTelefone': '',
+            'userUniversidadeNome': '',
+            'userUniversidadeCNPJ': '', 
+            'userUniversidadeContatoInfo': '',
           },
         );
       },

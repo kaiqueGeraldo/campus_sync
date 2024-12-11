@@ -33,12 +33,14 @@ class AuthService {
         "cpf": cpf,
         "nome": username,
         "email": email,
-        "celular": '',
         "password": password,
+        "urlImagem": '',
+        "telefone": '',
+        "universidadeNome": '',
+        "universidadeCNPJ": '',
+        "universidadeContatoInfo": '',
       }),
     );
     return response;
   }
-
-  // Aqui você pode adicionar mais métodos, como recuperação de senha, etc.
 }

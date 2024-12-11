@@ -60,8 +60,7 @@ class SignUpController {
     if (response.statusCode == 200) {
       var usuarioRegistrado = json.decode(response.body);
       await _saveUserData(usuarioRegistrado);
-      _showSuccessDialog(usuarioRegistrado['nome'], usuarioRegistrado['cpf'],
-          usuarioRegistrado['universidadeId'].toString());
+      _showSuccessDialog(usuarioRegistrado['nome'], usuarioRegistrado['cpf']);
     } else if (await ApiService().checkCpfExists(cpfController.text) &&
         await ApiService().checkEmailExists(emailController.text)) {
       customShowDialog(
@@ -92,11 +91,14 @@ class SignUpController {
     await prefs.setString('userNome', usuario['nome']);
     await prefs.setString('userEmail', usuario['email']);
     await prefs.setString('userToken', usuario['token']);
-    await prefs.setString(
-        'universidadeId', usuario['universidadeId'].toString());
+    await prefs.setString('userImagem', usuario['urlImagem']);
+    await prefs.setString('userTelefone', usuario['telefone']);
+    await prefs.setString('userUniversidadeNome', usuario['universidadeNome']);
+    await prefs.setString('userUniversidadeCNPJ', usuario['universidadeCNPJ']);
+    await prefs.setString('userUniversidadeContatoInfo', usuario['universidadeContatoInfo']);
   }
 
-  void _showSuccessDialog(String nome, String cpf, String universidadeId) {
+  void _showSuccessDialog(String nome, String cpf) {
     customShowDialog(
       context: context,
       title: 'Cadastro Realizado!',
@@ -110,7 +112,11 @@ class SignUpController {
             'userCpf': cpf,
             'userNome': nome,
             'userEmail': emailController.text,
-            'universidadeId': universidadeId,
+            'userImagem': '',
+            'userTelefone': '',
+            'userUniversidadeNome': '',
+            'userUniversidadeCNPJ': '',
+            'userUniversidadeContatoInfo': '',
           },
         );
       },

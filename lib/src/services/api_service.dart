@@ -10,7 +10,7 @@ class ApiService {
   // Buscar dados do usuário pelo CPF
   Future<User> fetchUserData(String cpf) async {
     final response = await http.get(
-      Uri.parse('$_baseUrl/Users/$cpf'),
+      Uri.parse('$_baseUrl/api/User/profile?cpf=$cpf'),
       headers: {'Content-Type': 'application/json'},
     );
 
@@ -32,7 +32,7 @@ class ApiService {
   Future<bool> checkCpfExists(String cpf) async {
     cpf = cpf.replaceAll(RegExp(r'\D'), '');
 
-    final response = await http.get(Uri.parse('$_baseUrl/Users/$cpf'));
+    final response = await http.get(Uri.parse('$_baseUrl/User/profile?cpf=$cpf'));
 
     if (response.statusCode == 200) {
       return true;
@@ -44,26 +44,21 @@ class ApiService {
   }
 
 // Verificar se o email já existe (filtrando manualmente no cliente)
-  Future<bool> checkEmailExists(String email) async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl/Users'),
-      headers: {'Content-Type': 'application/json'},
-    );
+Future<bool> checkEmailExists(String email) async {
+  final response = await http.get(
+    Uri.parse('$_baseUrl/User/verify-email?email=$email'),
+    headers: {'Content-Type': 'application/json'},
+  );
 
-    if (response.statusCode == 200) {
-      final List<dynamic> users = jsonDecode(response.body);
-
-      final user = users.firstWhere(
-        (u) => u['email'] == email,
-        orElse: () => null,
-      );
-
-      return user != null;
-    } else {
-      throw Exception(
-          'Erro ao verificar existência do e-mail: ${response.reasonPhrase}');
-    }
+  if (response.statusCode == 200) {
+    return true;
+  } else if (response.statusCode == 404) {
+    return false;
+  } else {
+    throw Exception(
+        'Erro ao verificar existência do e-mail: ${response.reasonPhrase}');
   }
+}
 
   // Reiniciar senha do usuário
   Future<bool> resetPassword(String cpf, String newPassword) async {
@@ -200,7 +195,7 @@ class ApiService {
 
   Future<List<dynamic>> listarFaculdades() async {
     final response = await http.get(
-      Uri.parse('$_baseUrl/Faculdades'),
+      Uri.parse('$_baseUrl/Faculdade'),
       headers: {'Content-Type': 'application/json'},
     );
 
