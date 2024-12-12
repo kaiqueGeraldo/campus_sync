@@ -43,7 +43,7 @@ class ApiService {
     }
   }
 
-// Verificar se o email já existe (filtrando manualmente no cliente)
+// Verificar se o email já existe
 Future<bool> checkEmailExists(String email) async {
   final response = await http.get(
     Uri.parse('$_baseUrl/User/verify-email?email=$email'),

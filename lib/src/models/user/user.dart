@@ -2,13 +2,19 @@ class User {
   final String cpf;
   final String nome;
   final String email;
-  final String celular;
+  final String? urlImagem;
+  final String? universidadeNome;
+  final String? universidadeCNPJ;
+  final String? universidadeContatoInfo;
 
   User({
     required this.cpf,
     required this.nome,
     required this.email,
-    required this.celular,
+    this.urlImagem,
+    this.universidadeNome,
+    this.universidadeCNPJ,
+    this.universidadeContatoInfo,
   });
 
   factory User.fromJson(Map<String, dynamic> json) {
@@ -16,7 +22,10 @@ class User {
       cpf: json['cpf'],
       nome: json['nome'],
       email: json['email'],
-      celular: json['celular'],
+      urlImagem: json['urlImagem'],
+      universidadeNome: json['universidadeNome'],
+      universidadeCNPJ: json['universidadeCNPJ'],
+      universidadeContatoInfo: json['universidadeContatoInfo'],
     );
   }
 
@@ -25,7 +34,10 @@ class User {
       'cpf': cpf,
       'nome': nome,
       'email': email,
-      'celular': celular,
+      'urlImagem': urlImagem,
+      'universidadeNome': universidadeNome,
+      'universidadeCNPJ': universidadeCNPJ,
+      'universidadeContatoInfo': universidadeContatoInfo,
     };
   }
 }

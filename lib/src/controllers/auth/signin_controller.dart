@@ -4,7 +4,7 @@ import 'package:campus_sync/src/services/auth_service.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; 
+import 'package:shared_preferences/shared_preferences.dart';
 
 final formKeySignIn = GlobalKey<FormState>();
 
@@ -43,8 +43,7 @@ class SignInController {
       var usuarioEncontrado = json.decode(response.body);
 
       await _saveUserData(usuarioEncontrado);
-      _showSuccessDialog(usuarioEncontrado['nome'], usuarioEncontrado['cpf'],
-          usuarioEncontrado['universidadeId'].toString());
+      _showSuccessDialog(usuarioEncontrado['nome'], usuarioEncontrado['cpf']);
     } else if (response.statusCode == 404) {
       _showAccountNotFoundDialog();
     } else {
@@ -54,23 +53,21 @@ class SignInController {
 
   Future<void> _saveUserData(Map<String, dynamic> usuario) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('userCpf', usuario['cpf'].toString());
-    await prefs.setString('userNome', usuario['nome']);
-    await prefs.setString('userEmail', usuario['email']);
-    await prefs.setString('userToken', usuario['token']);
-    await prefs.setString('userImagem', usuario['urlImagem']);
-    await prefs.setString('userTelefone', usuario['telefone']);
-    await prefs.setString('userUniversidadeNome', usuario['universidadeNome']);
-    await prefs.setString('userUniversidadeCNPJ', usuario['universidadeCNPJ']);
-    await prefs.setString('userUniversidadeContatoInfo', usuario['universidadeContatoInfo']);
+    await prefs.setString('userCpf', usuario['cpf'] ?? '');
+    await prefs.setString('userNome', usuario['nome'] ?? '');
+    await prefs.setString('userEmail', usuario['email'] ?? '');
+    await prefs.setString('userToken', usuario['token'] ?? '');
+    await prefs.setString('userImagem', usuario['urlImagem'] ?? '');
+    await prefs.setString('userUniversidadeNome', usuario['universidadeNome'] ?? '');
+    await prefs.setString('userUniversidadeCNPJ', usuario['universidadeCNPJ'] ?? '');
+    await prefs.setString('userUniversidadeContatoInfo', usuario['universidadeContatoInfo'] ?? '');
   }
 
-  void _showSuccessDialog(String nome, String cpf, String universidadeId) {
+  void _showSuccessDialog(String nome, String cpf) {
     customShowDialog(
       context: context,
       title: 'Sucesso no Login!',
-      content:
-          'Bem-vindo de volta ao app $nome. Clique em Entrar para continuar.',
+      content: 'Bem-vindo de volta ao app $nome. Clique em Entrar para continuar.',
       confirmText: 'Entrar',
       onConfirm: () {
         Navigator.of(context).pushNamedAndRemoveUntil(
@@ -83,7 +80,7 @@ class SignInController {
             'userImagem': '',
             'userTelefone': '',
             'userUniversidadeNome': '',
-            'userUniversidadeCNPJ': '', 
+            'userUniversidadeCNPJ': '',
             'userUniversidadeContatoInfo': '',
           },
         );
@@ -95,8 +92,7 @@ class SignInController {
     customShowDialog(
       context: context,
       title: 'Conta não encontrada',
-      content:
-          'A conta com este email não foi encontrada. Deseja criar uma nova conta?',
+      content: 'A conta com este email não foi encontrada. Deseja criar uma nova conta?',
       confirmText: 'Criar Conta',
       cancelText: 'Cancelar',
       onConfirm: () {
