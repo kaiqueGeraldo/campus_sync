@@ -3,7 +3,6 @@ import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/initial_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/models/initial_page/drawer_menu_item.dart';
-import 'package:campus_sync/src/models/user/user.dart';
 import 'package:campus_sync/src/views/pages/main/about_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/entidade_page.dart';
 import 'package:campus_sync/src/views/pages/main/home_page.dart';
@@ -45,7 +44,7 @@ class _InitialPageState extends State<InitialPage> {
     return Scaffold(
       drawer: Drawer(
         backgroundColor: AppColors.backgroundWhiteColor,
-        child: FutureBuilder<User>(
+        child: FutureBuilder<Map<String, dynamic>>(
           future: controller.fetchUserData(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
@@ -64,8 +63,8 @@ class _InitialPageState extends State<InitialPage> {
                     currentAccountPicture: const CircleAvatar(
                       backgroundImage: AssetImage('assets/images/logo.png'),
                     ),
-                    accountName: Text(user.nome),
-                    accountEmail: Text(user.email),
+                    accountName: Text(user['nome']),
+                    accountEmail: Text(user['email']),
                     decoration: const BoxDecoration(
                         color: AppColors.backgroundBlueColor),
                   ),

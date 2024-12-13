@@ -34,11 +34,6 @@ class AuthService {
         "nome": username,
         "email": email,
         "password": password,
-        "urlImagem": '',
-        "telefone": '',
-        "universidadeNome": '',
-        "universidadeCNPJ": '',
-        "universidadeContatoInfo": '',
       }),
     );
     return response;

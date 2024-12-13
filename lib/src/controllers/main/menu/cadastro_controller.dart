@@ -26,7 +26,9 @@ class CadastroController {
     'EnderecoCEP': 'CEP',
     'EnderecoCidade': 'Cidade',
     'EnderecoEstado': 'Estado',
-    'EnderecoRua': 'Rua',
+    'EnderecoLogradouro': 'Logradouro',
+    'EnderecoNumero': 'Numero',
+    'EnderecoBairro': 'Bairro',
     'EstadoCivil': 'Estado Cívil',
     'EstudanteId': 'Estudante',
     'FaculdadeId': 'Faculdade',
@@ -43,8 +45,14 @@ class CadastroController {
     'TipoFacul': 'Tipo de Faculdade',
     'TituloEleitor': 'Título de Eleitor',
     'TurmaId': 'Turma',
-    'UniversidadeId': 'Universidade',
   };
+
+  Future _recuperarCPF() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? userCPF = prefs.getString('userCPF') ?? '';
+
+    return userCPF;
+  }
 
   void initControllers(Map<String, dynamic> initialData) {
     initialData.forEach((key, value) {
@@ -132,50 +140,51 @@ class CadastroController {
     switch (field) {
       case 'TipoFacul':
         return const [
-          DropdownMenuItem(value: 1, child: Text('Pública')),
-          DropdownMenuItem(value: 2, child: Text('Privada')),
-          DropdownMenuItem(value: 3, child: Text('Militar')),
+          DropdownMenuItem(value: 0, child: Text('Pública')),
+          DropdownMenuItem(value: 1, child: Text('Privada')),
+          DropdownMenuItem(value: 2, child: Text('Militar')),
         ];
       case 'PeriodoCurso':
         return const [
-          DropdownMenuItem(value: 1, child: Text('Matutino')),
-          DropdownMenuItem(value: 2, child: Text('Vespertino')),
-          DropdownMenuItem(value: 3, child: Text('Noturno')),
-          DropdownMenuItem(value: 4, child: Text('Integral')),
+          DropdownMenuItem(value: 0, child: Text('Matutino')),
+          DropdownMenuItem(value: 1, child: Text('Vespertino')),
+          DropdownMenuItem(value: 2, child: Text('Noturno')),
+          DropdownMenuItem(value: 3, child: Text('Integral')),
         ];
       case 'Turmas':
         return const [
           DropdownMenuItem(value: 1, child: Text('1')),
           DropdownMenuItem(value: 2, child: Text('2')),
           DropdownMenuItem(value: 3, child: Text('3')),
+          DropdownMenuItem(value: 4, child: Text('4')),
         ];
       case 'EstadoCivil':
         return const [
-          DropdownMenuItem(value: 1, child: Text('Solteiro')),
-          DropdownMenuItem(value: 2, child: Text('Casado')),
-          DropdownMenuItem(value: 3, child: Text('Divorciado')),
-          DropdownMenuItem(value: 4, child: Text('Viúvo')),
+          DropdownMenuItem(value: 0, child: Text('Solteiro')),
+          DropdownMenuItem(value: 1, child: Text('Casado')),
+          DropdownMenuItem(value: 2, child: Text('Divorciado')),
+          DropdownMenuItem(value: 3, child: Text('Viúvo')),
         ];
       case 'Nacionalidade':
         return const [
-          DropdownMenuItem(value: 1, child: Text('Brasileiro')),
-          DropdownMenuItem(value: 2, child: Text('Estrangeiro')),
+          DropdownMenuItem(value: 0, child: Text('Brasileiro')),
+          DropdownMenuItem(value: 1, child: Text('Estrangeiro')),
         ];
       case 'Cor/Raca/Etnia':
         return const [
-          DropdownMenuItem(value: 1, child: Text('Branco')),
-          DropdownMenuItem(value: 2, child: Text('Pardo')),
-          DropdownMenuItem(value: 3, child: Text('Negro')),
-          DropdownMenuItem(value: 4, child: Text('Amarelo')),
-          DropdownMenuItem(value: 5, child: Text('Indígena')),
+          DropdownMenuItem(value: 0, child: Text('Branco')),
+          DropdownMenuItem(value: 1, child: Text('Pardo')),
+          DropdownMenuItem(value: 2, child: Text('Negro')),
+          DropdownMenuItem(value: 3, child: Text('Amarelo')),
+          DropdownMenuItem(value: 4, child: Text('Indígena')),
         ];
       case 'Escolaridade':
         return const [
-          DropdownMenuItem(value: 1, child: Text('Ensino Médio')),
-          DropdownMenuItem(value: 2, child: Text('Graduação')),
-          DropdownMenuItem(value: 3, child: Text('Pós-Graduação')),
-          DropdownMenuItem(value: 4, child: Text('Mestrado')),
-          DropdownMenuItem(value: 5, child: Text('Doutorado')),
+          DropdownMenuItem(value: 0, child: Text('Ensino Médio')),
+          DropdownMenuItem(value: 1, child: Text('Graduação')),
+          DropdownMenuItem(value: 2, child: Text('Pós-Graduação')),
+          DropdownMenuItem(value: 3, child: Text('Mestrado')),
+          DropdownMenuItem(value: 4, child: Text('Doutorado')),
         ];
       case 'CursosRelacionados':
         if (faculdadeId == null) {
@@ -201,15 +210,7 @@ class CadastroController {
   }
 
   Future<void> cadastrar(BuildContext context, String endpoint) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? universidadeId = prefs.getString('universidadeId');
-
-    if (universidadeId == null) {
-      CustomSnackbar.show(context, 'Erro: Universidade não identificada.');
-      return;
-    }
-
-    final Map<String, dynamic> formData = _formatFormData(universidadeId);
+    final Map<String, dynamic> formData = formatFormData();
     final response = await ApiService().cadastrarDados(endpoint, formData);
 
     if (response != null &&
@@ -222,7 +223,7 @@ class CadastroController {
     }
   }
 
-  Map<String, dynamic> _formatFormData(String universidadeId) {
+  Map<String, dynamic> formatFormData() {
     final Map<String, dynamic> formData = {};
 
     controllers.forEach((key, controller) {
@@ -233,8 +234,6 @@ class CadastroController {
       formData[key] = value;
     });
 
-    formData['universidadeId'] = int.parse(universidadeId);
-
     formData['faculdadeId'] = formData.remove('FaculdadeId');
     formData['estudanteId'] = formData.remove('EstudanteId');
     formData['turmaId'] = formData.remove('TurmaId');
@@ -243,18 +242,22 @@ class CadastroController {
     formData['descricao'] = formData.remove('Descricao');
     formData['mensalidade'] = formData.remove('Mensalidade');
     formData['email'] = formData.remove('Email');
+    formData['emailResponsavel'] = formData.remove('EmailResponsavel');
     formData['telefone'] = formData.remove('Telefone');
     formData['dataNascimento'] = formData.remove('DataNascimento');
     formData['numEstudante'] = formData.remove('NumEstudante');
     formData['periodo'] = formData.remove('PeriodoTurma');
     formData['capacidadeMaxima'] = formData.remove('CapacidadeMaxima');
     formData['cursosOferecidos'] = cursosSelecionados.join(',');
+    formData['userCPF'] = _recuperarCPF();
 
     formData['endereco'] = {
-      'rua': formData.remove('EnderecoRua') ?? '',
+      'cep': formData.remove('EnderecoCEP') ?? '',
+      'logradouro': formData.remove('EnderecoLogradouro') ?? '',
+      'numero': formData.remove('EnderecoNumero') ?? '',
+      'bairro': formData.remove('EnderecoBairro') ?? '',
       'cidade': formData.remove('EnderecoCidade') ?? '',
       'estado': formData.remove('EnderecoEstado') ?? '',
-      'cep': formData.remove('EnderecoCEP') ?? '',
     };
 
     return formData;

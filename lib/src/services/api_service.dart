@@ -1,30 +1,39 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:campus_sync/src/models/user/user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ApiService {
   static const String _baseUrl =
       'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api';
 
-  // Buscar dados do usuário pelo CPF
-  Future<User> fetchUserData(String cpf) async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl/api/User/profile?cpf=$cpf'),
-      headers: {'Content-Type': 'application/json'},
-    );
+  Future<Map<String, dynamic>> fetchUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('userToken');
 
-    if (response.statusCode == 200) {
-      try {
-        return User.fromJson(jsonDecode(response.body));
-      } catch (e) {
-        throw Exception('Erro ao decodificar os dados do usuário: $e');
+    if (token == null) {
+      throw Exception('Token não encontrado. Faça login novamente.');
+    }
+
+    try {
+      final response = await http.get(
+        Uri.parse(
+            'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api/User/profile'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+      );
+      print('Token: $token');
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception(
+            'Erro ao obter o perfil: ${response.statusCode} - ${response.body}');
       }
-    } else if (response.statusCode == 404) {
-      throw Exception('Usuário não encontrado');
-    } else {
-      throw Exception(
-          'Erro ao carregar dados do usuário: ${response.reasonPhrase}');
+    } catch (e) {
+      // Tratar qualquer erro na requisição
+      throw Exception('Erro ao fazer requisição: $e');
     }
   }
 
@@ -32,7 +41,8 @@ class ApiService {
   Future<bool> checkCpfExists(String cpf) async {
     cpf = cpf.replaceAll(RegExp(r'\D'), '');
 
-    final response = await http.get(Uri.parse('$_baseUrl/User/profile?cpf=$cpf'));
+    final response =
+        await http.get(Uri.parse('$_baseUrl/User/verify-cpf?cpf=$cpf'));
 
     if (response.statusCode == 200) {
       return true;
@@ -44,21 +54,21 @@ class ApiService {
   }
 
 // Verificar se o email já existe
-Future<bool> checkEmailExists(String email) async {
-  final response = await http.get(
-    Uri.parse('$_baseUrl/User/verify-email?email=$email'),
-    headers: {'Content-Type': 'application/json'},
-  );
+  Future<bool> checkEmailExists(String email) async {
+    final response = await http.get(
+      Uri.parse('$_baseUrl/User/verify-email?email=$email'),
+      headers: {'Content-Type': 'application/json'},
+    );
 
-  if (response.statusCode == 200) {
-    return true;
-  } else if (response.statusCode == 404) {
-    return false;
-  } else {
-    throw Exception(
-        'Erro ao verificar existência do e-mail: ${response.reasonPhrase}');
+    if (response.statusCode == 200) {
+      return true;
+    } else if (response.statusCode == 404) {
+      return false;
+    } else {
+      throw Exception(
+          'Erro ao verificar existência do e-mail: ${response.reasonPhrase}');
+    }
   }
-}
 
   // Reiniciar senha do usuário
   Future<bool> resetPassword(String cpf, String newPassword) async {
@@ -76,8 +86,10 @@ Future<bool> checkEmailExists(String email) async {
   Future<http.Response?> cadastrarDados(
       String endpoint, Map<String, dynamic> formData,
       {String? faculdadeId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    // ignore: unused_local_variable
+    String? cpf = prefs.getString('userCpf');
     try {
-      // Define a URL dependendo se há um `faculdadeId`
       final url = faculdadeId != null
           ? '$_baseUrl/$endpoint/$faculdadeId'
           : '$_baseUrl/$endpoint';
@@ -89,6 +101,40 @@ Future<bool> checkEmailExists(String email) async {
       );
 
       return response;
+    } catch (e) {
+      print('Erro ao conectar com a API: $e');
+      return null;
+    }
+  }
+
+  Future<http.Response?> cadastrarFaculdade(
+      Map<String, dynamic> formData) async {
+    final prefs = await SharedPreferences.getInstance();
+    String? cpf = prefs.getString('userCpf');
+
+    if (cpf != null) {
+      formData['userCPF'] = cpf;
+    } else {
+      print('CPF não encontrado. Verifique se o usuário está logado.');
+      return null;
+    }
+
+    try {
+      const url = '$_baseUrl/api/Faculdade';
+
+      final response = await http.post(Uri.parse(url),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: json.encode(formData));
+
+      if (response.statusCode == 200) {
+        print('Faculdade cadastrada com sucesso!');
+        return response;
+      } else {
+        print('Erro ao cadastrar faculdade: ${response.body}');
+        return null;
+      }
     } catch (e) {
       print('Erro ao conectar com a API: $e');
       return null;

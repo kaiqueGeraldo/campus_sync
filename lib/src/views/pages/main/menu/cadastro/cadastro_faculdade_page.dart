@@ -1,5 +1,6 @@
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/services/api_service.dart';
 import 'package:campus_sync/src/views/components/custom_input_text_cadastro.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
@@ -622,7 +623,7 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
                     ),
                   ),
                   onPressed: () {
-                    controller.cadastrar(context, widget.endpoint);
+                    ApiService().cadastrarFaculdade(controller.formatFormData());
                   },
                   child: const Text(
                     'Cadastrar',

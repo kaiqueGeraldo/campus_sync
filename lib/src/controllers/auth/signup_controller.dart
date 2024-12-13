@@ -66,8 +66,7 @@ class SignUpController {
       customShowDialog(
         context: context,
         title: 'Conta já registrada!',
-        content:
-            'Já existe uma conta com esses dados regitrada no nosso app! Deseja ir para o login?',
+        content: 'Já existe uma conta com esses dados regitrada no nosso app! Deseja ir para o login?',
         cancelText: 'Não',
         onCancel: () => Navigator.pop(context),
         confirmText: 'Sim',
@@ -80,8 +79,7 @@ class SignUpController {
     } else if (await ApiService().checkEmailExists(emailController.text)) {
       CustomSnackbar.show(context, 'Email já registrado! Tente novamente.');
     } else {
-      CustomSnackbar.show(
-          context, 'Erro ao registrar. Verifique os dados e tente novamente.');
+      CustomSnackbar.show(context, 'Erro ao registrar. Verifique os dados e tente novamente.');
     }
   }
 
@@ -91,11 +89,6 @@ class SignUpController {
     await prefs.setString('userNome', usuario['nome']);
     await prefs.setString('userEmail', usuario['email']);
     await prefs.setString('userToken', usuario['token']);
-    await prefs.setString('userImagem', usuario['urlImagem']);
-    await prefs.setString('userTelefone', usuario['telefone']);
-    await prefs.setString('userUniversidadeNome', usuario['universidadeNome']);
-    await prefs.setString('userUniversidadeCNPJ', usuario['universidadeCNPJ']);
-    await prefs.setString('userUniversidadeContatoInfo', usuario['universidadeContatoInfo']);
   }
 
   void _showSuccessDialog(String nome, String cpf) {
@@ -112,11 +105,6 @@ class SignUpController {
             'userCpf': cpf,
             'userNome': nome,
             'userEmail': emailController.text,
-            'userImagem': '',
-            'userTelefone': '',
-            'userUniversidadeNome': '',
-            'userUniversidadeCNPJ': '',
-            'userUniversidadeContatoInfo': '',
           },
         );
       },
@@ -125,7 +113,7 @@ class SignUpController {
 
   String? validateUsername(String? value) {
     if (value == null || value.isEmpty) {
-      return 'O campo Username é obrigatório!';
+      return 'O campo Nome é obrigatório!';
     }
     return null;
   }

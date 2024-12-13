@@ -270,21 +270,21 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   ),
                 ],
               ),
-              _buildCard(
-                title: 'Curso',
-                icon: Icons.library_books_outlined,
-                initiallyExpanded: isCursoExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isCursoExpanded = expanded;
-                  });
-                },
-                children: [
-                  _buildTextInput('Nome'),
-                  _buildTextInput('Periodo'),
-                  _buildTextInput('Turma'),
-                ],
-              ),
+              // _buildCard(
+              //   title: 'Curso',
+              //   icon: Icons.library_books_outlined,
+              //   initiallyExpanded: isCursoExpanded,
+              //   onExpansionChanged: (expanded) {
+              //     setState(() {
+              //       isCursoExpanded = expanded;
+              //     });
+              //   },
+              //   children: [
+              //     _buildTextInput('Nome'),
+              //     _buildTextInput('Periodo'),
+              //     _buildTextInput('Turma'),
+              //   ],
+              // ),
               _buildCard(
                 title: 'Endereço',
                 icon: Icons.home,
@@ -295,7 +295,9 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   });
                 },
                 children: [
-                  _buildTextInput('EnderecoRua'),
+                  _buildTextInput('EnderecoLogradouro'),
+                  _buildTextInput('EnderecoNumero'),
+                  _buildTextInput('EnderecoBairro'),
                   _buildTextInput('EnderecoCidade'),
                   _buildTextInput('EnderecoEstado'),
                   _buildTextInput('EnderecoCEP'),

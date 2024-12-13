@@ -3,7 +3,6 @@ import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
-import 'package:campus_sync/src/models/user/user.dart';
 import 'package:campus_sync/src/services/api_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,15 +11,8 @@ class InitialController {
 
   InitialController({required this.context});
 
-  Future<User> fetchUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? loggedUserCpf = prefs.getString('userCpf');
-
-    if (loggedUserCpf == null) {
-      throw Exception('CPF do usuário logado não encontrado');
-    }
-
-    return await ApiService().fetchUserData(loggedUserCpf);
+  Future<Map<String, dynamic>> fetchUserData() async {
+    return await ApiService().fetchUserProfile();
   }
 
   Future<void> logout() async {

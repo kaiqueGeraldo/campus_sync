@@ -43,7 +43,7 @@ class SignInController {
       var usuarioEncontrado = json.decode(response.body);
 
       await _saveUserData(usuarioEncontrado);
-      _showSuccessDialog(usuarioEncontrado['nome'], usuarioEncontrado['cpf']);
+      _showSuccessDialog(usuarioEncontrado['nome'], usuarioEncontrado['cpf'], usuarioEncontrado['token']);
     } else if (response.statusCode == 404) {
       _showAccountNotFoundDialog();
     } else {
@@ -63,7 +63,7 @@ class SignInController {
     await prefs.setString('userUniversidadeContatoInfo', usuario['universidadeContatoInfo'] ?? '');
   }
 
-  void _showSuccessDialog(String nome, String cpf) {
+  void _showSuccessDialog(String nome, String cpf, String token) {
     customShowDialog(
       context: context,
       title: 'Sucesso no Login!',
@@ -77,6 +77,7 @@ class SignInController {
             'userCpf': cpf,
             'userNome': nome,
             'userEmail': emailController.text,
+            'userToken': token,
             'userImagem': '',
             'userTelefone': '',
             'userUniversidadeNome': '',

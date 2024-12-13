@@ -1,7 +1,6 @@
 import 'package:campus_sync/src/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class EntidadeController {
   String endpoint;
@@ -51,13 +50,13 @@ class EntidadeController {
 
   /// Define os dados iniciais com base no endpoint.
   Future<void> _initializeInitialData() async {
-    final universidadeId = await _loadUniversidadeId();
 
     final initialDataMap = {
       'Faculdades': {
-        'UniversidadeId': universidadeId,
         'Nome': '',
-        'EnderecoRua': '',
+        'EnderecoLogradouro': '',
+        'EnderecoNumero': '',
+        'EnderecoBairro': '',
         'EnderecoCidade': '',
         'EnderecoEstado': '',
         'EnderecoCEP': null,
@@ -85,7 +84,9 @@ class EntidadeController {
         'NomeMae': '',
         'TelefonePai': '',
         'TelefoneMae': '',
-        'EnderecoRua': '',
+        'EnderecoLogradouro': '',
+        'EnderecoNumero': '',
+        'EnderecoBairro': '',
         'EnderecoCidade': '',
         'EnderecoEstado': '',
         'EnderecoCEP': null,
@@ -114,7 +115,9 @@ class EntidadeController {
         'Telefone': '',
         'NomePai': '',
         'NomeMae': '',
-        'EnderecoRua': '',
+        'EnderecoLogradouro': '',
+        'EnderecoNumero': '',
+        'EnderecoBairro': '',
         'EnderecoCidade': '',
         'EnderecoEstado': '',
         'EnderecoCEP': null,
@@ -125,10 +128,12 @@ class EntidadeController {
         'ContatoInfo': '',
       },
       'Enderecos': {
-        'Rua': '',
+        'CEP': null,
+        'Logradouro': '',
+        'Numero': '',
+        'Bairro': '',
         'Cidade': '',
         'Estado': '',
-        'CEP': null,
       },
     };
 
@@ -166,11 +171,5 @@ class EntidadeController {
       context,
       MaterialPageRoute(builder: (context) => listagemPage),
     );
-  }
-
-  /// Carrega o ID da universidade do armazenamento local.
-  Future<String?> _loadUniversidadeId() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('universidadeId');
   }
 }
