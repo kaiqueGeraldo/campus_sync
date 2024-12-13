@@ -5,11 +5,9 @@ import 'package:flutter/material.dart';
 
 class CadastroColaboradorPage extends StatefulWidget {
   final String endpoint;
-  final Map<String, dynamic> initialData;
   const CadastroColaboradorPage({
     super.key,
     required this.endpoint,
-    required this.initialData,
   });
 
   @override
@@ -31,8 +29,7 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
   void initState() {
     super.initState();
     controller = CadastroController();
-    controller.initControllers(widget.initialData);
-    print('Initial Data: ${widget.initialData}');
+
   }
 
   Widget _buildTextInput(

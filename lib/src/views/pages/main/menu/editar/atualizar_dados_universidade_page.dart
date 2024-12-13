@@ -5,12 +5,10 @@ import 'package:flutter/material.dart';
 
 class AtualizarDadosUniversidadePage extends StatefulWidget {
   final String endpoint;
-  final Map<String, dynamic> initialData;
 
   const AtualizarDadosUniversidadePage({
     super.key,
     required this.endpoint,
-    required this.initialData,
   });
 
   @override
@@ -26,8 +24,6 @@ class _AtualizarDadosUniversidadePageState
   void initState() {
     super.initState();
     controller = CadastroController();
-    controller.initControllers(widget.initialData);
-    print('Initial Data: ${widget.initialData}');
   }
 
   Widget _buildTextInput(String field) {

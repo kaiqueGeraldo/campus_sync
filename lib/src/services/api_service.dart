@@ -37,6 +37,11 @@ class ApiService {
     }
   }
 
+  Future<String?> recuperarCPF() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userCpf');
+  }
+
   // Verificar se o CPF já existe
   Future<bool> checkCpfExists(String cpf) async {
     cpf = cpf.replaceAll(RegExp(r'\D'), '');
@@ -84,15 +89,16 @@ class ApiService {
   }
 
   Future<http.Response?> cadastrarDados(
-      String endpoint, Map<String, dynamic> formData,
-      {String? faculdadeId}) async {
+    String endpoint,
+    Map<String, dynamic> formData,
+  ) async {
     final prefs = await SharedPreferences.getInstance();
     // ignore: unused_local_variable
     String? cpf = prefs.getString('userCpf');
     try {
-      final url = faculdadeId != null
-          ? '$_baseUrl/$endpoint/$faculdadeId'
-          : '$_baseUrl/$endpoint';
+      final url = '$_baseUrl/$endpoint';
+      print('URL final: $url');
+      print('Dados enviados: ${json.encode(formData)}');
 
       final response = await http.post(
         Uri.parse(url),
@@ -107,58 +113,42 @@ class ApiService {
     }
   }
 
-  Future<http.Response?> cadastrarFaculdade(
-      Map<String, dynamic> formData) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? cpf = prefs.getString('userCpf');
-
-    if (cpf != null) {
-      formData['userCPF'] = cpf;
-    } else {
-      print('CPF não encontrado. Verifique se o usuário está logado.');
-      return null;
+  // listar entidades
+  Future<List<dynamic>> listarDados(String endpoint) async {
+    final cpf = await recuperarCPF();
+    if (endpoint == 'Faculdade') {
+      endpoint += '?cpf=$cpf';
+      print('cpf: $cpf');
     }
 
     try {
-      const url = '$_baseUrl/api/Faculdade';
-
-      final response = await http.post(Uri.parse(url),
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: json.encode(formData));
+      final url = Uri.parse('$_baseUrl/$endpoint');
+      final response = await http.get(url);
 
       if (response.statusCode == 200) {
-        print('Faculdade cadastrada com sucesso!');
-        return response;
+        return json.decode(response.body);
       } else {
-        print('Erro ao cadastrar faculdade: ${response.body}');
-        return null;
+        throw Exception('Falha ao carregar dados');
       }
     } catch (e) {
-      print('Erro ao conectar com a API: $e');
-      return null;
+      throw Exception('Falha ao carregar dados: $e');
     }
   }
 
   // listar entidades
-  Future<List<dynamic>> listarDados(String endpoint) async {
-    final prefs = await SharedPreferences.getInstance();
-    String? universidadeId = prefs.getString('universidadeId');
+  Future<List<dynamic>> buscarCursosPorFaculdade(int id) async {
+    try {
+      final url = Uri.parse(
+          'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api/Curso/faculdade/$id');
+      final response = await http.get(url);
 
-    if (universidadeId == null) {
-      throw Exception('Erro: Universidade não identificada.');
-    }
-
-    final response = await http.get(
-      Uri.parse('$_baseUrl/$endpoint?universidadeId=$universidadeId'),
-      headers: {'Content-Type': 'application/json'},
-    );
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Falha ao carregar dados');
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        throw Exception('Falha ao carregar dados');
+      }
+    } catch (e) {
+      throw Exception('Falha ao carregar dados: $e');
     }
   }
 
@@ -240,8 +230,10 @@ class ApiService {
   }
 
   Future<List<dynamic>> listarFaculdades() async {
+    final cpf = await recuperarCPF();
+
     final response = await http.get(
-      Uri.parse('$_baseUrl/Faculdade'),
+      Uri.parse('$_baseUrl/Faculdade?cpf=$cpf'),
       headers: {'Content-Type': 'application/json'},
     );
 

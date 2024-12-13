@@ -1,15 +1,18 @@
+import 'dart:convert';
+
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:campus_sync/src/views/components/custom_input_text_cadastro.dart';
+import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class CadastroEstudantePage extends StatefulWidget {
   final String endpoint;
-  final Map<String, dynamic> initialData;
   const CadastroEstudantePage({
     super.key,
     required this.endpoint,
-    required this.initialData,
   });
 
   @override
@@ -18,6 +21,27 @@ class CadastroEstudantePage extends StatefulWidget {
 
 class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
   late CadastroController controller;
+  final TextEditingController nomeController = TextEditingController();
+  final TextEditingController cpfController = TextEditingController();
+  final TextEditingController rgController = TextEditingController();
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController numeroMatriculaController =
+      TextEditingController();
+  final TextEditingController dataMatriculaController = TextEditingController();
+  final TextEditingController telefoneController = TextEditingController();
+  final TextEditingController dataNascimentoController =
+      TextEditingController();
+  final TextEditingController tituloEleitorController = TextEditingController();
+  final TextEditingController nomePaiController = TextEditingController();
+  final TextEditingController nomeMaeController = TextEditingController();
+  final TextEditingController telefonePaiController = TextEditingController();
+  final TextEditingController telefoneMaeController = TextEditingController();
+  final TextEditingController logradouroController = TextEditingController();
+  final TextEditingController numeroController = TextEditingController();
+  final TextEditingController bairroController = TextEditingController();
+  final TextEditingController cidadeController = TextEditingController();
+  final TextEditingController estadoController = TextEditingController();
+  final TextEditingController cepController = TextEditingController();
 
   bool isDadosEstudanteExpanded = true;
   bool isDocumentosExpanded = false;
@@ -31,40 +55,103 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
   void initState() {
     super.initState();
     controller = CadastroController();
-    controller.initControllers(widget.initialData);
-    print('Initial Data: ${widget.initialData}');
   }
 
-  Widget _buildTextInput(
-    String field, {
-    bool enabled = true,
-    bool disabled = false,
-    EdgeInsets? customPadding,
-  }) {
-    String labelText = controller.fieldNames[field] ?? field;
-    TextInputType keyboardType = controller.getKeyboardType(field);
-    int? maxLength = controller.getMaxLength(field);
+  @override
+  void dispose() {
+    logradouroController.dispose();
+    numeroController.dispose();
+    bairroController.dispose();
+    cidadeController.dispose();
+    estadoController.dispose();
+    cepController.dispose();
+    nomeController.dispose();
+    cpfController.dispose();
+    rgController.dispose();
+    emailController.dispose();
+    numeroMatriculaController.dispose();
+    dataMatriculaController.dispose();
+    telefoneController.dispose();
+    dataNascimentoController.dispose();
+    tituloEleitorController.dispose();
+    nomePaiController.dispose();
+    nomeMaeController.dispose();
+    telefonePaiController.dispose();
+    telefoneMaeController.dispose();
 
-    return Padding(
-      padding: customPadding ?? const EdgeInsets.only(bottom: 16),
-      child: CustomInputTextCadastro(
-        controller: controller.controllers[field] as TextEditingController,
-        labelText: labelText,
-        keyboardType: keyboardType,
-        maxLength: maxLength,
-        enabled: enabled && !disabled,
-        validator: (value) {
-          if (!disabled && (value == null || value.isEmpty)) {
-            return 'Este campo é obrigatório';
-          }
-          return null;
+    super.dispose();
+  }
+
+  Future<http.Response?> cadastrarEstudante() async {
+    int estadoCivilValue =
+        controller.dropdownValues['EstadoCivil'] as int? ?? 0;
+    int nacionalidadeValue =
+        controller.dropdownValues['Nacionalidade'] as int? ?? 0;
+    int corRacaEtniaValue =
+        controller.dropdownValues['Cor/Raca/Etnia'] as int? ?? 0;
+    int escolaridadeValue =
+        controller.dropdownValues['Escolaridade'] as int? ?? 0;
+
+    try {
+      const url =
+          'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api/Estudante';
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
         },
-      ),
-    );
+        body: json.encode({
+          "id": 0,
+          "nome": nomeController.text,
+          "cpf": cpfController.text,
+          "rg": rgController.text,
+          "email": emailController.text,
+          "numeroMatricula": numeroMatriculaController.text,
+          "dataMatricula": dataMatriculaController.text,
+          "telefone": telefoneController.text,
+          "dataNascimento": dataNascimentoController.text,
+          "tituloEleitor": tituloEleitorController.text,
+          "estadoCivil": estadoCivilValue,
+          "nacionalidade": nacionalidadeValue,
+          "corRacaEtnia": corRacaEtniaValue,
+          "escolaridade": escolaridadeValue,
+          "nomePai": nomePaiController.text,
+          "nomeMae": nomeMaeController.text,
+          "telefonePai": telefonePaiController.text,
+          "telefoneMae": telefoneMaeController.text,
+          "endereco": {
+            "id": 0,
+            "logradouro": logradouroController.text,
+            "numero": numeroController.text,
+            "bairro": bairroController.text,
+            "cidade": cidadeController.text,
+            "estado": estadoController.text,
+            "cep": cepController.text
+          },
+          "turmaId": 0
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomSnackbar.show(context, 'Estudante Cadastrado com sucesso!',
+            backgroundColor: AppColors.successColor);
+        Navigator.pop(context);
+        return response;
+      } else {
+        print('Erro ao cadastrar faculdade: ${response.statusCode}');
+        print('Detalhes: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Erro ao conectar com a API: $e');
+      return null;
+    }
   }
 
   Widget _buildDropdown(String field) {
     List<DropdownMenuItem<int>> items = controller.getDropdownItems(field);
+
     String labelText = controller.fieldNames[field] ?? field;
 
     return Padding(
@@ -101,6 +188,45 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
         validator: (value) {
           if (value == null) {
             return 'Por favor, selecione uma opção';
+          }
+          return null;
+        },
+      ),
+    );
+  }
+
+  Widget _buildTextInput(
+    String field, {
+    bool enabled = true,
+    bool disabled = false,
+    EdgeInsets? customPadding,
+  }) {
+    String labelText = controller.fieldNames[field] ?? field;
+    TextInputType keyboardType = controller.getKeyboardType(field);
+    int? maxLength = controller.getMaxLength(field);
+
+    TextEditingController fieldController;
+    fieldController = controller.getMaskedController(field, "");
+
+    switch (field) {
+      case 'Nome':
+        fieldController = nomeController;
+        break;
+      default:
+        fieldController = TextEditingController();
+    }
+
+    return Padding(
+      padding: customPadding ?? const EdgeInsets.only(bottom: 16),
+      child: CustomInputTextCadastro(
+        controller: fieldController,
+        labelText: labelText,
+        keyboardType: keyboardType,
+        maxLength: maxLength,
+        enabled: enabled && !disabled,
+        validator: (value) {
+          if (!disabled && (value == null || value.isEmpty)) {
+            return 'Este campo é obrigatório';
           }
           return null;
         },
@@ -199,8 +325,8 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                 children: [
                   _buildTextInput('CPF'),
                   _buildTextInput('RG'),
-                  _buildDropdown('EstadoCivil'),
                   _buildTextInput('TituloEleitor'),
+                  _buildDropdown('EstadoCivil'),
                   _buildDropdown('Nacionalidade'),
                   _buildDropdown('Cor/Raca/Etnia'),
                   _buildDropdown('Escolaridade'),
@@ -216,7 +342,6 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   });
                 },
                 children: [
-                  // Campos do Pai
                   _buildTextInput(
                     'NomePai',
                     disabled: naoConstaPai,
@@ -242,7 +367,6 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                     controlAffinity: ListTileControlAffinity.leading,
                     activeColor: AppColors.buttonColor,
                   ),
-                  // Campos da Mãe
                   _buildTextInput(
                     'NomeMae',
                     disabled: naoConstaMae,
@@ -270,21 +394,21 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   ),
                 ],
               ),
-              // _buildCard(
-              //   title: 'Curso',
-              //   icon: Icons.library_books_outlined,
-              //   initiallyExpanded: isCursoExpanded,
-              //   onExpansionChanged: (expanded) {
-              //     setState(() {
-              //       isCursoExpanded = expanded;
-              //     });
-              //   },
-              //   children: [
-              //     _buildTextInput('Nome'),
-              //     _buildTextInput('Periodo'),
-              //     _buildTextInput('Turma'),
-              //   ],
-              // ),
+              _buildCard(
+                title: 'Curso',
+                icon: Icons.library_books_rounded,
+                initiallyExpanded: isCursoExpanded,
+                onExpansionChanged: (expanded) {
+                  setState(() {
+                    isCursoExpanded = expanded;
+                  });
+                },
+                children: [
+                  _buildTextInput('Nome'),
+                  _buildTextInput('Turma'),
+                  _buildTextInput('Periodo'),
+                ],
+              ),
               _buildCard(
                 title: 'Endereço',
                 icon: Icons.home,
@@ -303,32 +427,12 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   _buildTextInput('EnderecoCEP'),
                 ],
               ),
-              SizedBox(
-                width: 300,
-                height: 50,
-                child: ElevatedButton(
-                  style: const ButtonStyle(
-                    elevation: WidgetStatePropertyAll(4),
-                    backgroundColor:
-                        WidgetStatePropertyAll(AppColors.buttonColor),
-                    foregroundColor:
-                        WidgetStatePropertyAll(AppColors.textColor),
-                    shape: WidgetStatePropertyAll(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                  ),
-                  onPressed: () {
-                    controller.cadastrar(context, widget.endpoint);
-                  },
-                  child: const Text(
-                    'Cadastrar',
-                    style: TextStyle(fontSize: 15),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
+              CustomButton(
+                text: 'Cadastrar',
+                onPressed: () {
+                  cadastrarEstudante();
+                },
+              )
             ],
           ),
         ),

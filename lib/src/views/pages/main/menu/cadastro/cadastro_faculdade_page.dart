@@ -1,19 +1,21 @@
+import 'dart:convert';
+
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/services/api_service.dart';
+import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:campus_sync/src/views/components/custom_input_text_cadastro.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class CadastroFaculdadePage extends StatefulWidget {
   final String endpoint;
-  final Map<String, dynamic> initialData;
 
   const CadastroFaculdadePage({
     super.key,
     required this.endpoint,
-    required this.initialData,
   });
 
   @override
@@ -23,7 +25,19 @@ class CadastroFaculdadePage extends StatefulWidget {
 class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
   late CadastroController controller;
   final TextEditingController _courseController = TextEditingController();
+  final TextEditingController nomeController = TextEditingController();
   final TextEditingController cnpjController = TextEditingController();
+  final TextEditingController telefoneController = TextEditingController();
+  final TextEditingController emailResponsavelController =
+      TextEditingController();
+  final TextEditingController tipoFaculController = TextEditingController();
+  final TextEditingController adicionarController = TextEditingController();
+  final TextEditingController logradouroController = TextEditingController();
+  final TextEditingController numeroController = TextEditingController();
+  final TextEditingController bairroController = TextEditingController();
+  final TextEditingController cidadeController = TextEditingController();
+  final TextEditingController estadoController = TextEditingController();
+  final TextEditingController cepController = TextEditingController();
   final ValueNotifier<bool> isCnpjValid = ValueNotifier<bool>(false);
   final List<String> cursosOferecidos = [];
   List<String> filteredCursos = [];
@@ -184,14 +198,131 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
   void initState() {
     super.initState();
     controller = CadastroController();
-    controller.initControllers(widget.initialData);
-    print('Initial Data: ${widget.initialData}');
   }
 
-  Widget _buildTextInput(String field) {
+  @override
+  void dispose() {
+    _courseController.dispose();
+    nomeController.dispose();
+    cnpjController.dispose();
+    telefoneController.dispose();
+    emailResponsavelController.dispose();
+    tipoFaculController.dispose();
+    adicionarController.dispose();
+    logradouroController.dispose();
+    numeroController.dispose();
+    bairroController.dispose();
+    cidadeController.dispose();
+    estadoController.dispose();
+    cepController.dispose();
+    super.dispose();
+  }
+
+  Future<http.Response?> cadastrarFaculdade() async {
+    int tipoFaculValue = controller.dropdownValues['TipoFacul'] as int? ?? 0;
+
+    try {
+      const url =
+          'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api/Faculdade';
+
+      final response = await http.post(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          "nome": nomeController.text,
+          "cnpj": cnpjController.text,
+          "telefone": telefoneController.text,
+          "emailResponsavel": emailResponsavelController.text,
+          "endereco": {
+            "logradouro": logradouroController.text,
+            "numero": numeroController.text,
+            "bairro": bairroController.text,
+            "cidade": cidadeController.text,
+            "estado": estadoController.text,
+            "cep": cepController.text
+          },
+          "tipo": tipoFaculValue,
+          "cursosOferecidos": cursosOferecidos,
+          "userCPF": await ApiService().recuperarCPF()
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CustomSnackbar.show(context, 'Faculdade Cadastrada com sucesso!',
+            backgroundColor: AppColors.successColor);
+        Navigator.pop(context);
+        return response;
+      } else {
+        print('Erro ao cadastrar faculdade: ${response.statusCode}');
+        print('Detalhes: ${response.body}');
+        return null;
+      }
+    } catch (e) {
+      print('Erro ao conectar com a API: $e');
+      return null;
+    }
+  }
+
+  Widget _buildTextInput(
+    String field, {
+    bool enabled = true,
+    bool disabled = false,
+    EdgeInsets? customPadding,
+  }) {
     String labelText = controller.fieldNames[field] ?? field;
+
     TextInputType keyboardType = controller.getKeyboardType(field);
+
     int? maxLength = controller.getMaxLength(field);
+
+    TextEditingController fieldController;
+    fieldController = controller.getMaskedController(field, "");
+
+    switch (field) {
+      case 'Curso':
+        fieldController = _courseController;
+        break;
+      case 'Nome':
+        fieldController = nomeController;
+        break;
+      case 'CNPJ':
+        fieldController = cnpjController;
+        break;
+      case 'Telefone':
+        fieldController = telefoneController;
+        break;
+      case 'EmailResponsavel':
+        fieldController = emailResponsavelController;
+        break;
+      case 'TipoFacul':
+        fieldController = tipoFaculController;
+        break;
+      case 'Adicionar':
+        fieldController = adicionarController;
+        break;
+      case 'EnderecoLogradouro':
+        fieldController = logradouroController;
+        break;
+      case 'EnderecoNumero':
+        fieldController = numeroController;
+        break;
+      case 'EnderecoBairro':
+        fieldController = bairroController;
+        break;
+      case 'EnderecoCidade':
+        fieldController = cidadeController;
+        break;
+      case 'EnderecoEstado':
+        fieldController = estadoController;
+        break;
+      case 'EnderecoCEP':
+        fieldController = cepController;
+        break;
+      default:
+        fieldController = TextEditingController();
+    }
 
     String? Function(String?)? validator;
     if (field == 'CNPJ') {
@@ -199,18 +330,19 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
     }
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: customPadding ?? const EdgeInsets.only(bottom: 16),
       child: CustomInputTextCadastro(
-        controller: controller.controllers[field] as TextEditingController,
+        controller: fieldController,
         labelText: labelText,
         keyboardType: keyboardType,
         maxLength: maxLength,
+        enabled: enabled && !disabled,
         validator: validator,
         suffixIcon: field == 'CNPJ'
             ? ValueListenableBuilder<bool>(
                 valueListenable: isCnpjValid,
                 builder: (context, isValid, _) {
-                  return controller.controllers[field]!.text.isEmpty
+                  return cnpjController.text.isEmpty
                       ? const Icon(
                           Icons.info,
                           color: Colors.grey,
@@ -233,6 +365,7 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
 
   Widget _buildDropdown(String field) {
     List<DropdownMenuItem<int>> items = controller.getDropdownItems(field);
+
     String labelText = controller.fieldNames[field] ?? field;
 
     return Padding(
@@ -272,6 +405,55 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
           }
           return null;
         },
+      ),
+    );
+  }
+
+  Widget _buildCard({
+    required String title,
+    required IconData icon,
+    required bool initiallyExpanded,
+    required ValueChanged<bool> onExpansionChanged,
+    required List<Widget> children,
+  }) {
+    return Card(
+      color: AppColors.lightGreyColor,
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: ExpansionTile(
+        backgroundColor: AppColors.lightGreyColor,
+        iconColor: initiallyExpanded ? AppColors.buttonColor : Colors.black,
+        leading: Icon(
+          icon,
+          color: initiallyExpanded ? AppColors.buttonColor : Colors.black,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        initiallyExpanded: initiallyExpanded,
+        onExpansionChanged: onExpansionChanged,
+        title: Text(
+          title,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: initiallyExpanded ? AppColors.buttonColor : Colors.black,
+          ),
+        ),
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: children,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -432,7 +614,7 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
   }
 
   void updateCnpjNotifier() {
-    final text = controller.controllers['CNPJ']!.text;
+    final text = cnpjController.text;
     isCnpjValid.value = text.isNotEmpty && validateCnpjLogic(text);
   }
 
@@ -474,8 +656,6 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
 
   @override
   Widget build(BuildContext context) {
-    final hasEnderecoFields = controller.controllers.keys
-        .any((field) => controller.isEnderecoField(field));
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       appBar: AppBar(
@@ -486,152 +666,49 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
         child: SingleChildScrollView(
           child: Column(
             children: [
-              Card(
-                color: AppColors.lightGreyColor,
-                margin: const EdgeInsets.only(bottom: 16),
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: ExpansionTile(
-                  backgroundColor: AppColors.lightGreyColor,
-                  iconColor: isDadosEntidadeExpanded
-                      ? AppColors.buttonColor
-                      : Colors.black,
-                  leading: Icon(
-                    Icons.cases_rounded,
-                    color: isDadosEntidadeExpanded
-                        ? AppColors.buttonColor
-                        : Colors.black,
-                  ),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  initiallyExpanded: isDadosEntidadeExpanded,
-                  onExpansionChanged: (expanded) {
-                    setState(() {
-                      isDadosEntidadeExpanded = expanded;
-                    });
-                  },
-                  title: Text(
-                    'Dados ${widget.endpoint}',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: isDadosEntidadeExpanded
-                          ? AppColors.buttonColor
-                          : Colors.black,
-                    ),
-                  ),
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Form(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ...controller.controllers.keys
-                                .where((field) =>
-                                    !controller.isEnderecoField(field))
-                                .map((field) => _buildTextInput(field)),
-                            ...controller.dropdownValues.keys
-                                .where((field) =>
-                                    !controller.isEnderecoField(field))
-                                .map((field) => _buildDropdown(field)),
-                            _buildCourseInput(),
-                            if (cursosOferecidos.isNotEmpty)
-                              _buildCursosOferecidos(),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+              _buildCard(
+                title: 'Dados de ${widget.endpoint}',
+                icon: Icons.cases_rounded,
+                initiallyExpanded: isDadosEntidadeExpanded,
+                onExpansionChanged: (expanded) {
+                  setState(() {
+                    isDadosEntidadeExpanded = expanded;
+                  });
+                },
+                children: [
+                  _buildTextInput('Nome'),
+                  _buildTextInput('CNPJ'),
+                  _buildTextInput('Telefone'),
+                  _buildTextInput('EmailResponsavel'),
+                  _buildDropdown('TipoFacul'),
+                  _buildCourseInput(),
+                  if (cursosOferecidos.isNotEmpty) _buildCursosOferecidos(),
+                ],
               ),
-              if (hasEnderecoFields)
-                Card(
-                  color: AppColors.lightGreyColor,
-                  margin: const EdgeInsets.only(bottom: 16),
-                  elevation: 4,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: ExpansionTile(
-                    iconColor: isEnderecoExpanded
-                        ? AppColors.buttonColor
-                        : Colors.black,
-                    leading: Icon(
-                      Icons.home_rounded,
-                      color: isEnderecoExpanded
-                          ? AppColors.buttonColor
-                          : Colors.black,
-                    ),
-                    backgroundColor: AppColors.lightGreyColor,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10)),
-                    initiallyExpanded: isEnderecoExpanded,
-                    onExpansionChanged: (expanded) {
-                      setState(() {
-                        isEnderecoExpanded = expanded;
-                      });
-                    },
-                    title: Text(
-                      'Endereço',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: isEnderecoExpanded
-                            ? AppColors.buttonColor
-                            : Colors.black,
-                      ),
-                    ),
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Form(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              ...controller.controllers.keys
-                                  .where((field) =>
-                                      controller.isEnderecoField(field))
-                                  .map((field) => _buildTextInput(field)),
-                              ...controller.dropdownValues.keys
-                                  .where((field) =>
-                                      controller.isEnderecoField(field))
-                                  .map((field) => _buildDropdown(field)),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              SizedBox(
-                width: 300,
-                height: 50,
-                child: ElevatedButton(
-                  style: const ButtonStyle(
-                    elevation: WidgetStatePropertyAll(4),
-                    backgroundColor:
-                        WidgetStatePropertyAll(AppColors.buttonColor),
-                    foregroundColor:
-                        WidgetStatePropertyAll(AppColors.textColor),
-                    shape: WidgetStatePropertyAll(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                  ),
-                  onPressed: () {
-                    ApiService().cadastrarFaculdade(controller.formatFormData());
-                  },
-                  child: const Text(
-                    'Cadastrar',
-                    style: TextStyle(fontSize: 15),
-                  ),
-                ),
+              _buildCard(
+                title: 'Endereço',
+                icon: Icons.home,
+                initiallyExpanded: isEnderecoExpanded,
+                onExpansionChanged: (expanded) {
+                  setState(() {
+                    isEnderecoExpanded = expanded;
+                  });
+                },
+                children: [
+                  _buildTextInput('EnderecoLogradouro'),
+                  _buildTextInput('EnderecoNumero'),
+                  _buildTextInput('EnderecoBairro'),
+                  _buildTextInput('EnderecoCidade'),
+                  _buildTextInput('EnderecoEstado'),
+                  _buildTextInput('EnderecoCEP'),
+                ],
               ),
-              const SizedBox(height: 20),
+              CustomButton(
+                text: 'Cadastrar',
+                onPressed: () {
+                  cadastrarFaculdade();
+                },
+              )
             ],
           ),
         ),

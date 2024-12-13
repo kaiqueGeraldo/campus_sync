@@ -5,12 +5,10 @@ import 'package:campus_sync/src/models/colors/colors.dart';
 
 class CadastroPage extends StatefulWidget {
   final String endpoint;
-  final Map<String, dynamic> initialData;
 
   const CadastroPage({
     super.key,
     required this.endpoint,
-    required this.initialData,
   });
 
   @override
@@ -24,8 +22,6 @@ class _CadastroPageState extends State<CadastroPage> {
   void initState() {
     super.initState();
     controller = CadastroController();
-    controller.initControllers(widget.initialData);
-    print('Initial Data: ${widget.initialData}');
   }
 
   Widget _buildDropdown(String field) {

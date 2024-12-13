@@ -170,35 +170,34 @@ class EntidadePage extends StatelessWidget {
 
   Widget _getCadastroPage(BuildContext context) {
     switch (endpoint) {
-      case 'Faculdades':
+      case 'Faculdade':
         return CadastroFaculdadePage(
           endpoint: endpoint,
-          initialData: _controller.initialData,
+
         );
-      case 'Estudantes':
+      case 'Estudante':
         return CadastroEstudantePage(
           endpoint: endpoint,
-          initialData: _controller.initialData,
+
         );
-      case 'Colaboradores':
+      case 'Colaborador':
         return CadastroColaboradorPage(
           endpoint: endpoint,
-          initialData: _controller.initialData,
+
         );
-      case 'Cursos':
+      case 'Curso':
         return CadastroCursoPage(
           endpoint: endpoint,
-          initialData: _controller.initialData,
+
         );
       case 'Universidade':
         return AtualizarDadosUniversidadePage(
           endpoint: endpoint,
-          initialData: _controller.initialData,
+
         );
       default:
         return const CadastroPage(
           endpoint: 'default',
-          initialData: {},
         );
     }
   }

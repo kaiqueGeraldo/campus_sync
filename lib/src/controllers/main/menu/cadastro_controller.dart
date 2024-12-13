@@ -64,7 +64,7 @@ class CadastroController {
           cursosOferecidos.addAll(value.map<int>((e) => e as int));
         }
       } else {
-        controllers[key] = _getMaskedController(key, value?.toString() ?? '');
+        controllers[key] = getMaskedController(key, value?.toString() ?? '');
       }
     });
   }
@@ -74,7 +74,7 @@ class CadastroController {
     dropdownValues.clear();
   }
 
-  TextEditingController _getMaskedController(
+  TextEditingController getMaskedController(
       String field, String initialValue) {
     switch (field) {
       case 'CPF':
@@ -101,7 +101,7 @@ class CadastroController {
 
   int? getMaxLength(String field) {
     switch (field) {
-      case 'Valor':
+      case 'Mensalidade':
         return 12;
       default:
         return 50;
@@ -112,7 +112,7 @@ class CadastroController {
     switch (field) {
       case 'CPF':
       case 'CNPJ':
-      case 'Valor':
+      case 'Mensalidade':
       case 'Celular':
       case 'Telefone':
       case 'EnderecoCEP':
@@ -210,7 +210,42 @@ class CadastroController {
   }
 
   Future<void> cadastrar(BuildContext context, String endpoint) async {
-    final Map<String, dynamic> formData = formatFormData();
+    List<String> requiredFields = [];
+
+    switch (endpoint) {
+      case 'Faculdade':
+        requiredFields = [
+          'Nome',
+          'CNPJ',
+          'Telefone',
+          'EmailResponsavel',
+          'TipoFacul',
+          'CursosOferecidos',
+        ];
+        break;
+      case 'Curso':
+        requiredFields = ['Nome', 'Descricao', 'Mensalidade', 'FaculdadeId'];
+        break;
+      case 'Estudante':
+        requiredFields = [
+          'Nome',
+          'Email',
+          'DataNascimento',
+          'EnderecoCEP',
+          'EnderecoLogradouro',
+          'EnderecoNumero',
+          'EnderecoBairro',
+          'EnderecoCidade',
+          'EnderecoEstado',
+          'userCPF'
+        ];
+        break;
+      default:
+        CustomSnackbar.show(context, 'Endpoint desconhecido!');
+        return;
+    }
+
+    final formData = await formatFormData(requiredFields);
     final response = await ApiService().cadastrarDados(endpoint, formData);
 
     if (response != null &&
@@ -218,12 +253,13 @@ class CadastroController {
       CustomSnackbar.show(context, 'Cadastro realizado com sucesso!');
       Navigator.pop(context);
     } else {
-      CustomSnackbar.show(context,
-          'Erro ao cadastrar: ${response?.reasonPhrase ?? 'Desconhecido'}');
+      CustomSnackbar.show(
+          context, 'Erro ao cadastrar: ${response?.body ?? 'Desconhecido'}');
     }
   }
 
-  Map<String, dynamic> formatFormData() {
+  Future<Map<String, dynamic>> formatFormData(
+      List<String> requiredFields) async {
     final Map<String, dynamic> formData = {};
 
     controllers.forEach((key, controller) {
@@ -234,33 +270,28 @@ class CadastroController {
       formData[key] = value;
     });
 
-    formData['faculdadeId'] = formData.remove('FaculdadeId');
-    formData['estudanteId'] = formData.remove('EstudanteId');
-    formData['turmaId'] = formData.remove('TurmaId');
-    formData['nome'] = formData.remove('Nome');
-    formData['tipo'] = formData.remove('TipoFacul');
-    formData['descricao'] = formData.remove('Descricao');
-    formData['mensalidade'] = formData.remove('Mensalidade');
-    formData['email'] = formData.remove('Email');
-    formData['emailResponsavel'] = formData.remove('EmailResponsavel');
-    formData['telefone'] = formData.remove('Telefone');
-    formData['dataNascimento'] = formData.remove('DataNascimento');
-    formData['numEstudante'] = formData.remove('NumEstudante');
-    formData['periodo'] = formData.remove('PeriodoTurma');
-    formData['capacidadeMaxima'] = formData.remove('CapacidadeMaxima');
-    formData['cursosOferecidos'] = cursosSelecionados.join(',');
-    formData['userCPF'] = _recuperarCPF();
+    if (requiredFields.contains('userCPF')) {
+      formData['userCPF'] = await _recuperarCPF();
+    }
 
-    formData['endereco'] = {
-      'cep': formData.remove('EnderecoCEP') ?? '',
-      'logradouro': formData.remove('EnderecoLogradouro') ?? '',
-      'numero': formData.remove('EnderecoNumero') ?? '',
-      'bairro': formData.remove('EnderecoBairro') ?? '',
-      'cidade': formData.remove('EnderecoCidade') ?? '',
-      'estado': formData.remove('EnderecoEstado') ?? '',
-    };
+    if (requiredFields.any((field) => field.startsWith('Endereco'))) {
+      formData['endereco'] = {
+        'cep': formData.remove('EnderecoCEP') ?? '',
+        'logradouro': formData.remove('EnderecoLogradouro') ?? '',
+        'numero': formData.remove('EnderecoNumero') ?? '',
+        'bairro': formData.remove('EnderecoBairro') ?? '',
+        'cidade': formData.remove('EnderecoCidade') ?? '',
+        'estado': formData.remove('EnderecoEstado') ?? '',
+      };
+    }
 
-    return formData;
+      if (requiredFields.contains('CursosOferecidos')) {
+    formData['CursosOferecidos'] = cursosOferecidos.map((curso) => curso.toString()).toList();
+  }
+
+
+    // Retorna apenas os campos necessários
+    return formData..removeWhere((key, value) => value == null);
   }
 
   bool isEnderecoField(String field) {

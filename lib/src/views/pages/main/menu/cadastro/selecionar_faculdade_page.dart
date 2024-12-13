@@ -106,7 +106,6 @@ class _SelecionarFaculdadePageState extends State<SelecionarFaculdadePage> {
                           trailing: const Icon(Icons.arrow_forward_ios),
                           onTap: () {
                             widget.onSelecionar(faculdade);
-                            Navigator.pop(context);
                           },
                         ),
                       );
