@@ -8,9 +8,7 @@ class AboutPage extends StatefulWidget {
   State<AboutPage> createState() => _AboutPageState();
 }
 
-class _AboutPageState extends State<AboutPage>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
+class _AboutPageState extends State<AboutPage> {
   late List<bool> _animations;
 
   final List<Map<String, dynamic>> aboutItems = [
@@ -74,18 +72,9 @@ class _AboutPageState extends State<AboutPage>
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 300),
-    );
+    // Inicializando a lista de animações, definindo inicialmente o segundo item como expandido
     _animations = List<bool>.filled(aboutItems.length, false);
     _animations[1] = true;
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 
   @override
@@ -94,22 +83,24 @@ class _AboutPageState extends State<AboutPage>
       backgroundColor: AppColors.backgroundWhiteColor,
       body: Padding(
         padding: const EdgeInsets.all(15),
-        child: Column(
-          children: List.generate(
-            aboutItems.length,
-            (index) => Padding(
-              padding: const EdgeInsets.only(bottom: 15),
-              child: GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _animations[index] = !_animations[index];
-                  });
-                },
-                child: _buildExpandableContainer(
-                  title: aboutItems[index]['title'],
-                  icon: aboutItems[index]['icon'],
-                  isExpanded: _animations[index],
-                  content: aboutItems[index]['content'],
+        child: SingleChildScrollView(
+          child: Column(
+            children: List.generate(
+              aboutItems.length,
+              (index) => Padding(
+                padding: const EdgeInsets.only(bottom: 15),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _animations[index] = !_animations[index];
+                    });
+                  },
+                  child: _buildExpandableContainer(
+                    title: aboutItems[index]['title'],
+                    icon: aboutItems[index]['icon'],
+                    isExpanded: _animations[index],
+                    content: aboutItems[index]['content'],
+                  ),
                 ),
               ),
             ),

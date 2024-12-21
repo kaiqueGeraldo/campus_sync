@@ -1,15 +1,23 @@
+import 'package:campus_sync/src/connectivity/connectivity_service.dart';
+import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/menu/listagem_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/services/api_service.dart';
+import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
+import 'package:campus_sync/src/views/pages/main/menu/detalhes_item_page.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class ListagemPage extends StatefulWidget {
   final String endpoint;
   final Map<String, String> fieldMapping;
+  final bool cameFromHome;
 
   const ListagemPage({
     super.key,
     required this.endpoint,
     required this.fieldMapping,
+    required this.cameFromHome,
   });
 
   @override
@@ -41,12 +49,62 @@ class _ListagemPageState extends State<ListagemPage> {
     });
   }
 
+  Future<void> _verDetalhes(String endpoint, String id) async {
+    print(endpoint);
+
+    try {
+      final Map<String, dynamic> dados =
+          await ApiService().listarDadosConfiguracoes(endpoint, id);
+      print('Dados retornados: $dados');
+      print('Tipo do item: ${dados['tipo']}');
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DetalhesItemPage(
+            titulo: endpoint,
+            dados: dados,
+          ),
+        ),
+      );
+    } catch (e) {
+      customShowDialog(
+        context: context,
+        title: 'Erro',
+        content: 'Não foi possível carregar os detalhes. Erro: $e',
+        confirmText: 'Fechar',
+        onConfirm: () => Navigator.pop(context),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final connectivityService = Provider.of<ConnectivityService>(context);
+
+    if (connectivityService.isCheckingConnection) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        body: Center(
+            child: CircularProgressIndicator(
+          color: AppColors.buttonColor,
+        )),
+      );
+    }
+
+    if (!connectivityService.isConnected) {
+      return OfflinePage(onRetry: () {}, isLoading: false);
+    }
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       appBar: AppBar(
-        title: Text('Listagem de ${widget.endpoint}'),
+        title: widget.cameFromHome
+            ? widget.endpoint == 'Colaborador'
+                ? Text('Detalhes de ${widget.endpoint}es')
+                : Text('Detalhes de ${widget.endpoint}s')
+            : widget.endpoint == 'Colaborador'
+                ? Text('Listagem de ${widget.endpoint}es')
+                : Text('Listagem de ${widget.endpoint}s'),
         backgroundColor: AppColors.backgroundBlueColor,
         shadowColor: Colors.black,
         elevation: 4,
@@ -63,7 +121,11 @@ class _ListagemPageState extends State<ListagemPage> {
           } else if (snapshot.hasError) {
             return Center(child: Text('Erro: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text('Nenhum item encontrado.'));
+            return const Center(
+                child: Text(
+              'Nenhum item encontrado.',
+              textAlign: TextAlign.center,
+            ));
           }
 
           final items = snapshot.data!;
@@ -112,29 +174,46 @@ class _ListagemPageState extends State<ListagemPage> {
               ),
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   itemCount: filteredItems.length,
                   itemBuilder: (context, index) {
                     final item = filteredItems[index];
-                    final titleField = widget.fieldMapping['title'] ?? 'nome';
 
-                    return Card(
-                      margin: const EdgeInsets.symmetric(vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      color: AppColors.lightGreyColor,
-                      elevation: 4,
-                      child: ListTile(
-                        title: Text(
-                          item[titleField] ?? 'Nome não disponível',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                    String subtitle;
+                    if (widget.endpoint == 'Faculdade') {
+                      subtitle =
+                          'Tipo: ${item['tipoString'] ?? '-'}\nUniversidade: ${item['universidadeNome'] ?? '-'}';
+                    } else if (widget.endpoint == 'Curso') {
+                      subtitle =
+                          'Mensalidade: R\$ ${item['mensalidade'] ?? '-'}\nFaculdade: ${item['faculdadeNome'] ?? '-'}';
+                    } else if (widget.endpoint == 'Estudante' ||
+                        widget.endpoint == 'Colaborador') {
+                      subtitle =
+                          'CPF: ${item['cpf'] ?? '-'}\nEmail: ${item['email'] ?? '-'}';
+                    } else {
+                      subtitle = 'Detalhes não disponíveis';
+                    }
+
+                    return GestureDetector(
+                      onTap: () {
+                        String id = items[index]['id'].toString();
+                        _verDetalhes(widget.endpoint, id);
+                      },
+                      child: Card(
+                        margin: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
                         ),
-                        subtitle: Text(
-                          _controller.getSubtitleText(
-                              widget.fieldMapping, item),
+                        color: AppColors.lightGreyColor,
+                        elevation: 4,
+                        child: ListTile(
+                          title: Text(
+                            item['nome'] ?? 'Nome não disponível',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(subtitle),
+                          trailing: const Icon(Icons.arrow_forward_ios),
                         ),
-                        trailing: const Icon(Icons.arrow_forward_ios),
                       ),
                     );
                   },

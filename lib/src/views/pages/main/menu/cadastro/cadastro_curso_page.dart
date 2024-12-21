@@ -1,17 +1,17 @@
 import 'dart:convert';
 
+import 'package:campus_sync/src/connectivity/connectivity_service.dart';
+import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
-import 'package:campus_sync/src/services/api_service.dart';
+import 'package:campus_sync/src/views/components/cadastro/custom_expansion_card.dart';
 import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:campus_sync/src/views/components/custom_input_text_cadastro.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
-import 'package:campus_sync/src/views/pages/main/menu/cadastro/selecionar_faculdade_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
-import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class CadastroCursoPage extends StatefulWidget {
   final String endpoint;
@@ -27,6 +27,7 @@ class CadastroCursoPage extends StatefulWidget {
 
 class _CadastroCursoPageState extends State<CadastroCursoPage> {
   late CadastroController controller;
+  bool _isLoading = false;
   Map<String, dynamic>? faculdadeSelecionada;
   bool isDadosCursoExpanded = true;
   final TextEditingController _disciplinasController = TextEditingController();
@@ -36,9 +37,104 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
   List<TextEditingController> turmasNomeControllers = [];
   List<int?> turmasPeriodoValues = [];
   List<TextEditingController> turmasPeriodoControllers = [];
-  List<String> disciplinasDisponiveis = [];
   final List<String> disciplinasOferecidos = [];
   List<String> filteredDisciplinas = [];
+  List<String> disciplinasDisponiveis = [
+    "Matemática Básica",
+    "Cálculo Diferencial e Integral",
+    "Álgebra Linear",
+    "Física Geral",
+    "Química Geral",
+    "Geometria Analítica",
+    "Estatística Aplicada",
+    "Engenharia de Software",
+    "Inteligência Artificial",
+    "Algoritmos e Estruturas de Dados",
+    "Redes de Computadores",
+    "Banco de Dados",
+    "Ciência de Dados",
+    "Internet das Coisas (IoT)",
+    "Segurança da Informação",
+    "Sistemas Embarcados",
+    "Análise de Circuitos Elétricos",
+    "Processamento de Sinais",
+    "Desenvolvimento Mobile",
+    "Desenvolvimento Web",
+    "Filosofia",
+    "Sociologia",
+    "Antropologia",
+    "Psicologia Geral",
+    "História do Brasil",
+    "História Mundial",
+    "Geografia Humana",
+    "Direitos Humanos",
+    "Políticas Públicas",
+    "Educação e Sociedade",
+    "Teoria da Comunicação",
+    "Ética e Cidadania",
+    "Psicologia Organizacional",
+    "História da Arte",
+    "Pedagogia Aplicada",
+    "Biologia Celular",
+    "Genética",
+    "Ecologia",
+    "Fisiologia Humana",
+    "Anatomia Humana",
+    "Microbiologia",
+    "Imunologia",
+    "Farmacologia",
+    "Bioquímica",
+    "Enfermagem Básica",
+    "Saúde Pública",
+    "Nutrição e Metabolismo",
+    "Higiene e Saúde",
+    "Epidemiologia",
+    "Psicologia da Saúde",
+    "Educação Física e Esporte",
+    "Direito Constitucional",
+    "Direito Penal",
+    "Administração Geral",
+    "Gestão de Projetos",
+    "Marketing Digital",
+    "Finanças Corporativas",
+    "Contabilidade Básica",
+    "Economia",
+    "Planejamento Urbano",
+    "Ciências Políticas",
+    "Comportamento Organizacional",
+    "Empreendedorismo",
+    "Relações Internacionais",
+    "Ciência Atuária",
+    "Linguagem e Comunicação",
+    "Produção Audiovisual",
+    "Fotografia",
+    "Design Gráfico",
+    "Design de Interiores",
+    "Publicidade e Propaganda",
+    "Jornalismo Investigativo",
+    "Literatura Brasileira",
+    "Teatro e Expressão Corporal",
+    "Música e Ritmos",
+    "História da Música",
+    "Cinema e Produção Audiovisual",
+    "Agronomia",
+    "Engenharia Ambiental",
+    "Gestão de Recursos Hídricos",
+    "Manejo Florestal",
+    "Climatologia",
+    "Zootecnia",
+    "Produção de Alimentos",
+    "Sustentabilidade e Meio Ambiente",
+    "Geoprocessamento",
+    "Lógica e Raciocínio",
+    "Libras",
+    "Língua Inglesa",
+    "Língua Espanhola",
+    "Metodologia de Pesquisa",
+    "Técnicas de Apresentação",
+    "Estudos de Gênero",
+    "Cultura e Sociedade"
+  ];
 
   @override
   void initState() {
@@ -60,45 +156,59 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
   }
 
   Future<http.Response?> cadastrarCurso() async {
+    print('disciplinas: $disciplinasOferecidos');
+    setState(() {
+      _isLoading = true;
+    });
+
     int quantidadeTurmasValue =
         controller.dropdownValues['Turmas'] as int? ?? 0;
 
     final mensalidade =
         int.parse(mensalidadeController.text.replaceAll(RegExp(r'[^0-9]'), ''));
 
-    // Gerar a lista de turmas com os valores corretos
     final turmas = List.generate(
       quantidadeTurmasValue,
       (index) {
         return {
           "id": 0,
           "nome": turmasNomeControllers[index].text,
-          "periodo": turmasPeriodoValues[index] ?? 0, // Atualizado
+          "periodo": turmasPeriodoValues[index] ?? 0,
         };
       },
     );
 
-    // Buscar o ID e nome do curso selecionado no dropdown
-    int? cursoId;
+    final disciplinas = disciplinasOferecidos.map((disciplina) {
+      return {
+        "id": 0,
+        "nome": disciplina,
+        "descricao": '',
+      };
+    }).toList();
+
+    int? cursoId = controller.cursoSelecionadoNotifier.value;
     String nomeCurso = '';
-    if (controller.dropdownValues['Curso'] != null) {
-      final cursoSelecionado = cursosDropdownItems.firstWhere(
-        (item) => item.value == controller.dropdownValues['Curso'],
+    if (cursoId != null) {
+      final cursoSelecionado =
+          controller.cursosDropdownItemsNotifier.value.firstWhere(
+        (item) => item.value == cursoId,
         orElse: () => const DropdownMenuItem<int>(
           value: -1,
           child: Text('Curso não encontrado'),
         ),
       );
+
       if (cursoSelecionado.value != -1) {
-        cursoId = cursoSelecionado.value;
-        nomeCurso = (cursoSelecionado.child as Text).data ?? ''; // Atualizado
+        nomeCurso = (cursoSelecionado.child as Text).data ?? '';
       } else {
-        CustomSnackbar.show(context, 'Curso não encontrado');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Curso selecionado não encontrado.'),
+          ),
+        );
         return null;
       }
-    }
-
-    if (cursoId == null) {
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Por favor, selecione um curso antes de continuar.'),
@@ -107,7 +217,7 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
       return null;
     }
 
-    if (faculdadeSelecionada == null) {
+    if (controller.faculdadeSelecionadaNotifier.value.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content:
@@ -127,7 +237,6 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
     }
 
     try {
-      // Adicionando o ID do curso na URL
       final url =
           'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api/Curso/$cursoId';
 
@@ -139,10 +248,11 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
         body: json.encode({
           "nome": nomeCurso,
           "mensalidade": mensalidade,
-          "faculdadeId": faculdadeSelecionada?['id'] ?? 0,
+          "faculdadeId":
+              controller.faculdadeSelecionadaNotifier.value['id'] ?? 0,
           "quantidadeTurmas": quantidadeTurmasValue,
           "turmas": turmas,
-          "disciplinas": disciplinasOferecidos,
+          "disciplinas": disciplinas,
         }),
       );
 
@@ -171,6 +281,10 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
         ),
       );
       return null;
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
@@ -200,15 +314,14 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
           children: [
             Text('Turma ${index + 1}',
                 style: const TextStyle(fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             CustomInputTextCadastro(
               controller: turmasNomeControllers[index],
               labelText: 'Nome da Turma',
               keyboardType: TextInputType.text,
             ),
-            const SizedBox(height: 5),
+            const SizedBox(height: 10),
             _buildPeriodoDropdown(index),
-            const SizedBox(height: 16),
           ],
         );
       }),
@@ -274,392 +387,44 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
     );
   }
 
-  void abrirTelaFaculdades() async {
-    try {
-      final faculdades = (await ApiService().listarFaculdades())
-          .map((faculdade) => faculdade as Map<String, dynamic>)
-          .toList();
-
-      final selecionada = await Navigator.push<Map<String, dynamic>>(
-        context,
-        MaterialPageRoute(
-          builder: (context) => SelecionarFaculdadePage(
-            faculdades: faculdades,
-            onSelecionar: (faculdade) {
-              Navigator.pop(context, faculdade);
-            },
-          ),
-        ),
-      );
-
-      if (selecionada != null) {
-        setState(() {
-          faculdadeSelecionada = selecionada;
-        });
-
-        final cursos = await ApiService().buscarCursosPorFaculdade(
-          faculdadeSelecionada!['id'],
-        );
-
-        setState(() {
-          controller.dropdownValues['Curso'] = null;
-          cursosDropdownItems = cursos.map((curso) {
-            return DropdownMenuItem<int>(
-              value: curso['id'],
-              child: Text(curso['nome']),
-            );
-          }).toList();
-        });
-      }
-    } catch (e) {
-      print('Erro ao buscar faculdades ou cursos: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content:
-              Text('Erro ao carregar faculdades ou cursos. Tente novamente.'),
-        ),
-      );
-    }
-  }
-
-  Widget _buildFaculdadeInput() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onTap: abrirTelaFaculdades,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black38),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    faculdadeSelecionada != null
-                        ? faculdadeSelecionada!['nome']
-                        : 'Selecione uma Faculdade',
-                    style: const TextStyle(fontSize: 16),
-                  ),
-                  if (faculdadeSelecionada != null)
-                    GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          faculdadeSelecionada = null;
-                        });
-                      },
-                      child: const Icon(Icons.close, color: Colors.red),
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCard({
-    required String title,
-    required IconData icon,
-    required bool initiallyExpanded,
-    required ValueChanged<bool> onExpansionChanged,
-    required List<Widget> children,
-  }) {
-    return Card(
-      color: AppColors.lightGreyColor,
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: ExpansionTile(
-        backgroundColor: AppColors.lightGreyColor,
-        iconColor: initiallyExpanded ? AppColors.buttonColor : Colors.black,
-        leading: Icon(
-          icon,
-          color: initiallyExpanded ? AppColors.buttonColor : Colors.black,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        initiallyExpanded: initiallyExpanded,
-        onExpansionChanged: onExpansionChanged,
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: initiallyExpanded ? AppColors.buttonColor : Colors.black,
-          ),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: children,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<List<Map<String, dynamic>>> getCursosPorFaculdade(
-      int faculdadeId) async {
-    try {
-      final response = await ApiService().buscarCursosPorFaculdade(faculdadeId);
-      return (response).map((curso) => curso as Map<String, dynamic>).toList();
-    } catch (e) {
-      print('Erro ao buscar cursos para faculdade $faculdadeId: $e');
-      return [];
-    }
-  }
-
-  Widget _buildDropdown(String field) {
-    List<DropdownMenuItem<int>> items = [];
-
-    if (field == 'Curso') {
-      items = cursosDropdownItems;
-    } else {
-      items = controller.getDropdownItems(field);
-    }
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<int>(
-        value: controller.dropdownValues[field] as int?,
-        items: items,
-        onChanged: (newValue) {
-          setState(() {
-            controller.dropdownValues[field] = newValue;
-            print('Dropdown $field updated to $newValue');
-          });
-        },
-        decoration: InputDecoration(
-          labelText: controller.fieldNames[field] ?? field,
-          labelStyle: const TextStyle(color: AppColors.backgroundBlueColor),
-          border: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
-            borderSide: BorderSide(color: Colors.black12),
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(
-              width: 1.5,
-              color: AppColors.backgroundBlueColor,
-            ),
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
-        ),
-        dropdownColor: AppColors.lightGreyColor,
-        style: const TextStyle(
-          color: Colors.black,
-          fontSize: 16,
-        ),
-        validator: (value) {
-          if (value == null) {
-            return 'Por favor, selecione uma opção';
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildTextInput(
-    String field, {
-    bool enabled = true,
-    bool disabled = false,
-    EdgeInsets? customPadding,
-  }) {
-    String labelText = controller.fieldNames[field] ?? field;
-    TextInputType keyboardType = controller.getKeyboardType(field);
-    int? maxLength = controller.getMaxLength(field);
-
-    TextInputFormatter? inputFormatter;
-    if (field == 'Mensalidade') {
-      inputFormatter = _currencyFormatter();
-    }
-
-    TextEditingController fieldController;
-    fieldController = controller.getMaskedController(field, "");
-
-    switch (field) {
-      case 'Mensalidade':
-        fieldController = mensalidadeController;
-        break;
-      default:
-        fieldController = TextEditingController();
-    }
-
-    return Padding(
-      padding: customPadding ?? const EdgeInsets.only(bottom: 16),
-      child: CustomInputTextCadastro(
-        controller: fieldController,
-        labelText: labelText,
-        keyboardType: keyboardType,
-        maxLength: maxLength,
-        enabled: enabled && !disabled,
-        validator: (value) {
-          if (!disabled && (value == null || value.isEmpty)) {
-            return 'Este campo é obrigatório';
-          }
-          return null;
-        },
-        inputFormatters: inputFormatter != null ? [inputFormatter] : null,
-      ),
-    );
-  }
-
-  TextInputFormatter _currencyFormatter() {
-    return TextInputFormatter.withFunction((oldValue, newValue) {
-      String newText = newValue.text.replaceAll(RegExp(r'[^0-9]'), '');
-
-      if (newText.isEmpty) {
-        return const TextEditingValue(
-          text: '',
-          selection: TextSelection.collapsed(offset: 0),
-        );
-      }
-
-      double value = double.tryParse(newText) ?? 0;
-      String formatted = NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$')
-          .format(value / 100);
-
-      return TextEditingValue(
-        text: formatted,
-        selection: TextSelection.collapsed(offset: formatted.length),
-      );
-    });
-  }
-
   Widget _buildDisciplinasInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: _disciplinasController,
-          onChanged: _filterDisciplinas,
-          decoration: InputDecoration(
-            labelText: 'Adicionar Disciplina',
-            floatingLabelStyle:
-                const TextStyle(color: AppColors.backgroundBlueColor),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Colors.black12),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: AppColors.backgroundBlueColor),
-            ),
-          ),
-        ),
-        if (_disciplinasController.text.isNotEmpty &&
-            filteredDisciplinas.isNotEmpty)
-          Card(
-            color: AppColors.backgroundWhiteColor,
-            shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(8),
-                    bottomRight: Radius.circular(8))),
-            margin: const EdgeInsets.only(top: 5),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxHeight: 200,
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
-                itemCount: filteredDisciplinas.length,
-                itemBuilder: (context, index) {
-                  final curso = filteredDisciplinas[index];
-                  return ListTile(
-                    title: Text(curso),
-                    onTap: () => _addDisciplina(curso),
-                  );
-                },
-              ),
-            ),
-          ),
-      ],
+    return controller.buildListInput(
+      context,
+      label: 'Adicionar Disciplina',
+      enabled: !_isLoading,
+      controller: _disciplinasController,
+      itemsDisponiveis: disciplinasDisponiveis,
+      filteredItems: filteredDisciplinas,
+      onAddItem: _addDisciplina,
+      onRemoveItem: _removeDisciplina,
+      onRemoveAll: _removeAllDisciplina,
+      onFilter: _filterDisciplinas,
     );
   }
 
   Widget _buildDisciplinasOferecidos() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Disciplinas Oferecidos:',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: disciplinasOferecidos.map((curso) {
-              return ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 110,
-                ),
-                child: Chip(
-                  label: GestureDetector(
-                    onTap: () {
-                      CustomSnackbar.show(
-                        context,
-                        curso,
-                        backgroundColor: AppColors.socialButtonColor,
-                      );
-                    },
-                    child: Text(
-                      curso,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                  backgroundColor: AppColors.lightGreyColor,
-                  deleteIcon: const Icon(Icons.close, color: Colors.red),
-                  onDeleted: () => _removeDisciplina(curso),
-                ),
-              );
-            }).toList(),
-          ),
-          if (disciplinasDisponiveis.length > 1)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: _removeAllDisciplina,
-                child: const Text('Remover tudo',
-                    style: TextStyle(color: AppColors.buttonColor)),
-              ),
-            )
-        ],
-      ),
+    return controller.buildSelectedItems(
+      context,
+      label: 'Disciplinas Oferecidas:',
+      itemsSelecionados: disciplinasOferecidos,
+      onRemoveItem: (disciplina) => _removeDisciplina(disciplina),
+      onRemoveAll: _removeAllDisciplina,
     );
   }
 
-  void _addDisciplina(String curso) {
+  void _addDisciplina(String disciplina) {
     setState(() {
-      if (!disciplinasOferecidos.contains(curso)) {
-        disciplinasOferecidos.add(curso);
+      if (!disciplinasOferecidos.contains(disciplina)) {
+        disciplinasOferecidos.add(disciplina);
       }
       _disciplinasController.clear();
       filteredDisciplinas.clear();
     });
   }
 
-  void _removeDisciplina(String curso) {
+  void _removeDisciplina(String disicplina) {
     setState(() {
-      disciplinasOferecidos.remove(curso);
+      disciplinasOferecidos.remove(disicplina);
     });
   }
 
@@ -682,24 +447,41 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
   void _filterDisciplinas(String query) {
     setState(() {
       filteredDisciplinas = disciplinasDisponiveis
-          .where((curso) => curso.toLowerCase().contains(query.toLowerCase()))
+          .where((disciplina) =>
+              disciplina.toLowerCase().contains(query.toLowerCase()))
           .toList();
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final connectivityService = Provider.of<ConnectivityService>(context);
+
+    if (connectivityService.isCheckingConnection) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        body: Center(
+            child: CircularProgressIndicator(
+          color: AppColors.buttonColor,
+        )),
+      );
+    }
+
+    if (!connectivityService.isConnected) {
+      return OfflinePage(onRetry: () {}, isLoading: false);
+    }
+    
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       appBar: AppBar(
-        title: const Text('Cadastro de Curso'),
+        title: const Text('Cadastro de Cursos'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _buildCard(
+              CustomExpansionCard(
                 title: 'Dados do Curso',
                 icon: Icons.library_books,
                 initiallyExpanded: isDadosCursoExpanded,
@@ -709,15 +491,22 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
                   });
                 },
                 children: [
-                  _buildFaculdadeInput(),
-                  _buildDropdown('Curso'),
-                  _buildTextInput('Mensalidade'),
+                  if(!_isLoading)
+                  controller.buildCamposFaculdadeECurso(
+                    context,
+                  ),
+                  controller.buildTextInput(
+                    'Mensalidade',
+                    context,
+                    mensalidadeController,
+                    !_isLoading,
+                  ),
                   _buildDisciplinasInput(),
                   if (disciplinasOferecidos.isNotEmpty)
                     _buildDisciplinasOferecidos(),
                 ],
               ),
-              _buildCard(
+              CustomExpansionCard(
                 title: 'Turmas',
                 icon: Icons.switch_account_outlined,
                 initiallyExpanded: isDadosCursoExpanded,
@@ -727,14 +516,26 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
                   });
                 },
                 children: [
-                  _buildDropdown('Turmas'),
+                  controller.buildDropdown(
+                    'Turmas',
+                    context,
+                    !_isLoading,
+                    (newValue) {
+                      setState(() {
+                        controller.dropdownValues['Turmas'] = newValue;
+                      });
+                    },
+                  ),
                   _buildTurmasInputs(),
                 ],
               ),
               CustomButton(
-                text: 'Cadastrar',
+                text: _isLoading ? '' : 'Cadastrar',
+                isLoading: _isLoading,
                 onPressed: () {
-                  cadastrarCurso();
+                  if (!_isLoading) {
+                    cadastrarCurso();
+                  }
                 },
               )
             ],

@@ -3,12 +3,16 @@ import 'package:flutter/material.dart';
 
 class EditarItemPage extends StatefulWidget {
   final Map<String, dynamic> item;
+  final String titulo;
+  final String endpoint;
   final void Function(Map<String, dynamic>) onSave;
 
   const EditarItemPage({
     super.key,
     required this.item,
     required this.onSave,
+    required this.titulo,
+    required this.endpoint,
   });
 
   @override

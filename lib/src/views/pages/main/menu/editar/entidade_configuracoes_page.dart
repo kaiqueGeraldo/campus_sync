@@ -1,10 +1,13 @@
+import 'package:campus_sync/src/connectivity/connectivity_service.dart';
+import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/services/api_service.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
+import 'package:campus_sync/src/views/pages/main/menu/detalhes_item_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/editar/editar_item_page.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class EntidadeConfiguracoesPage extends StatefulWidget {
   final List<Map<String, dynamic>> itens;
@@ -28,6 +31,8 @@ class EntidadeConfiguracoesPage extends StatefulWidget {
 class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
   late List<Map<String, dynamic>> itensFiltrados;
   final TextEditingController pesquisaController = TextEditingController();
+  final Map<String, dynamic> turmasRecuperadas = {};
+  final List<Map<String, dynamic>> disciplinasRecuperadas = [];
 
   @override
   void initState() {
@@ -40,122 +45,26 @@ class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
     setState(() {
       itensFiltrados = widget.itens.where((item) {
         final nome = item['nome']?.toLowerCase() ?? '';
-        final id = item['id']?.toString() ?? '';
+        final id = item['id'].toString();
         return nome.contains(query) || id.contains(query);
       }).toList();
     });
   }
 
   Future<void> _verDetalhes(String endpoint, String id) async {
+    print(widget.titulo);
+
     try {
       final Map<String, dynamic> dados =
           await ApiService().listarDadosConfiguracoes(endpoint, id);
+      print('Dados retornados: $dados');
 
-      List<Widget> content;
-
-      if (endpoint == 'Faculdades') {
-        content = [
-          _buildDetailTile(
-              'Nome', dados['nome'], Icons.cast_for_education_outlined),
-          _buildDetailTile(
-              'Tipo', dados['tipoString'], Icons.apartment_rounded),
-          _buildDetailTile(
-              'Universidade', dados['universidadeNome'], Icons.account_balance),
-          const SizedBox(height: 10),
-          const Text(
-            'Endereço:',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          _buildDetailTile(
-              'Rua', dados['endereco']['rua'], Icons.straighten_outlined),
-          _buildDetailTile('Cidade', dados['endereco']['cidade'],
-              Icons.location_city_rounded),
-          _buildDetailTile('Estado', dados['endereco']['estado'],
-              Icons.store_mall_directory_outlined),
-          _buildDetailTile(
-              'CEP', dados['endereco']['cep'], Icons.location_on_outlined),
-        ];
-      } else if (endpoint == 'Cursos') {
-        content = [
-          _buildDetailTile('Descrição', dados['descricao'], Icons.tag_outlined),
-          _buildDetailTile(
-            'Mensalidade',
-            NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').format(
-              double.tryParse(dados['mensalidade'].toString()) ?? 0,
-            ),
-            Icons.attach_money_outlined,
-          ),
-          _buildDetailTile('Faculdade', dados['faculdadeNome'],
-              Icons.cast_for_education_outlined),
-        ];
-      } else if (endpoint == 'Estudantes') {
-        content = [
-          _buildDetailTile('Nome', dados['nome'], Icons.tag_outlined),
-          _buildDetailTile('Email', dados['email'], Icons.email),
-          _buildDetailTile('Telefone', dados['telefone'], Icons.phone),
-          const SizedBox(height: 10),
-          const Text(
-            'Endereço:',
-            style: TextStyle(fontWeight: FontWeight.bold),
-          ),
-          _buildDetailTile(
-              'Rua', dados['endereco']['rua'], Icons.straighten_outlined),
-          _buildDetailTile('Cidade', dados['endereco']['cidade'],
-              Icons.location_city_rounded),
-          _buildDetailTile('Estado', dados['endereco']['estado'],
-              Icons.store_mall_directory_outlined),
-          _buildDetailTile(
-              'CEP', dados['endereco']['cep'], Icons.location_on_outlined),
-        ];
-      } else {
-        content = [const Text('Detalhes não disponíveis para este item.')];
-      }
-
-      showDialog(
-        barrierDismissible: true,
-        context: context,
-        builder: (context) => Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: Container(
-            width: MediaQuery.of(context).size.width * 0.8,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.backgroundWhiteColor,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Text(
-                    'Detalhes ${widget.titulo}',
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: content,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: const Text(
-                      'Fechar',
-                      style: TextStyle(color: AppColors.buttonColor),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => DetalhesItemPage(
+            titulo: widget.titulo,
+            dados: dados,
           ),
         ),
       );
@@ -170,19 +79,11 @@ class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
     }
   }
 
-  Widget _buildDetailTile(String title, String? value, IconData icon) {
-    return ListTile(
-      leading: Icon(icon),
-      title: Text(title),
-      subtitle: Text(value ?? 'Não informado'),
-    );
-  }
-
   void _confirmarExcluir(Map<String, dynamic> item) {
     customShowDialog(
       context: context,
       title: 'Excluir ${widget.titulo}',
-      content: 'Tem certeza que deseja excluir ${item['nome']}?',
+      content: 'Tem certeza que deseja excluir ${item['nome']}? Todos os itens relacionados também serão excluídos.',
       confirmText: 'Excluir',
       cancelText: 'Cancelar',
       onConfirm: () {
@@ -195,47 +96,55 @@ class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
 
   void _excluirItem(Map<String, dynamic> item) async {
     final itemIndex = widget.itens.indexOf(item);
+    bool desfazerClicado = false;
 
-    try {
-      await ApiService()
-          .excluirDadosConfiguracoes(widget.titulo, item['id'].toString());
+    setState(() {
+      widget.itens.remove(item);
+      itensFiltrados.remove(item);
+    });
 
-      setState(() {
-        widget.itens.remove(item);
-        itensFiltrados.remove(item);
-      });
+    CustomSnackbar.show(
+      context,
+      '${item['nome']} foi excluído.',
+      actionLabel: 'Desfazer',
+      textColor: AppColors.textColor,
+      showCloseButton: false,
+      onAction: () async {
+        desfazerClicado = true;
 
-      CustomSnackbar.show(
-        context,
-        '${item['nome']} foi excluído.',
-        actionLabel: 'Desfazer',
-        onAction: () async {
-          try {
-            await ApiService().recriarDadosConfiguracoes(widget.titulo, item);
+        setState(() {
+          widget.itens.insert(itemIndex.clamp(0, widget.itens.length), item);
+          itensFiltrados.insert(
+              itemIndex.clamp(0, itensFiltrados.length), item);
+        });
 
-            setState(() {
-              widget.itens.insert(itemIndex, item);
-              _filtrarItens();
-            });
-          } catch (e) {
-            customShowDialog(
-              context: context,
-              title: 'Erro',
-              content: 'Não foi possível desfazer a exclusão. Erro: $e',
-              confirmText: 'Fechar',
-              onConfirm: () => Navigator.pop(context),
-            );
-          }
-        },
-      );
-    } catch (e) {
-      customShowDialog(
-        context: context,
-        title: 'Erro',
-        content: 'Não foi possível excluir o item. Erro: $e',
-        confirmText: 'Fechar',
-        onConfirm: () => Navigator.pop(context),
-      );
+        CustomSnackbar.show(
+          context,
+          '${item['nome']} foi restaurado com sucesso!',
+          backgroundColor: AppColors.successColor,
+        );
+      },
+    );
+    await Future.delayed(const Duration(seconds: 6));
+
+    if (!desfazerClicado) {
+      try {
+        await ApiService()
+            .excluirDadosConfiguracoes(widget.titulo, item['id'].toString());
+      } catch (e) {
+        setState(() {
+          widget.itens.insert(itemIndex, item);
+          itensFiltrados.insert(itemIndex, item);
+        });
+
+        customShowDialog(
+          context: context,
+          title: 'Erro',
+          content: 'Não foi possível excluir o item no backend. Erro: $e',
+          confirmText: 'Fechar',
+          onConfirm: () => Navigator.pop(context),
+        );
+      }
     }
   }
 
@@ -256,6 +165,8 @@ class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
             });
             Navigator.pop(context);
           },
+          titulo: widget.titulo,
+          endpoint: widget.titulo,
         ),
       ),
     );
@@ -263,10 +174,28 @@ class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final connectivityService = Provider.of<ConnectivityService>(context);
+
+    if (connectivityService.isCheckingConnection) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        body: Center(
+            child: CircularProgressIndicator(
+          color: AppColors.buttonColor,
+        )),
+      );
+    }
+
+    if (!connectivityService.isConnected) {
+      return OfflinePage(onRetry: () {}, isLoading: false);
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       appBar: AppBar(
-        title: Text('Configurar ${widget.titulo}'),
+        title: widget.titulo == 'Colaborador'
+            ? Text('Configurar ${widget.titulo}es')
+            : Text('Configurar ${widget.titulo}s'),
         backgroundColor: AppColors.backgroundBlueColor,
         shadowColor: Colors.black,
         elevation: 4,
@@ -316,6 +245,19 @@ class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
                     itemCount: itensFiltrados.length,
                     itemBuilder: (context, index) {
                       final item = itensFiltrados[index];
+
+                      String subtitle;
+                      if (widget.titulo == 'Faculdade') {
+                        subtitle = '${item['universidadeNome'] ?? ''}';
+                      } else if (widget.titulo == 'Curso') {
+                        subtitle = '${item['faculdadeNome'] ?? ''}';
+                      } else if (widget.titulo == 'Estudante' ||
+                          widget.titulo == 'Colaborador') {
+                        subtitle =
+                            '${item['turmaNome'] ?? ''}${item['cargo'] ?? ''}';
+                      } else {
+                        subtitle = 'Detalhes não disponíveis';
+                      }
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 8),
                         shape: RoundedRectangleBorder(
@@ -331,7 +273,7 @@ class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
                                 style: const TextStyle(
                                     fontWeight: FontWeight.bold),
                               ),
-                              subtitle: Text('ID: ${item['id']}'),
+                              subtitle: Text(subtitle),
                               trailing: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
@@ -354,6 +296,7 @@ class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
                                 String id =
                                     itensFiltrados[index]['id'].toString();
                                 _verDetalhes(widget.titulo, id);
+                                print('ID: $id');
                               },
                               child: const Text(
                                 'Mostrar informações completas',
@@ -366,8 +309,10 @@ class _EntidadeConfiguracoesPageState extends State<EntidadeConfiguracoesPage> {
                     },
                   )
                 : const Center(
-                    child:
-                        Text('Nenhum item encontrado. Pesquise para listar.'),
+                    child: Text(
+                      'Nenhum item encontrado. Pesquise para listar.',
+                      textAlign: TextAlign.center,
+                    ),
                   ),
           ),
         ],

@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:campus_sync/src/routes/route_generate.dart';
 import 'package:campus_sync/src/services/api_service.dart';
 import 'package:campus_sync/src/services/auth_service.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
+import 'package:campus_sync/src/views/pages/main/initial_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,10 +14,12 @@ class SignUpController {
   final BuildContext context;
   final formKey = formKeySignUp;
   final TextEditingController usernameController = TextEditingController();
-  final TextEditingController cpfController = MaskedTextController(mask: '000.000.000-00');
+  final TextEditingController cpfController =
+      MaskedTextController(mask: '000.000.000-00');
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController = TextEditingController();
+  final TextEditingController confirmPasswordController =
+      TextEditingController();
   final ValueNotifier<bool> obscurePassword = ValueNotifier(true);
   final ValueNotifier<bool> obscureConfirmPassword = ValueNotifier(true);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
@@ -60,7 +62,10 @@ class SignUpController {
     if (response.statusCode == 200) {
       var usuarioRegistrado = json.decode(response.body);
       await _saveUserData(usuarioRegistrado);
-      _showSuccessDialog(usuarioRegistrado['nome'], usuarioRegistrado['cpf']);
+      _showSuccessDialog(
+        usuarioRegistrado['nome'],
+        usuarioRegistrado['cpf'],
+      );
     } else if (await ApiService().checkCpfExists(cpfController.text) &&
         await ApiService().checkEmailExists(emailController.text)) {
       customShowDialog(
@@ -98,14 +103,18 @@ class SignUpController {
       content: 'Bem-vindo ao app, $nome. Clique em Entrar para continuar.',
       confirmText: 'Entrar',
       onConfirm: () {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          RouteGenerate.routeInitial,
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const InitialPage(cameFromSignIn: false),
+              settings: RouteSettings(
+                arguments: {
+                  'userCpf': cpf,
+                  'userNome': nome,
+                  'userEmail': emailController.text,
+                },
+              )),
           (route) => false,
-          arguments: {
-            'userCpf': cpf,
-            'userNome': nome,
-            'userEmail': emailController.text,
-          },
         );
       },
     );

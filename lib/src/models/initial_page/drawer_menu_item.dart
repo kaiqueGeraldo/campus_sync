@@ -4,7 +4,8 @@ class DrawerMenuItem {
   final String title;
   final IconData icon;
   final String endpoint;
-  const DrawerMenuItem({required this.title, required this.icon, required this.endpoint});
+  final String? cpf;
+  const DrawerMenuItem({required this.title, required this.icon, required this.endpoint, this.cpf,});
 }
 
 final List<DrawerMenuItem> drawerMenuItems = [
@@ -14,4 +15,5 @@ final List<DrawerMenuItem> drawerMenuItems = [
   const DrawerMenuItem(title: 'Colaboradores', icon: Icons.spatial_audio_off_outlined, endpoint: 'Colaborador'),
   const DrawerMenuItem(title: 'Configurações', icon: Icons.settings_outlined, endpoint: 'Configuracoes'),
   const DrawerMenuItem(title: 'Universidade', icon: Icons.school_outlined, endpoint: 'Universidade'),
+  const DrawerMenuItem(title: 'Conta', icon: Icons.account_circle_outlined, endpoint: 'Conta'),
 ];

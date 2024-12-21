@@ -1,5 +1,4 @@
 import 'package:campus_sync/src/views/pages/auth/forgot_password_page.dart';
-import 'package:campus_sync/src/views/pages/main/initial_page.dart';
 import 'package:campus_sync/src/views/pages/auth/signin_page.dart';
 import 'package:campus_sync/src/views/pages/auth/signup_page.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +7,6 @@ class RouteGenerate {
   static const String routeSignIn = '/signin';
   static const String routeSignUp = '/signup';
   static const String routeForgotPassword = '/forgotpassword';
-  static const String routeInitial = '/initial';
 
   static Route<dynamic> generateRoute(RouteSettings settings) {
     switch (settings.name) {
@@ -23,10 +21,6 @@ class RouteGenerate {
       case routeForgotPassword:
         return MaterialPageRoute(
           builder: (_) => const ForgotPasswordPage(),
-        );
-      case routeInitial:
-        return MaterialPageRoute(
-          builder: (_) => const InitialPage(),
         );
       default:
         return _notFoundPage();

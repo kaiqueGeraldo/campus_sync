@@ -3,6 +3,7 @@ import 'package:campus_sync/src/routes/route_generate.dart';
 import 'package:campus_sync/src/services/auth_service.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
+import 'package:campus_sync/src/views/pages/main/initial_page.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -43,8 +44,15 @@ class SignInController {
       var usuarioEncontrado = json.decode(response.body);
 
       await _saveUserData(usuarioEncontrado);
-      _showSuccessDialog(usuarioEncontrado['nome'], usuarioEncontrado['cpf'], usuarioEncontrado['token']);
+      _showSuccessDialog(
+        usuarioEncontrado['nome'],
+        usuarioEncontrado['cpf'],
+        usuarioEncontrado['token'],
+        usuarioEncontrado['urlImagem'],
+      );
     } else if (response.statusCode == 404) {
+      _showAccountNotFoundDialog();
+    } else if (response.statusCode == 401) {
       _showAccountNotFoundDialog();
     } else {
       CustomSnackbar.show(context, 'Dados inválidos. Tente Novamente!');
@@ -63,27 +71,35 @@ class SignInController {
     await prefs.setString('userUniversidadeContatoInfo', usuario['universidadeContatoInfo'] ?? '');
   }
 
-  void _showSuccessDialog(String nome, String cpf, String token) {
+  void _showSuccessDialog(
+    String nome,
+    String cpf,
+    String token,
+    String? urlImagem,
+  ) {
     customShowDialog(
       context: context,
       title: 'Sucesso no Login!',
       content: 'Bem-vindo de volta ao app $nome. Clique em Entrar para continuar.',
       confirmText: 'Entrar',
       onConfirm: () {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          RouteGenerate.routeInitial,
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(
+              builder: (context) => const InitialPage(cameFromSignIn: true),
+              settings: RouteSettings(
+                arguments: {
+                  'userCpf': cpf,
+                  'userNome': nome,
+                  'userEmail': emailController.text,
+                  'userToken': token,
+                  'userImagem': urlImagem,
+                  'userUniversidadeNome': '',
+                  'userUniversidadeCNPJ': '',
+                  'userUniversidadeContatoInfo': '',
+                },
+              )),
           (route) => false,
-          arguments: {
-            'userCpf': cpf,
-            'userNome': nome,
-            'userEmail': emailController.text,
-            'userToken': token,
-            'userImagem': '',
-            'userTelefone': '',
-            'userUniversidadeNome': '',
-            'userUniversidadeCNPJ': '',
-            'userUniversidadeContatoInfo': '',
-          },
         );
       },
     );
@@ -93,11 +109,13 @@ class SignInController {
     customShowDialog(
       context: context,
       title: 'Conta não encontrada',
-      content: 'A conta com este email não foi encontrada. Deseja criar uma nova conta?',
+      content: 'Não existe uma conta com esse e-mail registrada em nosso App. Deseja criar uma nova conta?',
       confirmText: 'Criar Conta',
       cancelText: 'Cancelar',
       onConfirm: () {
-        Navigator.of(context).pushNamed(RouteGenerate.routeSignUp);
+        Navigator.of(context).pushNamed(RouteGenerate.routeSignUp, 
+          arguments: {'userEmail': emailController.text},
+        );
       },
     );
   }

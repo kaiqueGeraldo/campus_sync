@@ -1,5 +1,8 @@
+import 'package:campus_sync/src/connectivity/connectivity_service.dart';
+import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class SelecionarFaculdadePage extends StatefulWidget {
   final List<Map<String, dynamic>> faculdades;
@@ -39,6 +42,22 @@ class _SelecionarFaculdadePageState extends State<SelecionarFaculdadePage> {
 
   @override
   Widget build(BuildContext context) {
+    final connectivityService = Provider.of<ConnectivityService>(context);
+
+    if (connectivityService.isCheckingConnection) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        body: Center(
+            child: CircularProgressIndicator(
+          color: AppColors.buttonColor,
+        )),
+      );
+    }
+
+    if (!connectivityService.isConnected) {
+      return OfflinePage(onRetry: () {}, isLoading: false);
+    }
+    
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       appBar: AppBar(

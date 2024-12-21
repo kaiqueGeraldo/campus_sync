@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:campus_sync/src/connectivity/connectivity_service.dart';
 import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/initial_controller.dart';
@@ -11,7 +12,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class InitialPage extends StatefulWidget {
-  const InitialPage({super.key});
+  final bool cameFromSignIn;
+  const InitialPage({super.key, required this.cameFromSignIn});
 
   @override
   State<InitialPage> createState() => _InitialPageState();
@@ -26,90 +28,127 @@ class _InitialPageState extends State<InitialPage> {
     const AboutPage(),
   ];
 
+  String userName = 'Usuário';
+  String userEmail = '';
+  Uint8List? userImageBytes;
+  bool isLoading = true;
+
+  late Map? arguments;
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    arguments = ModalRoute.of(context)?.settings.arguments as Map?;
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    final controller = InitialController(context: context);
+    final userData = await controller.getUserData(arguments: arguments);
+
+    setState(() {
+      userName = userData['userName'];
+      userEmail = userData['userEmail'];
+      userImageBytes = userData['userImageBytes'];
+      isLoading = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
-    final controller = InitialController(context: context);
     final connectivityService = Provider.of<ConnectivityService>(context);
 
-    if (connectivityService.isCheckingConnection) {
+    if (connectivityService.isCheckingConnection || isLoading) {
       return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
+        backgroundColor: AppColors.backgroundWhiteColor,
+        body: Center(
+            child: CircularProgressIndicator(
+          color: AppColors.buttonColor,
+        )),
       );
     }
 
     if (!connectivityService.isConnected) {
-      return OfflinePage(onRetry: () {}, isLoading: false);
+      return OfflinePage(onRetry: () => _loadUserData(), isLoading: false);
     }
 
     return Scaffold(
       drawer: Drawer(
         backgroundColor: AppColors.backgroundWhiteColor,
-        child: FutureBuilder<Map<String, dynamic>>(
-          future: controller.fetchUserData(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(
-                  color: AppColors.buttonColor,
-                ),
-              );
-            } else if (snapshot.hasError) {
-              return const Center(child: Text('Erro ao carregar dados'));
-            } else if (snapshot.hasData) {
-              final user = snapshot.data!;
-              return Column(
-                children: [
-                  UserAccountsDrawerHeader(
-                    currentAccountPicture: const CircleAvatar(
-                      backgroundImage: AssetImage('assets/images/logo.png'),
-                    ),
-                    accountName: Text(user['nome']),
-                    accountEmail: Text(user['email']),
-                    decoration: const BoxDecoration(
-                        color: AppColors.backgroundBlueColor),
-                  ),
-                  ListTile(
-                    leading: const Icon(Icons.home_outlined),
-                    title: const Text('Home'),
-                    onTap: () => Navigator.pop(context),
-                  ),
-                  ...drawerMenuItems
-                      .where((item) => item.title != 'Universidade')
-                      .map(
-                        (item) => ListTile(
-                          leading: Icon(item.icon),
-                          title: Text(item.title),
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => EntidadePage(
-                                  titulo: item.title,
-                                  endpoint: item.endpoint,
-                                ),
-                              ),
-                            );
-                          },
+        child: Column(
+          children: [
+            UserAccountsDrawerHeader(
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: AppColors.backgroundWhiteColor,
+                child: userImageBytes != null
+                    ? ClipOval(
+                        child: Image.memory(
+                          userImageBytes!,
+                          fit: BoxFit.cover,
+                          width: 72,
+                          height: 72,
                         ),
+                      )
+                    : const Icon(
+                        Icons.person,
+                        size: 50.0,
                       ),
-                ],
-              );
-            } else {
-              return const Center(child: Text('Nenhum dado disponível'));
-            }
-          },
+              ),
+              accountName: Text(userName),
+              accountEmail: Text(userEmail),
+              decoration:
+                  const BoxDecoration(color: AppColors.backgroundBlueColor),
+            ),
+            ListTile(
+              leading: const Icon(Icons.home_outlined),
+              title: const Text('Home'),
+              onTap: () => Navigator.pop(context),
+            ),
+            ...drawerMenuItems
+                .where((item) =>
+                    item.title != 'Universidade' && item.title != 'Conta')
+                .map(
+                  (item) => ListTile(
+                    leading: Icon(item.icon),
+                    title: Text(item.title),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EntidadePage(
+                            titulo: item.title,
+                            endpoint: item.endpoint,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+          ],
         ),
       ),
       appBar: AppBar(
         title: const Text('CampusSync'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () => _loadUserData(),
+            tooltip: 'Atualizar',
+          ),
           PopupMenuButton<int>(
             color: AppColors.backgroundWhiteColor,
             onSelected: (int result) {},
             itemBuilder: (BuildContext context) => <PopupMenuEntry<int>>[
               PopupMenuItem<int>(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
-                onTap: controller.logout,
+                onTap: () async {
+                  await InitialController(context: context).logout();
+                },
                 value: 1,
                 child: const Text(
                   'Sair da conta',

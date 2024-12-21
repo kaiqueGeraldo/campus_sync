@@ -1,12 +1,15 @@
 import 'dart:convert';
-
+import 'package:campus_sync/src/connectivity/connectivity_service.dart';
+import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/views/components/cadastro/custom_expansion_card.dart';
 import 'package:campus_sync/src/views/components/custom_button.dart';
-import 'package:campus_sync/src/views/components/custom_input_text_cadastro.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class CadastroEstudantePage extends StatefulWidget {
   final String endpoint;
@@ -21,6 +24,11 @@ class CadastroEstudantePage extends StatefulWidget {
 
 class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
   late CadastroController controller;
+  bool _isLoading = false;
+  Map<String, dynamic>? faculdadeSelecionada;
+  List<DropdownMenuItem<int>> cursosDropdownItems = [];
+  List<DropdownMenuItem<int>> turmasDropdownItems = [];
+  Map<int, List<dynamic>> turmasPorCurso = {};
   final TextEditingController nomeController = TextEditingController();
   final TextEditingController cpfController = TextEditingController();
   final TextEditingController rgController = TextEditingController();
@@ -83,14 +91,24 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
   }
 
   Future<http.Response?> cadastrarEstudante() async {
-    int estadoCivilValue =
-        controller.dropdownValues['EstadoCivil'] as int? ?? 0;
-    int nacionalidadeValue =
-        controller.dropdownValues['Nacionalidade'] as int? ?? 0;
-    int corRacaEtniaValue =
-        controller.dropdownValues['Cor/Raca/Etnia'] as int? ?? 0;
-    int escolaridadeValue =
-        controller.dropdownValues['Escolaridade'] as int? ?? 0;
+    setState(() {
+      _isLoading = true;
+    });
+
+    int? estadoCivilValue = controller.dropdownValues['EstadoCivil'];
+    int? nacionalidadeValue = controller.dropdownValues['Nacionalidade'];
+    int? corRacaEtniaValue = controller.dropdownValues['Cor/Raca/Etnia'];
+    int? escolaridadeValue = controller.dropdownValues['Escolaridade'];
+    int? turmaIdSelecionada = controller.dropdownValues['Turma'];
+    String? dataMatricula = dataMatriculaController.text.isNotEmpty
+        ? DateFormat('yyyy-MM-dd').format(
+            DateFormat('dd/MM/yyyy').parse(dataMatriculaController.text))
+        : null;
+
+    String? dataNascimento = dataNascimentoController.text.isNotEmpty
+        ? DateFormat('yyyy-MM-dd').format(
+            DateFormat('dd/MM/yyyy').parse(dataNascimentoController.text))
+        : null;
 
     try {
       const url =
@@ -108,14 +126,14 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
           "rg": rgController.text,
           "email": emailController.text,
           "numeroMatricula": numeroMatriculaController.text,
-          "dataMatricula": dataMatriculaController.text,
+          "dataMatricula": dataMatricula,
           "telefone": telefoneController.text,
-          "dataNascimento": dataNascimentoController.text,
+          "dataNascimento": dataNascimento,
           "tituloEleitor": tituloEleitorController.text,
-          "estadoCivil": estadoCivilValue,
-          "nacionalidade": nacionalidadeValue,
-          "corRacaEtnia": corRacaEtniaValue,
-          "escolaridade": escolaridadeValue,
+          "estadoCivil": getEstadoCivilString(estadoCivilValue),
+          "nacionalidade": getNacionalidadeString(nacionalidadeValue),
+          "corRacaEtnia": getCorRacaEtniaString(corRacaEtniaValue),
+          "escolaridade": getEscolaridadeString(escolaridadeValue),
           "nomePai": nomePaiController.text,
           "nomeMae": nomeMaeController.text,
           "telefonePai": telefonePaiController.text,
@@ -129,9 +147,12 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
             "estado": estadoController.text,
             "cep": cepController.text
           },
-          "turmaId": 0
+          "turmaId": turmaIdSelecionada
         }),
       );
+
+      print('TESTE DE CADASTRO: ${response.body}');
+      print('TESTE DE CADASTRO: ${response.statusCode}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         CustomSnackbar.show(context, 'Estudante Cadastrado com sucesso!',
@@ -139,163 +160,108 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
         Navigator.pop(context);
         return response;
       } else {
-        print('Erro ao cadastrar faculdade: ${response.statusCode}');
-        print('Detalhes: ${response.body}');
+        CustomSnackbar.show(context, response.body);
         return null;
       }
     } catch (e) {
       print('Erro ao conectar com a API: $e');
       return null;
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
-  Widget _buildDropdown(String field) {
-    List<DropdownMenuItem<int>> items = controller.getDropdownItems(field);
-
-    String labelText = controller.fieldNames[field] ?? field;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<int>(
-        value: controller.dropdownValues[field] as int?,
-        items: items,
-        onChanged: (newValue) {
-          setState(() {
-            controller.dropdownValues[field] = newValue;
-            print('Dropdown $field updated to $newValue');
-          });
-        },
-        decoration: InputDecoration(
-          labelText: labelText,
-          labelStyle: const TextStyle(color: AppColors.backgroundBlueColor),
-          border: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
-            borderSide: BorderSide(color: Colors.black12),
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(
-              width: 1.5,
-              color: AppColors.backgroundBlueColor,
-            ),
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
-        ),
-        dropdownColor: AppColors.lightGreyColor,
-        style: const TextStyle(
-          color: Colors.black,
-          fontSize: 16,
-        ),
-        validator: (value) {
-          if (value == null) {
-            return 'Por favor, selecione uma opção';
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildTextInput(
-    String field, {
-    bool enabled = true,
-    bool disabled = false,
-    EdgeInsets? customPadding,
-  }) {
-    String labelText = controller.fieldNames[field] ?? field;
-    TextInputType keyboardType = controller.getKeyboardType(field);
-    int? maxLength = controller.getMaxLength(field);
-
-    TextEditingController fieldController;
-    fieldController = controller.getMaskedController(field, "");
-
-    switch (field) {
-      case 'Nome':
-        fieldController = nomeController;
-        break;
+  String? getEstadoCivilString(int? value) {
+    switch (value) {
+      case 0:
+        return 'Solteiro';
+      case 1:
+        return 'Casado';
+      case 2:
+        return 'Divorciado';
+      case 3:
+        return 'Viúvo';
       default:
-        fieldController = TextEditingController();
+        return null;
     }
-
-    return Padding(
-      padding: customPadding ?? const EdgeInsets.only(bottom: 16),
-      child: CustomInputTextCadastro(
-        controller: fieldController,
-        labelText: labelText,
-        keyboardType: keyboardType,
-        maxLength: maxLength,
-        enabled: enabled && !disabled,
-        validator: (value) {
-          if (!disabled && (value == null || value.isEmpty)) {
-            return 'Este campo é obrigatório';
-          }
-          return null;
-        },
-      ),
-    );
   }
 
-  Widget _buildCard({
-    required String title,
-    required IconData icon,
-    required bool initiallyExpanded,
-    required ValueChanged<bool> onExpansionChanged,
-    required List<Widget> children,
-  }) {
-    return Card(
-      color: AppColors.lightGreyColor,
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: ExpansionTile(
-        backgroundColor: AppColors.lightGreyColor,
-        iconColor: initiallyExpanded ? AppColors.buttonColor : Colors.black,
-        leading: Icon(
-          icon,
-          color: initiallyExpanded ? AppColors.buttonColor : Colors.black,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        initiallyExpanded: initiallyExpanded,
-        onExpansionChanged: onExpansionChanged,
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: initiallyExpanded ? AppColors.buttonColor : Colors.black,
-          ),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: children,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+  String? getNacionalidadeString(int? value) {
+    switch (value) {
+      case 0:
+        return 'Brasileiro';
+      case 1:
+        return 'Estrangeiro';
+      default:
+        return null;
+    }
+  }
+
+  String? getCorRacaEtniaString(int? value) {
+    switch (value) {
+      case 0:
+        return 'Branco';
+      case 1:
+        return 'Pardo';
+      case 2:
+        return 'Negro';
+      case 3:
+        return 'Amarelo';
+      case 4:
+        return 'Indígena';
+      default:
+        return null;
+    }
+  }
+
+  String? getEscolaridadeString(int? value) {
+    switch (value) {
+      case 0:
+        return 'Ensino Médio';
+      case 1:
+        return 'Graduação';
+      case 2:
+        return 'Pós-Graduação';
+      case 3:
+        return 'Mestrado';
+      case 4:
+        return 'Doutorado';
+      default:
+        return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final connectivityService = Provider.of<ConnectivityService>(context);
+
+    if (connectivityService.isCheckingConnection) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        body: Center(
+            child: CircularProgressIndicator(
+          color: AppColors.buttonColor,
+        )),
+      );
+    }
+
+    if (!connectivityService.isConnected) {
+      return OfflinePage(onRetry: () {}, isLoading: false);
+    }
+    
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       appBar: AppBar(
-        title: Text('Cadastro de ${widget.endpoint}'),
+        title: const Text('Cadastro de Estudantes'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _buildCard(
+              CustomExpansionCard(
                 title: 'Dados do Estudante',
                 icon: Icons.person,
                 initiallyExpanded: isDadosEstudanteExpanded,
@@ -305,15 +271,33 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   });
                 },
                 children: [
-                  _buildTextInput('NumeroMatricula'),
-                  _buildTextInput('DataMatricula'),
-                  _buildTextInput('Nome'),
-                  _buildTextInput('Email'),
-                  _buildTextInput('DataNascimento'),
-                  _buildTextInput('Telefone'),
+                  controller.buildTextInput(
+                    'Nome',
+                    context,
+                    nomeController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'Email',
+                    context,
+                    emailController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'Telefone',
+                    context,
+                    telefoneController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'DataNascimento',
+                    context,
+                    dataNascimentoController,
+                    !_isLoading,
+                  ),
                 ],
               ),
-              _buildCard(
+              CustomExpansionCard(
                 title: 'Documentos',
                 icon: Icons.file_copy,
                 initiallyExpanded: isDocumentosExpanded,
@@ -323,16 +307,67 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   });
                 },
                 children: [
-                  _buildTextInput('CPF'),
-                  _buildTextInput('RG'),
-                  _buildTextInput('TituloEleitor'),
-                  _buildDropdown('EstadoCivil'),
-                  _buildDropdown('Nacionalidade'),
-                  _buildDropdown('Cor/Raca/Etnia'),
-                  _buildDropdown('Escolaridade'),
+                  controller.buildTextInput(
+                    'CPF',
+                    context,
+                    cpfController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'RG',
+                    context,
+                    rgController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'TituloEleitor',
+                    context,
+                    tituloEleitorController,
+                    !_isLoading,
+                  ),
+                  controller.buildDropdown(
+                    'EstadoCivil',
+                    context,
+                    !_isLoading,
+                    (newValue) {
+                      setState(() {
+                        controller.dropdownValues['EstadoCivil'] = newValue;
+                      });
+                    },
+                  ),
+                  controller.buildDropdown(
+                    'Nacionalidade',
+                    context,
+                    !_isLoading,
+                    (newValue) {
+                      setState(() {
+                        controller.dropdownValues['Nacionalidade'] = newValue;
+                      });
+                    },
+                  ),
+                  controller.buildDropdown(
+                    'Cor/Raca/Etnia',
+                    context,
+                    !_isLoading,
+                    (newValue) {
+                      setState(() {
+                        controller.dropdownValues['Cor/Raca/Etnia'] = newValue;
+                      });
+                    },
+                  ),
+                  controller.buildDropdown(
+                    'Escolaridade',
+                    context,
+                    !_isLoading,
+                    (newValue) {
+                      setState(() {
+                        controller.dropdownValues['Escolaridade'] = newValue;
+                      });
+                    },
+                  ),
                 ],
               ),
-              _buildCard(
+              CustomExpansionCard(
                 title: 'Informações dos Pais',
                 icon: Icons.family_restroom,
                 initiallyExpanded: isInformacoesPaisExpanded,
@@ -342,12 +377,11 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   });
                 },
                 children: [
-                  _buildTextInput(
+                  controller.buildTextInput(
                     'NomePai',
-                    disabled: naoConstaPai,
-                  ),
-                  _buildTextInput(
-                    'TelefonePai',
+                    context,
+                    nomePaiController,
+                    !_isLoading,
                     disabled: naoConstaPai,
                     customPadding: const EdgeInsets.only(bottom: 0),
                   ),
@@ -359,7 +393,6 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                         naoConstaPai = value ?? false;
                         if (naoConstaPai) {
                           controller.controllers['NomePai']?.clear();
-                          controller.controllers['TelefonePai']?.clear();
                         }
                       });
                     },
@@ -367,12 +400,11 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                     controlAffinity: ListTileControlAffinity.leading,
                     activeColor: AppColors.buttonColor,
                   ),
-                  _buildTextInput(
+                  controller.buildTextInput(
                     'NomeMae',
-                    disabled: naoConstaMae,
-                  ),
-                  _buildTextInput(
-                    'TelefoneMae',
+                    context,
+                    nomeMaeController,
+                    !_isLoading,
                     disabled: naoConstaMae,
                     customPadding: const EdgeInsets.only(bottom: 0),
                   ),
@@ -384,7 +416,6 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                         naoConstaMae = value ?? false;
                         if (naoConstaMae) {
                           controller.controllers['NomeMae']?.clear();
-                          controller.controllers['TelefoneMae']?.clear();
                         }
                       });
                     },
@@ -394,7 +425,7 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   ),
                 ],
               ),
-              _buildCard(
+              CustomExpansionCard(
                 title: 'Curso',
                 icon: Icons.library_books_rounded,
                 initiallyExpanded: isCursoExpanded,
@@ -404,12 +435,67 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   });
                 },
                 children: [
-                  _buildTextInput('Nome'),
-                  _buildTextInput('Turma'),
-                  _buildTextInput('Periodo'),
+                  controller.buildTextInput(
+                    'NumeroMatricula',
+                    context,
+                    numeroMatriculaController,
+                    !_isLoading,
+                  ),
+                  controller.buildFaculdadeInput(context),
+                  ValueListenableBuilder<Map<String, dynamic>>(
+                    valueListenable: controller.faculdadeSelecionadaNotifier,
+                    builder: (context, faculdadeSelecionada, child) {
+                      return Column(
+                        children: [
+                          if (faculdadeSelecionada.isNotEmpty)
+                            controller.buildCursosDropdown(
+                              context,
+                              !_isLoading,
+                            ),
+                          ValueListenableBuilder<int?>(
+                            valueListenable:
+                                controller.cursoSelecionadoNotifier,
+                            builder: (context, cursoSelecionado, child) {
+                              final turmas =
+                                  controller.turmasPorCurso[cursoSelecionado];
+
+                              if (cursoSelecionado != null &&
+                                  (turmas == null || turmas.isEmpty)) {
+                                WidgetsBinding.instance
+                                    .addPostFrameCallback((_) {
+                                  CustomSnackbar.show(
+                                    context,
+                                    'O curso selecionado não possui turmas associadas.',
+                                  );
+                                });
+                              }
+
+                              return Column(
+                                children: [
+                                  if (cursoSelecionado != null &&
+                                      turmas != null &&
+                                      turmas.isNotEmpty)
+                                    controller.buildTurmasDropdown(
+                                      context,
+                                      !_isLoading,
+                                    ),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                  controller.buildTextInput(
+                    'DataMatricula',
+                    context,
+                    dataMatriculaController,
+                    !_isLoading,
+                  ),
                 ],
               ),
-              _buildCard(
+              CustomExpansionCard(
                 title: 'Endereço',
                 icon: Icons.home,
                 initiallyExpanded: isEnderecoExpanded,
@@ -419,18 +505,51 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   });
                 },
                 children: [
-                  _buildTextInput('EnderecoLogradouro'),
-                  _buildTextInput('EnderecoNumero'),
-                  _buildTextInput('EnderecoBairro'),
-                  _buildTextInput('EnderecoCidade'),
-                  _buildTextInput('EnderecoEstado'),
-                  _buildTextInput('EnderecoCEP'),
+                  controller.buildTextInput(
+                    'EnderecoLogradouro',
+                    context,
+                    logradouroController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EnderecoNumero',
+                    context,
+                    numeroController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EnderecoBairro',
+                    context,
+                    bairroController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EnderecoCidade',
+                    context,
+                    cidadeController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EnderecoEstado',
+                    context,
+                    estadoController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EnderecoCEP',
+                    context,
+                    cepController,
+                    !_isLoading,
+                  ),
                 ],
               ),
               CustomButton(
-                text: 'Cadastrar',
+                text: _isLoading ? '' : 'Cadastrar',
+                isLoading: _isLoading,
                 onPressed: () {
-                  cadastrarEstudante();
+                  if (!_isLoading) {
+                    cadastrarEstudante();
+                  }
                 },
               )
             ],

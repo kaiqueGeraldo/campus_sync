@@ -4,6 +4,7 @@ class AppColors {
   // Primárias
   static const Color buttonColor = Color(0xff1a73e8); // Azul
   static const Color textColor = Color(0xfff8f8f9); // Branco
+  static const Color navigationBarColor = Color(0xff203240); // Branco
 
   // Neutras
   static const Color greyColor = Color(0xffa0a0a0);

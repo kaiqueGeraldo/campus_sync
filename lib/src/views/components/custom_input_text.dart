@@ -13,6 +13,8 @@ class CustomInputText extends StatelessWidget {
   final int? maxLength;
   final Widget? suffixIcon;
   final Function(String)? onChanged;
+  final bool isLoading;
+  final bool enable;
 
   const CustomInputText({
     required this.controller,
@@ -25,6 +27,8 @@ class CustomInputText extends StatelessWidget {
     this.maxLength,
     this.suffixIcon,
     this.onChanged,
+    this.isLoading = false,
+    this.enable = true,
     super.key,
   });
 
@@ -36,7 +40,9 @@ class CustomInputText extends StatelessWidget {
       obscureText: obscureText,
       validator: validator,
       maxLength: maxLength,
+      enabled: isLoading ? false : enable,
       maxLengthEnforcement: MaxLengthEnforcement.none,
+      cursorColor: AppColors.textColor,
       onChanged: (value) {
         if (onChanged != null) {
           onChanged!(value);

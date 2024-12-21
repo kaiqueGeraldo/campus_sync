@@ -4,57 +4,73 @@ import 'package:flutter/services.dart';
 
 class CustomInputTextCadastro extends StatelessWidget {
   final TextEditingController controller;
+  final String? field;
   final String labelText;
   final String? Function(String?)? validator;
   final int? maxLength;
   final Widget? suffixIcon;
   final Function(String)? onChanged;
+  final VoidCallback? onTap;
   final TextInputType keyboardType;
   final bool enabled;
+  final bool readOnly;
   final List<TextInputFormatter>? inputFormatters;
+  final EdgeInsets? padding;
+  final bool isLoading;
 
   const CustomInputTextCadastro({
+    super.key,
     required this.controller,
     required this.labelText,
     required this.keyboardType,
     this.validator,
     this.maxLength,
     this.enabled = true,
+    this.readOnly = false,
     this.inputFormatters,
-    super.key,
     this.suffixIcon,
     this.onChanged,
+    this.onTap,
+    this.padding,
+    this.field,
+    this.isLoading = false,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      validator: validator,
-      maxLengthEnforcement: MaxLengthEnforcement.enforced,
-      maxLength: maxLength,
-      keyboardType: keyboardType,
-      enabled: enabled,
-      inputFormatters: inputFormatters,
-      onChanged: (value) {
-        if (onChanged != null) {
-          onChanged!(value);
-        }
-      },
-      decoration: InputDecoration(
-        label: Text(labelText),
-        floatingLabelStyle:
-            const TextStyle(color: AppColors.backgroundBlueColor),
-        border: const OutlineInputBorder(
-          borderRadius: BorderRadius.all(Radius.circular(10)),
-          borderSide: BorderSide(color: Colors.black12),
+    return GestureDetector(
+      onTap: onTap,
+      child: TextFormField(
+        controller: controller,
+        validator: validator,
+        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+        maxLength: maxLength,
+        keyboardType: keyboardType,
+        enabled: isLoading ? false : enabled,
+        readOnly: readOnly,
+        inputFormatters: inputFormatters,
+        cursorColor: AppColors.backgroundBlueColor,
+        onChanged: (value) {
+          if (onChanged != null) {
+            onChanged!(value);
+          }
+        },
+        decoration: InputDecoration(
+          label: Text(labelText),
+          floatingLabelStyle: const TextStyle(
+            color: AppColors.backgroundBlueColor,
+          ),
+          border: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(10)),
+            borderSide: BorderSide(color: Colors.black12),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderSide: BorderSide(color: AppColors.backgroundBlueColor),
+            borderRadius: BorderRadius.all(Radius.circular(12)),
+          ),
+          counterText: '',
+          suffixIcon: suffixIcon,
         ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: AppColors.backgroundBlueColor),
-          borderRadius: BorderRadius.all(Radius.circular(12)),
-        ),
-        counterText: '',
-        suffixIcon: suffixIcon, 
       ),
     );
   }

@@ -1,8 +1,17 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:campus_sync/src/connectivity/connectivity_service.dart';
+import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/services/api_service.dart';
+import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AtualizarFotoUniversidadePage extends StatefulWidget {
   const AtualizarFotoUniversidadePage({super.key});
@@ -17,6 +26,39 @@ class _AtualizarFotoUniversidadePageState
   XFile? _image;
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
+  bool _isLoading = false;
+  Uint8List? _userImageBytes;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      final userData = await ApiService().fetchUserProfile(context);
+
+      if (userData['urlImagem'] != null && userData['urlImagem'].isNotEmpty) {
+        setState(() {
+          _userImageBytes = base64Decode(userData['urlImagem']);
+        });
+      } else {
+        setState(() {
+          _userImageBytes = null;
+        });
+      }
+    } catch (e) {
+      print('Erro ao carregar dados do usuário: $e');
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   void _showImageSourceSheet() {
     showModalBottomSheet(
@@ -72,6 +114,16 @@ class _AtualizarFotoUniversidadePageState
   }
 
   Future<void> _uploadImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('userToken');
+    String? cpf = prefs.getString('userCpf');
+    String? email = prefs.getString('userEmail');
+    String? nome = prefs.getString('userNome');
+
+    if (token == null) {
+      throw Exception('Token não encontrado. Faça login novamente.');
+    }
+
     if (_image == null) return;
 
     setState(() {
@@ -79,13 +131,43 @@ class _AtualizarFotoUniversidadePageState
     });
 
     try {
-      await Future.delayed(const Duration(seconds: 2));
+      final bytes = await File(_image!.path).readAsBytes();
+      final base64Image = base64Encode(bytes);
 
-      CustomSnackbar.show(context, 'Imagem atualizada com sucesso!',
-          backgroundColor: AppColors.successColor);
+      print('base64Image: $base64Image');
+
+      final response = await http.put(
+        Uri.parse(
+            'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api/User/update'),
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        },
+        body: json.encode({
+          'cpf': cpf,
+          'nome': nome,
+          'email': email,
+          'urlImagem': base64Image,
+        }),
+      );
+
+      print('Status: ${response.statusCode}');
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        CustomSnackbar.show(context, 'Imagem atualizada com sucesso!',
+            backgroundColor: AppColors.successColor);
+        Navigator.pop(context);
+      } else {
+        CustomSnackbar.show(
+          context,
+          'Erro ao atualizar imagem: ${response.body}',
+          backgroundColor: AppColors.errorColor,
+        );
+      }
     } catch (e) {
+      print('Erro ao atualizar imagem: $e');
       CustomSnackbar.show(context, 'Erro ao atualizar imagem: $e',
-          backgroundColor: AppColors.successColor);
+          backgroundColor: AppColors.errorColor);
     } finally {
       setState(() {
         _isUploading = false;
@@ -95,6 +177,22 @@ class _AtualizarFotoUniversidadePageState
 
   @override
   Widget build(BuildContext context) {
+    final connectivityService = Provider.of<ConnectivityService>(context);
+
+    if (connectivityService.isCheckingConnection) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        body: Center(
+            child: CircularProgressIndicator(
+          color: AppColors.buttonColor,
+        )),
+      );
+    }
+
+    if (!connectivityService.isConnected) {
+      return OfflinePage(onRetry: () => _loadUserData(), isLoading: false);
+    }
+    
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       appBar: AppBar(
@@ -105,11 +203,28 @@ class _AtualizarFotoUniversidadePageState
         child: Center(
           child: Column(
             children: [
-              if (_image != null)
+              if (_isLoading)
+                const LinearProgressIndicator(
+                  backgroundColor: AppColors.lightGreyColor,
+                  color: AppColors.buttonColor,
+                  valueColor: AlwaysStoppedAnimation(AppColors.buttonColor),
+                  minHeight: 8,
+                )
+              else if (_image != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(200),
                   child: Image.file(
                     File(_image!.path),
+                    width: 250,
+                    height: 250,
+                    fit: BoxFit.cover,
+                  ),
+                )
+              else if (_userImageBytes != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(200),
+                  child: Image.memory(
+                    _userImageBytes!,
                     width: 250,
                     height: 250,
                     fit: BoxFit.cover,
@@ -124,57 +239,24 @@ class _AtualizarFotoUniversidadePageState
                   ),
                 ),
               const SizedBox(height: 30),
-              SizedBox(
-                width: 300,
-                height: 50,
-                child: ElevatedButton(
-                  style: const ButtonStyle(
-                    elevation: WidgetStatePropertyAll(4),
-                    backgroundColor:
-                        WidgetStatePropertyAll(AppColors.buttonColor),
-                    foregroundColor:
-                        WidgetStatePropertyAll(AppColors.textColor),
-                    shape: WidgetStatePropertyAll(
-                      RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                  ),
-                  onPressed: _showImageSourceSheet,
-                  child: const Text(
-                    'Escolher Imagem',
-                    style: TextStyle(fontSize: 15),
-                  ),
-                ),
+              CustomButton(
+                text: 'Escolher Imagem',
+                onPressed: () {
+                  if (!_isUploading) {
+                    _showImageSourceSheet();
+                  }
+                },
               ),
               if (_image != null) ...[
                 const SizedBox(height: 20),
-                SizedBox(
-                  width: 300,
-                  height: 50,
-                  child: ElevatedButton(
-                    style: const ButtonStyle(
-                      elevation: WidgetStatePropertyAll(4),
-                      backgroundColor:
-                          WidgetStatePropertyAll(AppColors.buttonColor),
-                      foregroundColor:
-                          WidgetStatePropertyAll(AppColors.textColor),
-                      shape: WidgetStatePropertyAll(
-                        RoundedRectangleBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(10)),
-                        ),
-                      ),
-                    ),
-                    onPressed: _isUploading ? null : _uploadImage,
-                    child: _isUploading
-                        ? const CircularProgressIndicator(
-                            color: Colors.white,
-                          )
-                        : const Text(
-                            'Atualizar Imagem',
-                            style: TextStyle(fontSize: 15),
-                          ),
-                  ),
+                CustomButton(
+                  text: _isUploading ? '' : 'Atualizar Imagem',
+                  isLoading: _isUploading,
+                  onPressed: () {
+                    if (!_isUploading) {
+                      _uploadImage();
+                    }
+                  },
                 ),
               ],
             ],

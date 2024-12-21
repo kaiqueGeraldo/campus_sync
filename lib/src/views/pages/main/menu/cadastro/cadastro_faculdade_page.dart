@@ -1,14 +1,17 @@
 import 'dart:convert';
 
+import 'package:campus_sync/src/connectivity/connectivity_service.dart';
+import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/services/api_service.dart';
+import 'package:campus_sync/src/views/components/cadastro/custom_expansion_card.dart';
 import 'package:campus_sync/src/views/components/custom_button.dart';
-import 'package:campus_sync/src/views/components/custom_input_text_cadastro.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:provider/provider.dart';
 
 class CadastroFaculdadePage extends StatefulWidget {
   final String endpoint;
@@ -24,6 +27,7 @@ class CadastroFaculdadePage extends StatefulWidget {
 
 class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
   late CadastroController controller;
+  bool _isLoading = false;
   final TextEditingController _courseController = TextEditingController();
   final TextEditingController nomeController = TextEditingController();
   final TextEditingController cnpjController = TextEditingController();
@@ -219,6 +223,10 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
   }
 
   Future<http.Response?> cadastrarFaculdade() async {
+    setState(() {
+      _isLoading = true;
+    });
+
     int tipoFaculValue = controller.dropdownValues['TipoFacul'] as int? ?? 0;
 
     try {
@@ -255,312 +263,41 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
         Navigator.pop(context);
         return response;
       } else {
-        print('Erro ao cadastrar faculdade: ${response.statusCode}');
-        print('Detalhes: ${response.body}');
+        CustomSnackbar.show(context, response.body);
         return null;
       }
     } catch (e) {
       print('Erro ao conectar com a API: $e');
       return null;
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
     }
-  }
-
-  Widget _buildTextInput(
-    String field, {
-    bool enabled = true,
-    bool disabled = false,
-    EdgeInsets? customPadding,
-  }) {
-    String labelText = controller.fieldNames[field] ?? field;
-
-    TextInputType keyboardType = controller.getKeyboardType(field);
-
-    int? maxLength = controller.getMaxLength(field);
-
-    TextEditingController fieldController;
-    fieldController = controller.getMaskedController(field, "");
-
-    switch (field) {
-      case 'Curso':
-        fieldController = _courseController;
-        break;
-      case 'Nome':
-        fieldController = nomeController;
-        break;
-      case 'CNPJ':
-        fieldController = cnpjController;
-        break;
-      case 'Telefone':
-        fieldController = telefoneController;
-        break;
-      case 'EmailResponsavel':
-        fieldController = emailResponsavelController;
-        break;
-      case 'TipoFacul':
-        fieldController = tipoFaculController;
-        break;
-      case 'Adicionar':
-        fieldController = adicionarController;
-        break;
-      case 'EnderecoLogradouro':
-        fieldController = logradouroController;
-        break;
-      case 'EnderecoNumero':
-        fieldController = numeroController;
-        break;
-      case 'EnderecoBairro':
-        fieldController = bairroController;
-        break;
-      case 'EnderecoCidade':
-        fieldController = cidadeController;
-        break;
-      case 'EnderecoEstado':
-        fieldController = estadoController;
-        break;
-      case 'EnderecoCEP':
-        fieldController = cepController;
-        break;
-      default:
-        fieldController = TextEditingController();
-    }
-
-    String? Function(String?)? validator;
-    if (field == 'CNPJ') {
-      validator = validateCnpj;
-    }
-
-    return Padding(
-      padding: customPadding ?? const EdgeInsets.only(bottom: 16),
-      child: CustomInputTextCadastro(
-        controller: fieldController,
-        labelText: labelText,
-        keyboardType: keyboardType,
-        maxLength: maxLength,
-        enabled: enabled && !disabled,
-        validator: validator,
-        suffixIcon: field == 'CNPJ'
-            ? ValueListenableBuilder<bool>(
-                valueListenable: isCnpjValid,
-                builder: (context, isValid, _) {
-                  return cnpjController.text.isEmpty
-                      ? const Icon(
-                          Icons.info,
-                          color: Colors.grey,
-                        )
-                      : Icon(
-                          isCnpjValid.value ? Icons.check_circle : Icons.error,
-                          color: isCnpjValid.value ? Colors.green : Colors.red,
-                        );
-                },
-              )
-            : null,
-        onChanged: (value) {
-          setState(() {
-            updateCnpjNotifier();
-          });
-        },
-      ),
-    );
-  }
-
-  Widget _buildDropdown(String field) {
-    List<DropdownMenuItem<int>> items = controller.getDropdownItems(field);
-
-    String labelText = controller.fieldNames[field] ?? field;
-
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: DropdownButtonFormField<int>(
-        value: controller.dropdownValues[field] as int?,
-        items: items,
-        onChanged: (newValue) {
-          setState(() {
-            controller.dropdownValues[field] = newValue;
-            print('Dropdown $field updated to $newValue');
-          });
-        },
-        decoration: InputDecoration(
-          labelText: labelText,
-          labelStyle: const TextStyle(color: AppColors.backgroundBlueColor),
-          border: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
-            borderSide: BorderSide(color: Colors.black12),
-          ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(
-              width: 1.5,
-              color: AppColors.backgroundBlueColor,
-            ),
-            borderRadius: BorderRadius.all(Radius.circular(12)),
-          ),
-        ),
-        dropdownColor: AppColors.lightGreyColor,
-        style: const TextStyle(
-          color: Colors.black,
-          fontSize: 16,
-        ),
-        validator: (value) {
-          if (value == null) {
-            return 'Por favor, selecione uma opção';
-          }
-          return null;
-        },
-      ),
-    );
-  }
-
-  Widget _buildCard({
-    required String title,
-    required IconData icon,
-    required bool initiallyExpanded,
-    required ValueChanged<bool> onExpansionChanged,
-    required List<Widget> children,
-  }) {
-    return Card(
-      color: AppColors.lightGreyColor,
-      margin: const EdgeInsets.only(bottom: 16),
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: ExpansionTile(
-        backgroundColor: AppColors.lightGreyColor,
-        iconColor: initiallyExpanded ? AppColors.buttonColor : Colors.black,
-        leading: Icon(
-          icon,
-          color: initiallyExpanded ? AppColors.buttonColor : Colors.black,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-        initiallyExpanded: initiallyExpanded,
-        onExpansionChanged: onExpansionChanged,
-        title: Text(
-          title,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: initiallyExpanded ? AppColors.buttonColor : Colors.black,
-          ),
-        ),
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Form(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: children,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildCourseInput() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        TextField(
-          controller: _courseController,
-          onChanged: _filterCursos,
-          decoration: InputDecoration(
-            labelText: 'Adicionar Curso',
-            floatingLabelStyle:
-                const TextStyle(color: AppColors.backgroundBlueColor),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(10),
-              borderSide: const BorderSide(color: Colors.black12),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
-              borderSide:
-                  const BorderSide(color: AppColors.backgroundBlueColor),
-            ),
-          ),
-        ),
-        if (_courseController.text.isNotEmpty && filteredCursos.isNotEmpty)
-          Card(
-            color: AppColors.backgroundWhiteColor,
-            shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.only(
-                    bottomLeft: Radius.circular(8),
-                    bottomRight: Radius.circular(8))),
-            margin: const EdgeInsets.only(top: 5),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxHeight: 200,
-              ),
-              child: ListView.builder(
-                shrinkWrap: true,
-                physics: const BouncingScrollPhysics(),
-                itemCount: filteredCursos.length,
-                itemBuilder: (context, index) {
-                  final curso = filteredCursos[index];
-                  return ListTile(
-                    title: Text(curso),
-                    onTap: () => _addCurso(curso),
-                  );
-                },
-              ),
-            ),
-          ),
-      ],
+    return controller.buildListInput(
+      context,
+      label: 'Adicionar Curso',
+      enabled: !_isLoading,
+      controller: _courseController,
+      itemsDisponiveis: cursosDisponiveis,
+      filteredItems: filteredCursos,
+      onAddItem: _addCurso,
+      onRemoveItem: _removeCurso,
+      onRemoveAll: _removeAllCurso,
+      onFilter: _filterCursos,
     );
   }
 
   Widget _buildCursosOferecidos() {
-    return Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Cursos Oferecidos:',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-          ),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: cursosOferecidos.map((curso) {
-              return ConstrainedBox(
-                constraints: const BoxConstraints(
-                  maxWidth: 110,
-                ),
-                child: Chip(
-                  label: GestureDetector(
-                    onTap: () {
-                      CustomSnackbar.show(
-                        context,
-                        curso,
-                        backgroundColor: AppColors.socialButtonColor,
-                      );
-                    },
-                    child: Text(
-                      curso,
-                      overflow: TextOverflow.ellipsis,
-                      maxLines: 1,
-                    ),
-                  ),
-                  backgroundColor: AppColors.lightGreyColor,
-                  deleteIcon: const Icon(Icons.close, color: Colors.red),
-                  onDeleted: () => _removeCurso(curso),
-                ),
-              );
-            }).toList(),
-          ),
-          if (cursosOferecidos.length > 1)
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: _removeAllCurso,
-                child: const Text('Remover tudo',
-                    style: TextStyle(color: AppColors.buttonColor)),
-              ),
-            )
-        ],
-      ),
+    return controller.buildSelectedItems(
+      context,
+      label: 'Cursos Oferecidos:',
+      itemsSelecionados: cursosOferecidos,
+      onRemoveItem: (curso) => _removeCurso(curso),
+      onRemoveAll: _removeAllCurso,
     );
   }
 
@@ -656,18 +393,34 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
 
   @override
   Widget build(BuildContext context) {
+    final connectivityService = Provider.of<ConnectivityService>(context);
+
+    if (connectivityService.isCheckingConnection) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        body: Center(
+            child: CircularProgressIndicator(
+          color: AppColors.buttonColor,
+        )),
+      );
+    }
+
+    if (!connectivityService.isConnected) {
+      return OfflinePage(onRetry: () {}, isLoading: false);
+    }
+    
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       appBar: AppBar(
-        title: Text('Cadastro de ${widget.endpoint}'),
+        title: const Text('Cadastro de Faculdades'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
           child: Column(
             children: [
-              _buildCard(
-                title: 'Dados de ${widget.endpoint}',
+              CustomExpansionCard(
+                title: 'Dados da Faculdade',
                 icon: Icons.cases_rounded,
                 initiallyExpanded: isDadosEntidadeExpanded,
                 onExpansionChanged: (expanded) {
@@ -676,16 +429,45 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
                   });
                 },
                 children: [
-                  _buildTextInput('Nome'),
-                  _buildTextInput('CNPJ'),
-                  _buildTextInput('Telefone'),
-                  _buildTextInput('EmailResponsavel'),
-                  _buildDropdown('TipoFacul'),
+                  controller.buildTextInput(
+                    'Nome',
+                    context,
+                    nomeController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'CNPJ',
+                    context,
+                    cnpjController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'Telefone',
+                    context,
+                    telefoneController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EmailResponsavel',
+                    context,
+                    emailResponsavelController,
+                    !_isLoading,
+                  ),
+                  controller.buildDropdown(
+                    'TipoFacul',
+                    context,
+                    !_isLoading,
+                    (newValue) {
+                      setState(() {
+                        controller.dropdownValues['TipoFacul'] = newValue;
+                      });
+                    },
+                  ),
                   _buildCourseInput(),
                   if (cursosOferecidos.isNotEmpty) _buildCursosOferecidos(),
                 ],
               ),
-              _buildCard(
+              CustomExpansionCard(
                 title: 'Endereço',
                 icon: Icons.home,
                 initiallyExpanded: isEnderecoExpanded,
@@ -695,18 +477,51 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
                   });
                 },
                 children: [
-                  _buildTextInput('EnderecoLogradouro'),
-                  _buildTextInput('EnderecoNumero'),
-                  _buildTextInput('EnderecoBairro'),
-                  _buildTextInput('EnderecoCidade'),
-                  _buildTextInput('EnderecoEstado'),
-                  _buildTextInput('EnderecoCEP'),
+                  controller.buildTextInput(
+                    'EnderecoLogradouro',
+                    context,
+                    logradouroController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EnderecoNumero',
+                    context,
+                    numeroController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EnderecoBairro',
+                    context,
+                    bairroController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EnderecoCidade',
+                    context,
+                    cidadeController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EnderecoEstado',
+                    context,
+                    estadoController,
+                    !_isLoading,
+                  ),
+                  controller.buildTextInput(
+                    'EnderecoCEP',
+                    context,
+                    cepController,
+                    !_isLoading,
+                  ),
                 ],
               ),
               CustomButton(
-                text: 'Cadastrar',
+                text: _isLoading ? '' : 'Cadastrar',
+                isLoading: _isLoading,
                 onPressed: () {
-                  cadastrarFaculdade();
+                  if (!_isLoading) {
+                    cadastrarFaculdade();
+                  }
                 },
               )
             ],

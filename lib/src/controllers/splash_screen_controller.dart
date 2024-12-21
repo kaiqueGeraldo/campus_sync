@@ -28,8 +28,11 @@ class SplashScreenController {
     if (!_isDisposed) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) =>
-              isLoggedIn ? const InitialPage() : const SignInPage(),
+          builder: (context) => isLoggedIn
+              ? const InitialPage(
+                  cameFromSignIn: true,
+                )
+              : const SignInPage(),
         ),
       );
     }
