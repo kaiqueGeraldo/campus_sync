@@ -1,7 +1,7 @@
 import 'package:campus_sync/src/views/components/custom_alert_dialog.dart';
 import 'package:flutter/material.dart';
 
-void customShowDialog({
+Future<void>? customShowDialog({
   required BuildContext context,
   required String title,
   required String content,
@@ -9,8 +9,8 @@ void customShowDialog({
   VoidCallback? onConfirm,
   String? cancelText,
   VoidCallback? onCancel,
-}) {
-  showDialog(
+}) async {
+  await showDialog(
     context: context,
     builder: (BuildContext context) {
       return CustomAlertDialog(

@@ -1,15 +1,19 @@
+import 'dart:convert';
 import 'dart:typed_data';
 import 'package:campus_sync/src/connectivity/connectivity_service.dart';
 import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/initial_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/models/initial_page/drawer_menu_item.dart';
+import 'package:campus_sync/src/services/api_service.dart';
+import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:campus_sync/src/views/pages/main/about_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/entidade_page.dart';
 import 'package:campus_sync/src/views/pages/main/home_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu_page.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class InitialPage extends StatefulWidget {
   final bool cameFromSignIn;
@@ -19,25 +23,41 @@ class InitialPage extends StatefulWidget {
   State<InitialPage> createState() => _InitialPageState();
 }
 
-class _InitialPageState extends State<InitialPage> {
+class _InitialPageState extends State<InitialPage>
+    with SingleTickerProviderStateMixin {
   int _indexAtual = 1;
-
-  List<Widget> telas = [
-    const HomePage(),
-    const MenuPage(),
-    const AboutPage(),
-  ];
+  final GlobalKey<HomePageState> homePageKey = GlobalKey<HomePageState>();
+  final GlobalKey<MenuPageState> menuPageKey = GlobalKey<MenuPageState>();
+  ValueNotifier<Map<String, int?>> itemCountsNotifier =
+      ValueNotifier<Map<String, int?>>({});
+  ValueNotifier<Map<String, int?>> itemCountsNotifierMenu =
+      ValueNotifier<Map<String, int?>>({});
 
   String userName = 'Usuário';
   String userEmail = '';
   Uint8List? userImageBytes;
-  bool isLoading = true;
+  bool isLoading = false;
+  late AnimationController _controller;
 
   late Map? arguments;
 
   @override
   void initState() {
     super.initState();
+    itemCountsNotifier = ValueNotifier<Map<String, int?>>({});
+    itemCountsNotifierMenu = ValueNotifier<Map<String, int?>>({});
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 1),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    itemCountsNotifier.dispose();
+    itemCountsNotifierMenu.dispose();
+    _controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -54,16 +74,46 @@ class _InitialPageState extends State<InitialPage> {
     setState(() {
       userName = userData['userName'];
       userEmail = userData['userEmail'];
-      userImageBytes = userData['userImageBytes'];
       isLoading = false;
+      _loadImagemUser();
     });
+  }
+
+  Future<void> _loadImagemUser() async {
+    try {
+      final userData = await ApiService().fetchUserProfile(context);
+
+      if (userData['urlImagem'] != null && userData['urlImagem'].isNotEmpty) {
+        setState(() {
+          userImageBytes = base64Decode(userData['urlImagem']);
+        });
+      } else {
+        setState(() {
+          userImageBytes = null;
+        });
+      }
+    } catch (e) {
+      print('Erro ao carregar dados do usuário: $e');
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> telas = [
+      HomePage(
+        itemCountsNotifier: itemCountsNotifier,
+        key: homePageKey,
+      ),
+      MenuPage(
+        itemCountsNotifier: itemCountsNotifierMenu,
+        key: menuPageKey,
+      ),
+      const AboutPage(),
+    ];
+
     final connectivityService = Provider.of<ConnectivityService>(context);
 
-    if (connectivityService.isCheckingConnection || isLoading) {
+    if (connectivityService.isCheckingConnection) {
       return const Scaffold(
         backgroundColor: AppColors.backgroundWhiteColor,
         body: Center(
@@ -136,8 +186,56 @@ class _InitialPageState extends State<InitialPage> {
         title: const Text('CampusSync'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () => _loadUserData(),
+            icon: isLoading
+                ? RotationTransition(
+                    turns: _controller,
+                    child: const Icon(
+                      Icons.refresh,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                  )
+                : const Icon(
+                    Icons.refresh,
+                    color: Colors.white,
+                    size: 30,
+                  ),
+            onPressed: () async {
+              setState(() {
+                isLoading = true;
+              });
+
+              final prefs = await SharedPreferences.getInstance();
+              final cachedCounts =
+                  prefs.getStringList('cachedItemCounts') ?? [];
+
+              await homePageKey.currentState?.updateCacheWithItemCounts();
+              final hasMenuUpdates =
+                  await menuPageKey.currentState?.fetchCounts() ?? false;
+
+              final updatedCounts =
+                  prefs.getStringList('cachedItemCounts') ?? [];
+
+              setState(() {
+                isLoading = false;
+              });
+
+              if (!hasMenuUpdates &&
+                  cachedCounts
+                      .toSet()
+                      .difference(updatedCounts.toSet())
+                      .isEmpty &&
+                  updatedCounts
+                      .toSet()
+                      .difference(cachedCounts.toSet())
+                      .isEmpty) {
+                CustomSnackbar.show(
+                  context,
+                  'Nenhuma atualização disponível.',
+                  backgroundColor: Colors.blueAccent,
+                );
+              }
+            },
             tooltip: 'Atualizar',
           ),
           PopupMenuButton<int>(

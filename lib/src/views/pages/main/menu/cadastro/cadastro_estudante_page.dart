@@ -3,10 +3,12 @@ import 'package:campus_sync/src/connectivity/connectivity_service.dart';
 import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/views/components/cadastro/custom_endereco_form.dart';
 import 'package:campus_sync/src/views/components/cadastro/custom_expansion_card.dart';
 import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -24,32 +26,43 @@ class CadastroEstudantePage extends StatefulWidget {
 
 class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
   late CadastroController controller;
+  final GlobalKey<FormState> estudanteDadosFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> estudanteDocumentosFormKey =
+      GlobalKey<FormState>();
+  final GlobalKey<FormState> estudanteCursoFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> enderecoFormKey = GlobalKey<FormState>();
+  String cursosError = '';
   bool _isLoading = false;
+  final ValueNotifier<bool> _isLoadingController = ValueNotifier(false);
   Map<String, dynamic>? faculdadeSelecionada;
   List<DropdownMenuItem<int>> cursosDropdownItems = [];
   List<DropdownMenuItem<int>> turmasDropdownItems = [];
   Map<int, List<dynamic>> turmasPorCurso = {};
   final TextEditingController nomeController = TextEditingController();
-  final TextEditingController cpfController = TextEditingController();
-  final TextEditingController rgController = TextEditingController();
+  final TextEditingController cpfController =
+      MaskedTextController(mask: '000.000.000-00');
+  final TextEditingController rgController =
+      MaskedTextController(mask: '00.000.000-0');
   final TextEditingController emailController = TextEditingController();
   final TextEditingController numeroMatriculaController =
       TextEditingController();
-  final TextEditingController dataMatriculaController = TextEditingController();
-  final TextEditingController telefoneController = TextEditingController();
+  final TextEditingController dataMatriculaController =
+      MaskedTextController(mask: '00/00/0000');
+  final TextEditingController telefoneController =
+      MaskedTextController(mask: '(00) 00000-0000');
   final TextEditingController dataNascimentoController =
-      TextEditingController();
-  final TextEditingController tituloEleitorController = TextEditingController();
+      MaskedTextController(mask: '00/00/0000');
+  final TextEditingController tituloEleitorController =
+      MaskedTextController(mask: '000 000 000 0000');
   final TextEditingController nomePaiController = TextEditingController();
   final TextEditingController nomeMaeController = TextEditingController();
-  final TextEditingController telefonePaiController = TextEditingController();
-  final TextEditingController telefoneMaeController = TextEditingController();
   final TextEditingController logradouroController = TextEditingController();
   final TextEditingController numeroController = TextEditingController();
   final TextEditingController bairroController = TextEditingController();
   final TextEditingController cidadeController = TextEditingController();
   final TextEditingController estadoController = TextEditingController();
-  final TextEditingController cepController = TextEditingController();
+  final TextEditingController cepController =
+      MaskedTextController(mask: '00000-000');
 
   bool isDadosEstudanteExpanded = true;
   bool isDocumentosExpanded = false;
@@ -63,6 +76,9 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
   void initState() {
     super.initState();
     controller = CadastroController();
+    numeroMatriculaController.addListener(() {
+      setState(() {});
+    });
   }
 
   @override
@@ -84,13 +100,31 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
     tituloEleitorController.dispose();
     nomePaiController.dispose();
     nomeMaeController.dispose();
-    telefonePaiController.dispose();
-    telefoneMaeController.dispose();
-
     super.dispose();
   }
 
   Future<http.Response?> cadastrarEstudante() async {
+    final isEstudanteDadosValid =
+        estudanteDadosFormKey.currentState?.validate() ?? false;
+    final isEstudanteDocumentosValid =
+        estudanteDocumentosFormKey.currentState?.validate() ?? false;
+    final isEstudanteCargoValid =
+        estudanteCursoFormKey.currentState?.validate() ?? false;
+    final isEnderecoValid = enderecoFormKey.currentState?.validate() ?? false;
+
+    //final hasCourses = cursosOferecidos.isNotEmpty;
+
+    // setState(() {
+    //   cursosError = (hasCourses ? null : 'Adicione ao menos um item!')!;
+    // });
+
+    if (!isEstudanteDadosValid ||
+        !isEnderecoValid ||
+        !isEstudanteDocumentosValid ||
+        !isEstudanteCargoValid /*|| !hasCourses*/) {
+      return null;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -136,8 +170,6 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
           "escolaridade": getEscolaridadeString(escolaridadeValue),
           "nomePai": nomePaiController.text,
           "nomeMae": nomeMaeController.text,
-          "telefonePai": telefonePaiController.text,
-          "telefoneMae": telefoneMaeController.text,
           "endereco": {
             "id": 0,
             "logradouro": logradouroController.text,
@@ -250,309 +282,383 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
     if (!connectivityService.isConnected) {
       return OfflinePage(onRetry: () {}, isLoading: false);
     }
-    
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhiteColor,
-      appBar: AppBar(
-        title: const Text('Cadastro de Estudantes'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              CustomExpansionCard(
-                title: 'Dados do Estudante',
-                icon: Icons.person,
-                initiallyExpanded: isDadosEstudanteExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isDadosEstudanteExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildTextInput(
-                    'Nome',
-                    context,
-                    nomeController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'Email',
-                    context,
-                    emailController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'Telefone',
-                    context,
-                    telefoneController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'DataNascimento',
-                    context,
-                    dataNascimentoController,
-                    !_isLoading,
-                  ),
-                ],
-              ),
-              CustomExpansionCard(
-                title: 'Documentos',
-                icon: Icons.file_copy,
-                initiallyExpanded: isDocumentosExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isDocumentosExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildTextInput(
-                    'CPF',
-                    context,
-                    cpfController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'RG',
-                    context,
-                    rgController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'TituloEleitor',
-                    context,
-                    tituloEleitorController,
-                    !_isLoading,
-                  ),
-                  controller.buildDropdown(
-                    'EstadoCivil',
-                    context,
-                    !_isLoading,
-                    (newValue) {
-                      setState(() {
-                        controller.dropdownValues['EstadoCivil'] = newValue;
-                      });
-                    },
-                  ),
-                  controller.buildDropdown(
-                    'Nacionalidade',
-                    context,
-                    !_isLoading,
-                    (newValue) {
-                      setState(() {
-                        controller.dropdownValues['Nacionalidade'] = newValue;
-                      });
-                    },
-                  ),
-                  controller.buildDropdown(
-                    'Cor/Raca/Etnia',
-                    context,
-                    !_isLoading,
-                    (newValue) {
-                      setState(() {
-                        controller.dropdownValues['Cor/Raca/Etnia'] = newValue;
-                      });
-                    },
-                  ),
-                  controller.buildDropdown(
-                    'Escolaridade',
-                    context,
-                    !_isLoading,
-                    (newValue) {
-                      setState(() {
-                        controller.dropdownValues['Escolaridade'] = newValue;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              CustomExpansionCard(
-                title: 'Informações dos Pais',
-                icon: Icons.family_restroom,
-                initiallyExpanded: isInformacoesPaisExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isInformacoesPaisExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildTextInput(
-                    'NomePai',
-                    context,
-                    nomePaiController,
-                    !_isLoading,
-                    disabled: naoConstaPai,
-                    customPadding: const EdgeInsets.only(bottom: 0),
-                  ),
-                  CheckboxListTile(
-                    contentPadding: const EdgeInsets.only(left: 0),
-                    value: naoConstaPai,
-                    onChanged: (value) {
-                      setState(() {
-                        naoConstaPai = value ?? false;
-                        if (naoConstaPai) {
-                          controller.controllers['NomePai']?.clear();
-                        }
-                      });
-                    },
-                    title: const Text('Não consta'),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    activeColor: AppColors.buttonColor,
-                  ),
-                  controller.buildTextInput(
-                    'NomeMae',
-                    context,
-                    nomeMaeController,
-                    !_isLoading,
-                    disabled: naoConstaMae,
-                    customPadding: const EdgeInsets.only(bottom: 0),
-                  ),
-                  CheckboxListTile(
-                    contentPadding: const EdgeInsets.only(left: 0),
-                    value: naoConstaMae,
-                    onChanged: (value) {
-                      setState(() {
-                        naoConstaMae = value ?? false;
-                        if (naoConstaMae) {
-                          controller.controllers['NomeMae']?.clear();
-                        }
-                      });
-                    },
-                    title: const Text('Não consta'),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    activeColor: AppColors.buttonColor,
-                  ),
-                ],
-              ),
-              CustomExpansionCard(
-                title: 'Curso',
-                icon: Icons.library_books_rounded,
-                initiallyExpanded: isCursoExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isCursoExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildTextInput(
-                    'NumeroMatricula',
-                    context,
-                    numeroMatriculaController,
-                    !_isLoading,
-                  ),
-                  controller.buildFaculdadeInput(context),
-                  ValueListenableBuilder<Map<String, dynamic>>(
-                    valueListenable: controller.faculdadeSelecionadaNotifier,
-                    builder: (context, faculdadeSelecionada, child) {
-                      return Column(
-                        children: [
-                          if (faculdadeSelecionada.isNotEmpty)
-                            controller.buildCursosDropdown(
-                              context,
-                              !_isLoading,
+
+    return PopScope(
+      canPop: !_isLoading,
+      onPopInvokedWithResult: (bool didPop, result) {
+        if (didPop) {
+          print('Navegação permitida.');
+        } else {
+          CustomSnackbar.show(
+            context,
+            'Navegação bloqueada! Aguarde o carregamento.',
+            duration: const Duration(seconds: 2),
+          );
+          print('Tentativa de navegação bloqueada.');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        appBar: AppBar(
+          title: const Text('Cadastro de Estudantes'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                CustomExpansionCard(
+                  formKey: estudanteDadosFormKey,
+                  title: 'Dados do Estudante',
+                  icon: Icons.person,
+                  initiallyExpanded: isDadosEstudanteExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isDadosEstudanteExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    controller.buildTextInput(
+                      'Nome',
+                      context,
+                      nomeController,
+                      !_isLoading,
+                    ),
+                    controller.buildTextInput(
+                      'Email',
+                      context,
+                      emailController,
+                      !_isLoading,
+                      onChanged: (value) {
+                        setState(() {
+                          controller.updateEmailNotifier(value);
+                        });
+                      },
+                    ),
+                    controller.buildTextInput(
+                      'Telefone',
+                      context,
+                      telefoneController,
+                      !_isLoading,
+                    ),
+                    controller.buildTextInput(
+                      'DataNascimento',
+                      context,
+                      dataNascimentoController,
+                      !_isLoading,
+                    ),
+                  ],
+                ),
+                CustomExpansionCard(
+                  formKey: estudanteDocumentosFormKey,
+                  title: 'Documentos',
+                  icon: Icons.file_copy,
+                  initiallyExpanded: isDocumentosExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isDocumentosExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    controller.buildTextInput(
+                      'CPF',
+                      context,
+                      cpfController,
+                      !_isLoading,
+                      onChanged: (value) {
+                        setState(() {
+                          controller.updateCpfNotifier(value);
+                        });
+                      },
+                    ),
+                    controller.buildTextInput(
+                      'RG',
+                      context,
+                      rgController,
+                      !_isLoading,
+                    ),
+                    controller.buildTextInput(
+                      'TituloEleitor',
+                      context,
+                      tituloEleitorController,
+                      !_isLoading,
+                    ),
+                    controller.buildDropdown(
+                      'EstadoCivil',
+                      context,
+                      !_isLoading,
+                      (newValue) {
+                        setState(() {
+                          controller.dropdownValues['EstadoCivil'] = newValue;
+                        });
+                      },
+                    ),
+                    controller.buildDropdown(
+                      'Nacionalidade',
+                      context,
+                      !_isLoading,
+                      (newValue) {
+                        setState(() {
+                          controller.dropdownValues['Nacionalidade'] = newValue;
+                        });
+                      },
+                    ),
+                    controller.buildDropdown(
+                      'Cor/Raca/Etnia',
+                      context,
+                      !_isLoading,
+                      (newValue) {
+                        setState(() {
+                          controller.dropdownValues['Cor/Raca/Etnia'] =
+                              newValue;
+                        });
+                      },
+                    ),
+                    controller.buildDropdown(
+                      'Escolaridade',
+                      context,
+                      !_isLoading,
+                      (newValue) {
+                        setState(() {
+                          controller.dropdownValues['Escolaridade'] = newValue;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                CustomExpansionCard(
+                  title: 'Informações dos Pais',
+                  icon: Icons.family_restroom,
+                  initiallyExpanded: isInformacoesPaisExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isInformacoesPaisExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    controller.buildTextInput(
+                      'NomePai',
+                      context,
+                      nomePaiController,
+                      !_isLoading,
+                      disabled: naoConstaPai,
+                      customPadding: const EdgeInsets.only(bottom: 0),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: const EdgeInsets.only(left: 0),
+                      value: naoConstaPai,
+                      onChanged: (value) {
+                        setState(() {
+                          naoConstaPai = value ?? false;
+                          if (naoConstaPai) {
+                            controller.controllers['NomePai']?.clear();
+                          }
+                        });
+                      },
+                      title: const Text('Não consta'),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: AppColors.buttonColor,
+                    ),
+                    controller.buildTextInput(
+                      'NomeMae',
+                      context,
+                      nomeMaeController,
+                      !_isLoading,
+                      disabled: naoConstaMae,
+                      customPadding: const EdgeInsets.only(bottom: 0),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: const EdgeInsets.only(left: 0),
+                      value: naoConstaMae,
+                      onChanged: (value) {
+                        setState(() {
+                          naoConstaMae = value ?? false;
+                          if (naoConstaMae) {
+                            controller.controllers['NomeMae']?.clear();
+                          }
+                        });
+                      },
+                      title: const Text('Não consta'),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: AppColors.buttonColor,
+                    ),
+                  ],
+                ),
+                CustomExpansionCard(
+                  formKey: estudanteCursoFormKey,
+                  title: 'Curso',
+                  icon: Icons.library_books_rounded,
+                  initiallyExpanded: isCursoExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isCursoExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: controller.buildTextInput(
+                            'NumeroMatricula',
+                            context,
+                            numeroMatriculaController,
+                            false,
+                            radius: const BorderRadius.only(
+                              bottomRight: Radius.zero,
+                              topRight: Radius.zero,
+                              bottomLeft: Radius.circular(10),
+                              topLeft: Radius.circular(10),
                             ),
-                          ValueListenableBuilder<int?>(
-                            valueListenable:
-                                controller.cursoSelecionadoNotifier,
-                            builder: (context, cursoSelecionado, child) {
-                              final turmas =
-                                  controller.turmasPorCurso[cursoSelecionado];
-
-                              if (cursoSelecionado != null &&
-                                  (turmas == null || turmas.isEmpty)) {
-                                WidgetsBinding.instance
-                                    .addPostFrameCallback((_) {
-                                  CustomSnackbar.show(
-                                    context,
-                                    'O curso selecionado não possui turmas associadas.',
-                                  );
-                                });
-                              }
-
-                              return Column(
-                                children: [
-                                  if (cursoSelecionado != null &&
-                                      turmas != null &&
-                                      turmas.isNotEmpty)
-                                    controller.buildTurmasDropdown(
-                                      context,
-                                      !_isLoading,
-                                    ),
-                                ],
-                              );
-                            },
                           ),
-                        ],
-                      );
-                    },
-                  ),
-                  controller.buildTextInput(
-                    'DataMatricula',
-                    context,
-                    dataMatriculaController,
-                    !_isLoading,
-                  ),
-                ],
-              ),
-              CustomExpansionCard(
-                title: 'Endereço',
-                icon: Icons.home,
-                initiallyExpanded: isEnderecoExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isEnderecoExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildTextInput(
-                    'EnderecoLogradouro',
-                    context,
-                    logradouroController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'EnderecoNumero',
-                    context,
-                    numeroController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'EnderecoBairro',
-                    context,
-                    bairroController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'EnderecoCidade',
-                    context,
-                    cidadeController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'EnderecoEstado',
-                    context,
-                    estadoController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'EnderecoCEP',
-                    context,
-                    cepController,
-                    !_isLoading,
-                  ),
-                ],
-              ),
-              CustomButton(
-                text: _isLoading ? '' : 'Cadastrar',
-                isLoading: _isLoading,
-                onPressed: () {
-                  if (!_isLoading) {
-                    cadastrarEstudante();
-                  }
-                },
-              )
-            ],
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Container(
+                              height: 58,
+                              decoration: const BoxDecoration(
+                                color: AppColors.buttonColor,
+                                borderRadius: BorderRadius.only(
+                                  bottomRight: Radius.circular(10),
+                                  topRight: Radius.circular(10),
+                                ),
+                              ),
+                              child: IconButton(
+                                alignment: Alignment.center,
+                                icon: Icon(
+                                  numeroMatriculaController.text.isNotEmpty
+                                      ? Icons.check
+                                      : Icons.refresh,
+                                  color: AppColors.lightGreyColor,
+                                ),
+                                onPressed: () {
+                                  if (numeroMatriculaController.text.isEmpty) {
+                                    setState(() {
+                                      numeroMatriculaController.text =
+                                          controller.generateRandomMatricula(
+                                              'NumeroMatricula');
+                                      print(
+                                          'NUMERO: ${numeroMatriculaController.text}');
+                                    });
+                                  } else {
+                                    // Mostra a snackbar
+                                    CustomSnackbar.show(
+                                      context,
+                                      'O número já foi gerado!',
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    controller.buildFaculdadeInput(context),
+                    ValueListenableBuilder<Map<String, dynamic>>(
+                      valueListenable: controller.faculdadeSelecionadaNotifier,
+                      builder: (context, faculdadeSelecionada, child) {
+                        return Column(
+                          children: [
+                            if (faculdadeSelecionada.isNotEmpty)
+                              controller.buildCursosDropdown(
+                                context,
+                                !_isLoading,
+                              ),
+                            ValueListenableBuilder<int?>(
+                              valueListenable:
+                                  controller.cursoSelecionadoNotifier,
+                              builder: (context, cursoSelecionado, child) {
+                                final turmas =
+                                    controller.turmasPorCurso[cursoSelecionado];
+
+                                if (cursoSelecionado != null &&
+                                    (turmas == null || turmas.isEmpty)) {
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
+                                    CustomSnackbar.show(
+                                      context,
+                                      'O curso selecionado não possui turmas associadas.',
+                                    );
+                                  });
+                                }
+
+                                return Column(
+                                  children: [
+                                    if (cursoSelecionado != null &&
+                                        turmas != null &&
+                                        turmas.isNotEmpty)
+                                      controller.buildTurmasDropdown(
+                                        context,
+                                        !_isLoading,
+                                      ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    controller.buildTextInput(
+                      'DataMatricula',
+                      context,
+                      dataMatriculaController,
+                      !_isLoading,
+                    ),
+                  ],
+                ),
+                CustomExpansionCard(
+                  formKey: enderecoFormKey,
+                  title: 'Endereço',
+                  icon: Icons.home,
+                  initiallyExpanded: isEnderecoExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isEnderecoExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    EnderecoForm(
+                      cepController: cepController,
+                      logradouroController: logradouroController,
+                      numeroController: numeroController,
+                      bairroController: bairroController,
+                      cidadeController: cidadeController,
+                      estadoController: estadoController,
+                      isLoadingNotifier: _isLoadingController,
+                      isLoading: _isLoading,
+                      onSearchPressed: () async {
+                        _isLoadingController.value = true;
+                        await controller.searchAddress(
+                          context: context,
+                          cepController: cepController,
+                          logradouroController: logradouroController,
+                          bairroController: bairroController,
+                          cidadeController: cidadeController,
+                          estadoController: estadoController,
+                          isLoading: _isLoadingController,
+                        );
+                        _isLoadingController.value = false;
+                      },
+                    ),
+                  ],
+                ),
+                CustomButton(
+                  text: _isLoading ? '' : 'Cadastrar',
+                  isLoading: _isLoading,
+                  onPressed: () {
+                    if (!_isLoading) {
+                      cadastrarEstudante();
+                    }
+                  },
+                )
+              ],
+            ),
           ),
         ),
       ),

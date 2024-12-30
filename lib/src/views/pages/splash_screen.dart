@@ -54,10 +54,10 @@ class _SplashScreenState extends State<SplashScreen> {
                       return AnimatedOpacity(
                         opacity: showText ? 1.0 : 0.0,
                         duration: const Duration(seconds: 1),
-                        child: const Text(
+                        child: Text(
                           'CampusSync',
                           style: TextStyle(
-                            fontSize: 50,
+                            fontSize: MediaQuery.of(context).size.width * 0.1,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textColor,
                           ),

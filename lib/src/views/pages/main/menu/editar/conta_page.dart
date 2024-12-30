@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:campus_sync/src/connectivity/connectivity_service.dart';
 import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
@@ -21,6 +24,7 @@ class ContaPage extends StatefulWidget {
 
 class _ContaPageState extends State<ContaPage> {
   String userNome = 'Carregando...';
+  Uint8List? userImageBytes;
 
   @override
   void initState() {
@@ -30,13 +34,34 @@ class _ContaPageState extends State<ContaPage> {
 
   Future<void> _loadUserData() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       userNome = prefs.getString('userNome') ?? 'Usuário';
+      _loadImagemUser();
     });
   }
 
+  Future<void> _loadImagemUser() async {
+    try {
+      final userData = await ApiService().fetchUserProfile(context);
+
+      if (userData['urlImagem'] != null && userData['urlImagem'].isNotEmpty) {
+        setState(() {
+          userImageBytes = base64Decode(userData['urlImagem']);
+        });
+      } else {
+        if (!mounted) return;
+        setState(() {
+          userImageBytes = null;
+        });
+      }
+    } catch (e) {
+      print('Erro ao carregar dados do usuário: $e');
+    }
+  }
+
   void _sessaoExpirada() {
-    return customShowDialog(
+    customShowDialog(
       context: context,
       title: 'Ao na sessão',
       content: 'Erro ao recuperar dados da sua sessão. Faça login novamente',
@@ -195,10 +220,26 @@ class _ContaPageState extends State<ContaPage> {
                                   padding: const EdgeInsets.only(top: 30),
                                   child: Column(
                                     children: [
-                                      const CircleAvatar(
-                                        radius: 50,
-                                        backgroundImage: AssetImage(
-                                            'assets/images/logo.png'),
+                                      SizedBox(
+                                        width: 110,
+                                        height: 110,
+                                        child: CircleAvatar(
+                                          backgroundColor:
+                                              AppColors.backgroundWhiteColor,
+                                          child: userImageBytes != null
+                                              ? ClipOval(
+                                                  child: Image.memory(
+                                                    userImageBytes!,
+                                                    fit: BoxFit.cover,
+                                                    width: 110,
+                                                    height: 110,
+                                                  ),
+                                                )
+                                              : const Icon(
+                                                  Icons.person,
+                                                  size: 80,
+                                                ),
+                                        ),
                                       ),
                                       const SizedBox(height: 10),
                                       Text(

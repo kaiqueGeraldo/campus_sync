@@ -5,54 +5,38 @@ import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/services/api_service.dart';
-import 'package:campus_sync/src/views/components/cadastro/custom_endereco_form.dart';
 import 'package:campus_sync/src/views/components/cadastro/custom_expansion_card.dart';
 import 'package:campus_sync/src/views/components/custom_button.dart';
-import 'package:campus_sync/src/views/components/custom_input_text.dart';
-import 'package:campus_sync/src/views/components/custom_input_text_cadastro.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
+import 'package:campus_sync/src/views/pages/main/menu/adicionar/adicionar_disciplinas_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/adicionar/adicionar_turmas_page.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
 
-class CadastroFaculdadePage extends StatefulWidget {
+class AdicionarItemPage extends StatefulWidget {
   final String endpoint;
 
-  const CadastroFaculdadePage({
+  const AdicionarItemPage({
     super.key,
     required this.endpoint,
   });
 
   @override
-  State<CadastroFaculdadePage> createState() => _CadastroFaculdadePageState();
+  State<AdicionarItemPage> createState() => _AdicionarItemPageState();
 }
 
-class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
+class _AdicionarItemPageState extends State<AdicionarItemPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
   late CadastroController controller;
-  final GlobalKey<FormState> faculdadeFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> enderecoFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> dadosFormKey = GlobalKey<FormState>();
   String cursosError = '';
   bool _isLoading = false;
-  final ValueNotifier<bool> _isLoadingController = ValueNotifier(false);
+  bool isCursosExpanded = true;
+
   final TextEditingController courseController = TextEditingController();
-  final TextEditingController nomeController = TextEditingController();
-  final TextEditingController cnpjController =
-      MaskedTextController(mask: '00.000.000/0001-00');
-  final TextEditingController telefoneController =
-      MaskedTextController(mask: '(00) 00000-0000');
-  final TextEditingController emailResponsavelController =
-      TextEditingController();
-  final TextEditingController tipoFaculController = TextEditingController();
-  final TextEditingController logradouroController = TextEditingController();
-  final TextEditingController numeroController = TextEditingController();
-  final TextEditingController bairroController = TextEditingController();
-  final TextEditingController cidadeController = TextEditingController();
-  final TextEditingController estadoController = TextEditingController();
-  final TextEditingController cepController =
-      MaskedTextController(mask: '00000-000');
-  final ValueNotifier<bool> isCnpjValid = ValueNotifier<bool>(false);
   final List<String> cursosOferecidos = [];
   List<String> filteredCursos = [];
   List<String> cursosDisponiveis = [
@@ -212,28 +196,17 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
   void initState() {
     super.initState();
     controller = CadastroController();
+    _tabController = TabController(length: 2, vsync: this);
   }
 
   @override
   void dispose() {
-    courseController.dispose();
-    nomeController.dispose();
-    cnpjController.dispose();
-    telefoneController.dispose();
-    emailResponsavelController.dispose();
-    tipoFaculController.dispose();
-    logradouroController.dispose();
-    numeroController.dispose();
-    bairroController.dispose();
-    cidadeController.dispose();
-    estadoController.dispose();
-    cepController.dispose();
+    _tabController.dispose();
     super.dispose();
   }
 
-  Future<http.Response?> cadastrarFaculdade() async {
-    final isFaculdadeValid = faculdadeFormKey.currentState?.validate() ?? false;
-    final isEnderecoValid = enderecoFormKey.currentState?.validate() ?? false;
+  Future<http.Response?> atualizarCursos() async {
+    final isDadosValid = dadosFormKey.currentState?.validate() ?? false;
 
     final hasCourses = cursosOferecidos.isNotEmpty;
 
@@ -241,61 +214,119 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
       cursosError = (hasCourses ? null : 'Adicione ao menos um item!')!;
     });
 
-    if (!isFaculdadeValid || !isEnderecoValid || !hasCourses) {
+    if (!isDadosValid || !hasCourses) {
+      return null;
+    }
+    final cursosParaAdicionar = cursosOferecidos.toList();
+
+    final faculdadeSelecionada = controller.faculdadeSelecionadaNotifier.value;
+    if (faculdadeSelecionada.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Por favor, selecione uma faculdade antes de continuar.'),
+        ),
+      );
       return null;
     }
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    int tipoFaculValue = controller.dropdownValues['TipoFacul'] as int? ?? 0;
+    final faculdadeId = faculdadeSelecionada['id'];
+    print('ID FACULDADE: $faculdadeId');
+    if (faculdadeId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Faculdade inválida. Tente novamente.'),
+        ),
+      );
+      return null;
+    }
 
     try {
-      const url =
-          'https://campussync-g6bngmbmd9e6abbb.canadacentral-01.azurewebsites.net/api/Faculdade';
+      setState(() {
+        _isLoading = true;
+      });
 
-      final response = await http.post(
-        Uri.parse(url),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: json.encode({
-          "nome": nomeController.text,
-          "cnpj": cnpjController.text,
-          "telefone": telefoneController.text,
-          "emailResponsavel": emailResponsavelController.text,
-          "endereco": {
-            "logradouro": logradouroController.text,
-            "numero": numeroController.text,
-            "bairro": bairroController.text,
-            "cidade": cidadeController.text,
-            "estado": estadoController.text,
-            "cep": cepController.text
+      final cursosExistentes =
+          await ApiService().buscarCursosPorFaculdade(faculdadeId);
+
+      List<String> cursosDuplicados = [];
+      List<String> cursosAAdicionar = [];
+
+      final nomesCursosExistentes =
+          cursosExistentes.map((curso) => curso['nome'] as String).toList();
+
+      for (var curso in cursosParaAdicionar) {
+        if (nomesCursosExistentes.contains(curso)) {
+          cursosDuplicados.add(curso);
+        } else {
+          cursosAAdicionar.add(curso);
+        }
+      }
+
+      if (cursosDuplicados.isNotEmpty) {
+        final duplicadasMensagem = cursosDuplicados.join(', ');
+        customShowDialog(
+          context: context,
+          title: 'Cursos Duplicados',
+          content:
+              'Os seguintes cursos já estavam cadastrados na faculdade: $duplicadasMensagem.\nOs demais foram adicionados com sucesso.',
+          confirmText: 'OK',
+          onConfirm: () {
+            Navigator.pop(context);
+            Navigator.pop(context);
           },
-          "tipo": tipoFaculValue,
-          "cursosOferecidos": cursosOferecidos,
-          "userCPF": await ApiService().recuperarCPF()
-        }),
-      );
+        );
+      }
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        CustomSnackbar.show(context, 'Faculdade Cadastrada com sucesso!',
-            backgroundColor: AppColors.successColor);
-        Navigator.pop(context);
-        return response;
+      if (cursosAAdicionar.isNotEmpty) {
+        final response = await http.put(
+          Uri.parse(
+              '${ApiService.baseUrl}/Faculdade/adicionar-cursos/$faculdadeId'),
+          headers: {'Content-Type': 'application/json'},
+          body: json.encode({'cursosOferecidos': cursosAAdicionar}),
+        );
+
+        if (response.statusCode == 200 || response.statusCode == 204) {
+          if (cursosDuplicados.isNotEmpty) {
+          } else {
+            CustomSnackbar.show(context, 'Cursos atualizados com sucesso!',
+                backgroundColor: AppColors.successColor);
+            Navigator.pop(context);
+          }
+          return response;
+        } else {
+          print('Erro ao adicionar cursos: ${response.statusCode}');
+          print('Detalhes: ${response.body}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                  'Erro ao adicionar cursos. Código: ${response.statusCode}. Verifique os dados.'),
+            ),
+          );
+          return null;
+        }
       } else {
-        CustomSnackbar.show(context, response.body);
-        return null;
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Não há novos cursos para adicionar.'),
+          ),
+        );
       }
     } catch (e) {
       print('Erro ao conectar com a API: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content:
+              Text('Erro de conexão com a API. Tente novamente mais tarde.'),
+        ),
+      );
       return null;
     } finally {
       setState(() {
         _isLoading = false;
       });
     }
+    return null;
   }
 
   Widget _buildCourseInput() {
@@ -363,9 +394,6 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
     });
   }
 
-  bool isDadosEntidadeExpanded = true;
-  bool isEnderecoExpanded = false;
-
   @override
   Widget build(BuildContext context) {
     final connectivityService = Provider.of<ConnectivityService>(context);
@@ -399,130 +427,93 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.backgroundWhiteColor,
-        appBar: AppBar(
-          title: const Text('Cadastro de Faculdades'),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(16),
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                CustomExpansionCard(
-                  formKey: faculdadeFormKey,
-                  title: 'Dados da Faculdade',
-                  icon: Icons.cases_rounded,
-                  initiallyExpanded: isDadosEntidadeExpanded,
-                  onExpansionChanged: (expanded) {
-                    setState(() {
-                      isDadosEntidadeExpanded = expanded;
-                    });
-                  },
-                  children: [
-                    controller.buildTextInput(
-                      'Nome',
-                      context,
-                      nomeController,
-                      !_isLoading,
-                    ),
-                    controller.buildTextInput(
-                      'CNPJ',
-                      context,
-                      cnpjController,
-                      !_isLoading,
-                      onChanged: (value) {
-                        setState(() {
-                          controller.updateCNPJNotifier(value);
-                        });
+          backgroundColor: AppColors.backgroundWhiteColor,
+          appBar: AppBar(
+            title: Text(widget.endpoint == 'Curso'
+                ? 'Adicionar Turmas e/ou Disciplinas'
+                : 'Adicionar Cursos'),
+            bottom: widget.endpoint == 'Curso'
+                ? TabBar(
+                    dividerColor: AppColors.textColor,
+                    indicatorColor: AppColors.textColor,
+                    labelColor: AppColors.textColor,
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    unselectedLabelColor: AppColors.unselectedColor,
+                    splashBorderRadius: BorderRadius.circular(5),
+                    splashFactory: NoSplash.splashFactory,
+                    overlayColor: WidgetStateProperty.resolveWith<Color?>(
+                      (Set<WidgetState> states) {
+                        return states.contains(WidgetState.focused)
+                            ? null
+                            : AppColors.socialButtonColor;
                       },
                     ),
-                    controller.buildTextInput(
-                      'EmailResponsavel',
-                      context,
-                      emailResponsavelController,
-                      !_isLoading,
-                      onChanged: (value) {
-                        setState(() {
-                          controller.updateEmailNotifier(value);
-                        });
-                      },
-                    ),
-                    controller.buildTextInput(
-                      'Telefone',
-                      context,
-                      telefoneController,
-                      !_isLoading,
-                    ),
-                    controller.buildDropdown(
-                      'TipoFacul',
-                      context,
-                      !_isLoading,
-                      (newValue) {
-                        setState(() {
-                          controller.dropdownValues['TipoFacul'] = newValue;
-                        });
-                      },
-                    ),
-                    _buildCourseInput(),
-                    if (cursosOferecidos.isNotEmpty) _buildCursosOferecidos(),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 3, horizontal: 15),
-                      child: Text(
-                        cursosError,
-                        style: TextStyle(color: Colors.red[900], fontSize: 13),
-                      ),
-                    ),
+                    controller: _tabController,
+                    tabs: const <Widget>[
+                      Tab(icon: Icon(Icons.people_rounded)),
+                      Tab(icon: Icon(Icons.library_books)),
+                    ],
+                  )
+                : null,
+          ),
+          body: widget.endpoint == 'Curso'
+              ? TabBarView(
+                  controller: _tabController,
+                  children: const [
+                    AdicionarTurmasPage(),
+                    AdicionarDisciplinasPage(),
                   ],
-                ),
-                CustomExpansionCard(
-                  formKey: enderecoFormKey,
-                  title: 'Endereço',
-                  icon: Icons.home,
-                  initiallyExpanded: isEnderecoExpanded,
-                  onExpansionChanged: (expanded) {
-                    setState(() {
-                      isEnderecoExpanded = expanded;
-                    });
-                  },
-                  children: [
-                    EnderecoForm(
-                      cepController: cepController,
-                      logradouroController: logradouroController,
-                      numeroController: numeroController,
-                      bairroController: bairroController,
-                      cidadeController: cidadeController,
-                      estadoController: estadoController,
-                      isLoadingNotifier: _isLoadingController,
-                      isLoading: _isLoading,
-                      onSearchPressed: () async {
-                        _isLoadingController.value = true;
-                        await controller.searchAddress(
-                          context: context,
-                          cepController: cepController,
-                          logradouroController: logradouroController,
-                          bairroController: bairroController,
-                          cidadeController: cidadeController,
-                          estadoController: estadoController,
-                          isLoading: _isLoadingController,
-                        );
-                        _isLoadingController.value = false;
-                      },
-                    ),
-                  ],
-                ),
-                CustomButton(
-                  text: _isLoading ? '' : 'Cadastrar',
-                  isLoading: _isLoading,
-                  onPressed: () {
-                    if (!_isLoading) {
-                      cadastrarFaculdade();
-                    }
-                  },
                 )
+              : cursoDropdown()),
+    );
+  }
+
+  Widget cursoDropdown() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          children: [
+            CustomExpansionCard(
+              formKey: dadosFormKey,
+              title: 'Adicionar Cursos',
+              icon: Icons.school,
+              initiallyExpanded: true,
+              onExpansionChanged: (expanded) {
+                setState(() {
+                  isCursosExpanded = expanded;
+                });
+              },
+              children: [
+                controller.buildFaculdadeInput(context),
+                ValueListenableBuilder<Map>(
+                  valueListenable: controller.faculdadeSelecionadaNotifier,
+                  builder: (context, faculdadeSelecionada, child) {
+                    if (faculdadeSelecionada.isNotEmpty) {
+                      print('FACULDADE: $faculdadeSelecionada');
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildCourseInput(),
+                            if (cursosOferecidos.isNotEmpty)
+                              _buildCursosOferecidos(),
+                          ],
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
               ],
             ),
-          ),
+            CustomButton(
+              text: 'Atualizar',
+              isLoading: _isLoading,
+              onPressed: atualizarCursos,
+            ),
+          ],
         ),
       ),
     );

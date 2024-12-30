@@ -17,6 +17,7 @@ class CustomInputTextCadastro extends StatelessWidget {
   final List<TextInputFormatter>? inputFormatters;
   final EdgeInsets? padding;
   final bool isLoading;
+  final BorderRadius? borderRadius;
 
   const CustomInputTextCadastro({
     super.key,
@@ -34,6 +35,7 @@ class CustomInputTextCadastro extends StatelessWidget {
     this.padding,
     this.field,
     this.isLoading = false,
+    this.borderRadius,
   });
 
   @override
@@ -60,13 +62,13 @@ class CustomInputTextCadastro extends StatelessWidget {
           floatingLabelStyle: const TextStyle(
             color: AppColors.backgroundBlueColor,
           ),
-          border: const OutlineInputBorder(
-            borderRadius: BorderRadius.all(Radius.circular(10)),
-            borderSide: BorderSide(color: Colors.black12),
+          border: OutlineInputBorder(
+            borderRadius: borderRadius ?? const BorderRadius.all(Radius.circular(10)),
+            borderSide: const BorderSide(color: Colors.black12),
           ),
-          focusedBorder: const OutlineInputBorder(
-            borderSide: BorderSide(color: AppColors.backgroundBlueColor),
-            borderRadius: BorderRadius.all(Radius.circular(12)),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: borderRadius ?? const BorderRadius.all(Radius.circular(12)),
+            borderSide: const BorderSide(color: AppColors.backgroundBlueColor),
           ),
           counterText: '',
           suffixIcon: suffixIcon,

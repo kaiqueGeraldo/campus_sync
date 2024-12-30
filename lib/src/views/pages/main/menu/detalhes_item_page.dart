@@ -1,45 +1,98 @@
+import 'package:campus_sync/src/connectivity/connectivity_service.dart';
+import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 
 class DetalhesItemPage extends StatelessWidget {
-  final String titulo;
-  final Map<String, dynamic> dados;
+  final String endpoint;
+  final String id;
 
   const DetalhesItemPage({
     super.key,
-    required this.titulo,
-    required this.dados,
+    required this.endpoint,
+    required this.id,
   });
+
+  Future<Map<String, dynamic>> _fetchDetails() async {
+    try {
+      final data = await ApiService().listarDadosConfiguracoes(endpoint, id);
+      return data;
+    } catch (e) {
+      throw Exception('Erro ao carregar os detalhes: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final connectivityService = Provider.of<ConnectivityService>(context);
+
+    if (connectivityService.isCheckingConnection) {
+      return const Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        body: Center(
+          child: CircularProgressIndicator(
+            color: AppColors.buttonColor,
+          ),
+        ),
+      );
+    }
+
+    if (!connectivityService.isConnected) {
+      return OfflinePage(onRetry: () {}, isLoading: false);
+    }
+
     return Scaffold(
       backgroundColor: AppColors.backgroundWhiteColor,
       appBar: AppBar(
-        title: Text('Detalhes de $titulo'),
+        title: Text('Detalhes de $endpoint'),
         shadowColor: Colors.black,
         elevation: 4,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 16),
-            Expanded(
-              child: SingleChildScrollView(
-                child: _buildContent(),
+      body: FutureBuilder<Map<String, dynamic>>(
+        future: _fetchDetails(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(
+                color: AppColors.buttonColor,
               ),
+            );
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('Erro: ${snapshot.error}'),
+            );
+          } else if (!snapshot.hasData) {
+            return const Center(
+              child: Text('Nenhum detalhe encontrado.'),
+            );
+          }
+
+          final dados = snapshot.data!;
+
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(dados),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: _buildContent(endpoint, dados),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(Map<String, dynamic> dados) {
     final headerSubtitle = dados['universidadeNome'] ??
         dados['faculdadeNome'] ??
         dados['turmaNome'] ??
@@ -116,21 +169,21 @@ class DetalhesItemPage extends StatelessWidget {
     );
   }
 
-  Widget _buildContent() {
+  Widget _buildContent(String titulo, Map<String, dynamic> dados) {
     switch (titulo) {
       case 'Faculdade':
-        return _buildFaculdadeContent();
+        return _buildFaculdadeContent(dados);
       case 'Curso':
-        return _buildCursoContent();
+        return _buildCursoContent(dados);
       case 'Estudante':
       case 'Colaborador':
-        return _buildPessoaContent();
+        return _buildPessoaContent(dados);
       default:
-        return _buildDefaultContent();
+        return _buildDefaultContent(dados);
     }
   }
 
-  Widget _buildFaculdadeContent() {
+  Widget _buildFaculdadeContent(Map<String, dynamic> dados) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -145,6 +198,8 @@ class DetalhesItemPage extends StatelessWidget {
         _buildDetailTile('Telefone', dados['telefone'] ?? '',
             fieldType: 'telefone'),
         const SizedBox(height: 16),
+        _buildListSection('Cursos Oferecidos', dados['cursos'] ?? []),
+        const SizedBox(height: 16),
         const Text(
           'Endereço:',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
@@ -154,7 +209,7 @@ class DetalhesItemPage extends StatelessWidget {
     );
   }
 
-  Widget _buildCursoContent() {
+  Widget _buildCursoContent(Map<String, dynamic> dados) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -172,8 +227,8 @@ class DetalhesItemPage extends StatelessWidget {
     );
   }
 
-  Widget _buildPessoaContent() {
-    final isEstudante = titulo == 'Estudante';
+  Widget _buildPessoaContent(Map<String, dynamic> dados) {
+    final isEstudante = endpoint == 'Estudante';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -226,7 +281,7 @@ class DetalhesItemPage extends StatelessWidget {
     );
   }
 
-  Widget _buildDefaultContent() {
+  Widget _buildDefaultContent(Map<String, dynamic> dados) {
     return const Text('Detalhes não disponíveis para este item.');
   }
 
@@ -290,11 +345,15 @@ class DetalhesItemPage extends StatelessWidget {
     if (endereco == null) return [const Text('Endereço não disponível.')];
 
     return [
-      _buildDetailTile('Logradouro', endereco['logradouro']),
-      _buildDetailTile('Número', endereco['numero']),
+      _buildDetailTile(
+        'Localidade',
+        '${endereco['logradouro']}, ${endereco['numero']}',
+      ),
       _buildDetailTile('Bairro', endereco['bairro']),
-      _buildDetailTile('Cidade', endereco['cidade']),
-      _buildDetailTile('Estado', endereco['estado']),
+      _buildDetailTile(
+        'Região',
+        '${endereco['cidade']} - ${endereco['estado']}',
+      ),
       _buildDetailTile('CEP', endereco['cep'], fieldType: 'cep'),
     ];
   }

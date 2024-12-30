@@ -27,6 +27,9 @@ class CadastroCursoPage extends StatefulWidget {
 
 class _CadastroCursoPageState extends State<CadastroCursoPage> {
   late CadastroController controller;
+  final GlobalKey<FormState> cursoFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> turmasFormKey = GlobalKey<FormState>();
+  String cursosError = '';
   bool _isLoading = false;
   Map<String, dynamic>? faculdadeSelecionada;
   bool isDadosCursoExpanded = true;
@@ -156,6 +159,18 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
   }
 
   Future<http.Response?> cadastrarCurso() async {
+    final isCursoValid = cursoFormKey.currentState?.validate() ?? false;
+    final isTurmasValid = turmasFormKey.currentState?.validate() ?? false;
+
+    // final hasCourses = cursosOferecidos.isNotEmpty;
+
+    // setState(() {
+    //   cursosError = (hasCourses ? null : 'Adicione ao menos um item!')!;
+    // });
+
+    if (!isCursoValid || !isTurmasValid /*|| !hasCourses*/) {
+      return null;
+    }
     print('disciplinas: $disciplinasOferecidos');
     setState(() {
       _isLoading = true;
@@ -470,75 +485,91 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
     if (!connectivityService.isConnected) {
       return OfflinePage(onRetry: () {}, isLoading: false);
     }
-    
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhiteColor,
-      appBar: AppBar(
-        title: const Text('Cadastro de Cursos'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              CustomExpansionCard(
-                title: 'Dados do Curso',
-                icon: Icons.library_books,
-                initiallyExpanded: isDadosCursoExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isDadosCursoExpanded = expanded;
-                  });
-                },
-                children: [
-                  if(!_isLoading)
-                  controller.buildCamposFaculdadeECurso(
-                    context,
-                  ),
-                  controller.buildTextInput(
-                    'Mensalidade',
-                    context,
-                    mensalidadeController,
-                    !_isLoading,
-                  ),
-                  _buildDisciplinasInput(),
-                  if (disciplinasOferecidos.isNotEmpty)
-                    _buildDisciplinasOferecidos(),
-                ],
-              ),
-              CustomExpansionCard(
-                title: 'Turmas',
-                icon: Icons.switch_account_outlined,
-                initiallyExpanded: isDadosCursoExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isDadosCursoExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildDropdown(
-                    'Turmas',
-                    context,
-                    !_isLoading,
-                    (newValue) {
-                      setState(() {
-                        controller.dropdownValues['Turmas'] = newValue;
-                      });
-                    },
-                  ),
-                  _buildTurmasInputs(),
-                ],
-              ),
-              CustomButton(
-                text: _isLoading ? '' : 'Cadastrar',
-                isLoading: _isLoading,
-                onPressed: () {
-                  if (!_isLoading) {
-                    cadastrarCurso();
-                  }
-                },
-              )
-            ],
+
+    return PopScope(
+      canPop: !_isLoading,
+      onPopInvokedWithResult: (bool didPop, result) {
+        if (didPop) {
+          print('Navegação permitida.');
+        } else {
+          CustomSnackbar.show(
+            context,
+            'Navegação bloqueada! Aguarde o carregamento.',
+            duration: const Duration(seconds: 2),
+          );
+          print('Tentativa de navegação bloqueada.');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        appBar: AppBar(
+          title: const Text('Cadastro de Cursos'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                CustomExpansionCard(
+                  formKey: cursoFormKey,
+                  title: 'Dados do Curso',
+                  icon: Icons.library_books,
+                  initiallyExpanded: isDadosCursoExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isDadosCursoExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    if (!_isLoading)
+                      controller.buildCamposFaculdadeECurso(
+                          context, _isLoading),
+                    controller.buildTextInput(
+                      'Mensalidade',
+                      context,
+                      mensalidadeController,
+                      !_isLoading,
+                    ),
+                    _buildDisciplinasInput(),
+                    if (disciplinasOferecidos.isNotEmpty)
+                      _buildDisciplinasOferecidos(),
+                  ],
+                ),
+                CustomExpansionCard(
+                  formKey: turmasFormKey,
+                  title: 'Turmas',
+                  icon: Icons.switch_account_outlined,
+                  initiallyExpanded: isDadosCursoExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isDadosCursoExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    controller.buildDropdown(
+                      'Turmas',
+                      context,
+                      !_isLoading,
+                      (newValue) {
+                        setState(() {
+                          controller.dropdownValues['Turmas'] = newValue;
+                        });
+                      },
+                    ),
+                    _buildTurmasInputs(),
+                  ],
+                ),
+                CustomButton(
+                  text: _isLoading ? '' : 'Cadastrar',
+                  isLoading: _isLoading,
+                  onPressed: () {
+                    if (!_isLoading) {
+                      cadastrarCurso();
+                    }
+                  },
+                )
+              ],
+            ),
           ),
         ),
       ),

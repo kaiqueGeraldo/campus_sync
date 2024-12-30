@@ -14,12 +14,10 @@ class SignUpController {
   final BuildContext context;
   final formKey = formKeySignUp;
   final TextEditingController usernameController = TextEditingController();
-  final TextEditingController cpfController =
-      MaskedTextController(mask: '000.000.000-00');
+  final TextEditingController cpfController = MaskedTextController(mask: '000.000.000-00');
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
-  final TextEditingController confirmPasswordController =
-      TextEditingController();
+  final TextEditingController confirmPasswordController = TextEditingController();
   final ValueNotifier<bool> obscurePassword = ValueNotifier(true);
   final ValueNotifier<bool> obscureConfirmPassword = ValueNotifier(true);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:typed_data';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
@@ -40,6 +41,33 @@ class ApiService {
       _showErrorDialog(context, 'Erro ao fazer requisição: $e');
       throw Exception('Erro ao fazer requisição: $e');
     }
+  }
+
+  Future<void> refreshProfile(BuildContext context,
+      ValueNotifier<Map<String, dynamic>> userProfile) async {
+    try {
+      final profileData = await fetchUserProfile(context);
+
+      if (profileData.isNotEmpty) {
+        userProfile.value = profileData;
+      }
+    } catch (e) {
+      _showErrorDialog(context, 'Erro ao atualizar perfil: $e');
+    }
+  }
+
+  Future<Uint8List?> getSavedImage() async {
+    final prefs = await SharedPreferences.getInstance();
+    String? base64Image = prefs.getString('userImagem');
+    if (base64Image != null) {
+      try {
+        return base64Decode(base64Image);
+      } catch (e) {
+        print("Erro ao decodificar a imagem: $e");
+        return null;
+      }
+    }
+    return null;
   }
 
   void _showLogoutMessage(BuildContext context, String message) async {
@@ -150,13 +178,8 @@ class ApiService {
   // listar entidades
   Future<List<dynamic>> listarDados(String endpoint) async {
     final cpf = await recuperarCPF();
-    if (endpoint == 'Faculdade') {
-      endpoint += '?cpf=$cpf';
-    } else {
-      endpoint += '/por-cpf/$cpf';
-    }
 
-    final url = Uri.parse('$baseUrl/$endpoint');
+    final url = Uri.parse('$baseUrl/$endpoint?cpf=$cpf');
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -164,6 +187,22 @@ class ApiService {
     } else {
       throw Exception('Nenhuma faculdade encontrada para o CPF informado.');
     }
+  }
+
+  Future<List<Map<String, dynamic>>> carregarItens(String endpoint) async {
+    if (['Faculdade', 'Curso', 'Estudante', 'Colaborador'].contains(endpoint)) {
+      final List<dynamic> dados = await listarDados(endpoint);
+
+      return dados.map((item) {
+        if (item is Map<String, dynamic>) {
+          return item;
+        } else {
+          throw Exception('O item não é um Map<String, dynamic>');
+        }
+      }).toList();
+    }
+
+    return [];
   }
 
   // buscarCursosPorFaculdade
@@ -220,10 +259,16 @@ class ApiService {
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
 
-        if (data is List) {
-          return data.where((item) => item['tipo'] == 'disciplina').toList();
+        if (data is Map<String, dynamic> && data.containsKey('disciplinas')) {
+          final disciplinas = data['disciplinas'];
+
+          if (disciplinas is List) {
+            return disciplinas;
+          } else {
+            throw Exception('Estrutura de dados de disciplinas inesperada');
+          }
         } else {
-          throw Exception('Estrutura de dados inesperada');
+          throw Exception('Campo "disciplinas" não encontrado');
         }
       } else {
         throw Exception('Falha ao carregar dados');
@@ -268,13 +313,8 @@ class ApiService {
 
   Future<int> fetchItemCount(String endpoint) async {
     final cpf = await recuperarCPF();
-    if (endpoint == 'Faculdade') {
-      endpoint += '?cpf=$cpf';
-    } else {
-      endpoint += '/por-cpf/$cpf';
-    }
 
-    final url = Uri.parse('$baseUrl/$endpoint');
+    final url = Uri.parse('$baseUrl/$endpoint?cpf=$cpf');
 
     try {
       final response = await http.get(url);
@@ -322,5 +362,23 @@ class ApiService {
     } else {
       throw Exception('Erro ao carregar conquistas');
     }
+  }
+
+  Future<Map<String, dynamic>?> fetchAddressByCep(String cep) async {
+    final url = Uri.parse('https://viacep.com.br/ws/$cep/json/');
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data.containsKey('erro') && data['erro'] == true) {
+          return null;
+        }
+        return data;
+      }
+    } catch (e) {
+      print('Erro ao buscar o endereço: $e');
+    }
+    return null;
   }
 }

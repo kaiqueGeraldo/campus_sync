@@ -4,6 +4,7 @@ import 'package:campus_sync/src/controllers/main/menu/entidade_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/models/initial_page/drawer_menu_item.dart';
 import 'package:campus_sync/src/views/pages/main/initial_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/adicionar/adicionar_item_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_colaborador_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_curso_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro/cadastro_estudante_page.dart';
@@ -112,16 +113,12 @@ class _EntidadePageState extends State<EntidadePage> {
                                         ),
                                       );
                                     } else {
-                                      List<Map<String, dynamic>> itens =
-                                          await widget._controller
-                                              .carregarItens(item.endpoint);
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
                                           builder: (context) =>
                                               EntidadeConfiguracoesPage(
-                                            itens: itens,
-                                            titulo: item.endpoint,
+                                            endpoint: item.endpoint,
                                             onEditar: (item) {},
                                             onExcluir: (item) {},
                                           ),
@@ -230,7 +227,7 @@ class _EntidadePageState extends State<EntidadePage> {
                                 onTap: () {
                                   widget._controller.editarItemPage(
                                     context,
-                                    AtualizarDadosUniversidadePage(
+                                    AdicionarItemPage(
                                       endpoint: widget.endpoint,
                                     ),
                                   );
@@ -307,6 +304,7 @@ class _EntidadePageState extends State<EntidadePage> {
           const SizedBox(height: 10),
           Text(
             label,
+            textAlign: TextAlign.center,
             style: const TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,

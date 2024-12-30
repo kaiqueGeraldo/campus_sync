@@ -3,10 +3,12 @@ import 'package:campus_sync/src/connectivity/connectivity_service.dart';
 import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/views/components/cadastro/custom_endereco_form.dart';
 import 'package:campus_sync/src/views/components/cadastro/custom_expansion_card.dart';
 import 'package:campus_sync/src/views/components/custom_button.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -25,19 +27,31 @@ class CadastroColaboradorPage extends StatefulWidget {
 
 class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
   late CadastroController controller;
+  final GlobalKey<FormState> colaboradorDadosFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> colaboradorDocumentosFormKey =
+      GlobalKey<FormState>();
+  final GlobalKey<FormState> colaboradorCargoFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> enderecoFormKey = GlobalKey<FormState>();
+  String cursosError = '';
   bool _isLoading = false;
+  final ValueNotifier<bool> _isLoadingController = ValueNotifier(false);
   final TextEditingController nomeController = TextEditingController();
-  final TextEditingController cpfController = TextEditingController();
-  final TextEditingController rgController = TextEditingController();
+  final TextEditingController cpfController =
+      MaskedTextController(mask: '000.000.000-00');
+  final TextEditingController rgController =
+      MaskedTextController(mask: '00.000.000-0');
   final TextEditingController emailController = TextEditingController();
   final TextEditingController cargoController = TextEditingController();
   final TextEditingController numeroRegistroController =
       TextEditingController();
-  final TextEditingController dataAdmissaoController = TextEditingController();
-  final TextEditingController telefoneController = TextEditingController();
+  final TextEditingController dataAdmissaoController =
+      MaskedTextController(mask: '00/00/0000');
+  final TextEditingController telefoneController =
+      MaskedTextController(mask: '(00) 00000-0000');
   final TextEditingController dataNascimentoController =
-      TextEditingController();
-  final TextEditingController tituloEleitorController = TextEditingController();
+      MaskedTextController(mask: '00/00/0000');
+  final TextEditingController tituloEleitorController =
+      MaskedTextController(mask: '000 000 000 0000');
   final TextEditingController nomePaiController = TextEditingController();
   final TextEditingController nomeMaeController = TextEditingController();
   final TextEditingController logradouroController = TextEditingController();
@@ -45,7 +59,8 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
   final TextEditingController bairroController = TextEditingController();
   final TextEditingController cidadeController = TextEditingController();
   final TextEditingController estadoController = TextEditingController();
-  final TextEditingController cepController = TextEditingController();
+  final TextEditingController cepController =
+      MaskedTextController(mask: '00000-000');
 
   bool isDadosColaboradorExpanded = true;
   bool isDocumentosExpanded = false;
@@ -86,6 +101,27 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
   }
 
   Future<http.Response?> cadastrarColaborador() async {
+    final isColaboradorDadosValid =
+        colaboradorDadosFormKey.currentState?.validate() ?? false;
+    final isColaboradorDocumentosValid =
+        colaboradorDocumentosFormKey.currentState?.validate() ?? false;
+    final isColaboradorCargoValid =
+        colaboradorCargoFormKey.currentState?.validate() ?? false;
+    final isEnderecoValid = enderecoFormKey.currentState?.validate() ?? false;
+
+    //final hasCourses = cursosOferecidos.isNotEmpty;
+
+    // setState(() {
+    //   cursosError = (hasCourses ? null : 'Adicione ao menos um item!')!;
+    // });
+
+    if (!isColaboradorDadosValid ||
+        !isEnderecoValid ||
+        !isColaboradorDocumentosValid ||
+        !isColaboradorCargoValid /*|| !hasCourses*/) {
+      return null;
+    }
+
     setState(() {
       _isLoading = true;
     });
@@ -266,274 +302,344 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
     if (!connectivityService.isConnected) {
       return OfflinePage(onRetry: () {}, isLoading: false);
     }
-    
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhiteColor,
-      appBar: AppBar(
-        title: const Text('Cadastro de Colaboradores'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              CustomExpansionCard(
-                title: 'Dados do Colaborador',
-                icon: Icons.person,
-                initiallyExpanded: isDadosColaboradorExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isDadosColaboradorExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildTextInput(
-                    'Nome',
-                    context,
-                    nomeController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'Email',
-                    context,
-                    emailController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'Telefone',
-                    context,
-                    telefoneController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'DataNascimento',
-                    context,
-                    dataNascimentoController,
-                    !_isLoading,
-                  ),
-                ],
-              ),
-              CustomExpansionCard(
-                title: 'Documentos',
-                icon: Icons.file_copy,
-                initiallyExpanded: isDocumentosExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isDocumentosExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildTextInput(
-                    'CPF',
-                    context,
-                    cpfController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'RG',
-                    context,
-                    rgController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'TituloEleitor',
-                    context,
-                    tituloEleitorController,
-                    !_isLoading,
-                  ),
-                  controller.buildDropdown(
-                    'EstadoCivil',
-                    context,
-                    !_isLoading,
-                    (newValue) {
-                      setState(() {
-                        controller.dropdownValues['EstadoCivil'] = newValue;
-                      });
-                    },
-                  ),
-                  controller.buildDropdown(
-                    'Nacionalidade',
-                    context,
-                    !_isLoading,
-                    (newValue) {
-                      setState(() {
-                        controller.dropdownValues['Nacionalidade'] = newValue;
-                      });
-                    },
-                  ),
-                  controller.buildDropdown(
-                    'Cor/Raca/Etnia',
-                    context,
-                    !_isLoading,
-                    (newValue) {
-                      setState(() {
-                        controller.dropdownValues['Cor/Raca/Etnia'] = newValue;
-                      });
-                    },
-                  ),
-                  controller.buildDropdown(
-                    'Escolaridade',
-                    context,
-                    !_isLoading,
-                    (newValue) {
-                      setState(() {
-                        controller.dropdownValues['Escolaridade'] = newValue;
-                      });
-                    },
-                  ),
-                ],
-              ),
-              CustomExpansionCard(
-                title: 'Informações dos Pais',
-                icon: Icons.family_restroom,
-                initiallyExpanded: isInformacoesPaisExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isInformacoesPaisExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildTextInput(
-                    'NomePai',
-                    context,
-                    nomePaiController,
-                    !_isLoading,
-                    disabled: naoConstaPai,
-                    customPadding: const EdgeInsets.only(bottom: 0),
-                  ),
-                  CheckboxListTile(
-                    contentPadding: const EdgeInsets.only(left: 0),
-                    value: naoConstaPai,
-                    onChanged: (value) {
-                      setState(() {
-                        naoConstaPai = value ?? false;
-                        if (naoConstaPai) {
-                          controller.controllers['NomePai']?.clear();
-                        }
-                      });
-                    },
-                    title: const Text('Não consta'),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    activeColor: AppColors.buttonColor,
-                  ),
-                  controller.buildTextInput(
-                    'NomeMae',
-                    context,
-                    nomeMaeController,
-                    !_isLoading,
-                    disabled: naoConstaMae,
-                    customPadding: const EdgeInsets.only(bottom: 0),
-                  ),
-                  CheckboxListTile(
-                    contentPadding: const EdgeInsets.only(left: 0),
-                    value: naoConstaMae,
-                    onChanged: (value) {
-                      setState(() {
-                        naoConstaMae = value ?? false;
-                        if (naoConstaMae) {
-                          controller.controllers['NomeMae']?.clear();
-                        }
-                      });
-                    },
-                    title: const Text('Não consta'),
-                    controlAffinity: ListTileControlAffinity.leading,
-                    activeColor: AppColors.buttonColor,
-                  ),
-                ],
-              ),
-              CustomExpansionCard(
-                title: 'Cargo',
-                icon: Icons.work_outlined,
-                initiallyExpanded: isCargoExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isCargoExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildTextInput(
-                    'NumeroRegistro',
-                    context,
-                    numeroRegistroController,
-                    !_isLoading,
-                  ),
-                  controller.buildDropdown('Cargo', context, !_isLoading,
-                      (newValue) {
+
+    return PopScope(
+      canPop: !_isLoading,
+      onPopInvokedWithResult: (bool didPop, result) {
+        if (didPop) {
+          print('Navegação permitida.');
+        } else {
+          CustomSnackbar.show(
+            context,
+            'Navegação bloqueada! Aguarde o carregamento.',
+            duration: const Duration(seconds: 2),
+          );
+          print('Tentativa de navegação bloqueada.');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        appBar: AppBar(
+          title: const Text('Cadastro de Colaboradores'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                CustomExpansionCard(
+                  formKey: colaboradorDadosFormKey,
+                  title: 'Dados do Colaborador',
+                  icon: Icons.person,
+                  initiallyExpanded: isDadosColaboradorExpanded,
+                  onExpansionChanged: (expanded) {
                     setState(() {
-                      controller.dropdownValues['Cargo'] = newValue;
+                      isDadosColaboradorExpanded = expanded;
                     });
-                    print('Cargo selecionado: $newValue');
-                  }),
-                  if (controller.dropdownValues['Cargo'] == 0 && !_isLoading)
-                    controller.buildCamposFaculdadeECurso(
+                  },
+                  children: [
+                    controller.buildTextInput(
+                      'Nome',
                       context,
+                      nomeController,
+                      !_isLoading,
                     ),
-                  controller.buildTextInput(
-                    'DataAdmissao',
-                    context,
-                    dataAdmissaoController,
-                    !_isLoading,
-                  ),
-                ],
-              ),
-              CustomExpansionCard(
-                title: 'Endereço',
-                icon: Icons.home,
-                initiallyExpanded: isEnderecoExpanded,
-                onExpansionChanged: (expanded) {
-                  setState(() {
-                    isEnderecoExpanded = expanded;
-                  });
-                },
-                children: [
-                  controller.buildTextInput(
-                    'EnderecoLogradouro',
-                    context,
-                    logradouroController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'EnderecoNumero',
-                    context,
-                    numeroController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'EnderecoBairro',
-                    context,
-                    bairroController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'EnderecoCidade',
-                    context,
-                    cidadeController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'EnderecoEstado',
-                    context,
-                    estadoController,
-                    !_isLoading,
-                  ),
-                  controller.buildTextInput(
-                    'EnderecoCEP',
-                    context,
-                    cepController,
-                    !_isLoading,
-                  ),
-                ],
-              ),
-              CustomButton(
-                text: _isLoading ? '' : 'Cadastar',
-                isLoading: _isLoading,
-                onPressed: () {
-                  if (!_isLoading) {
-                    cadastrarColaborador();
-                  }
-                },
-              ),
-            ],
+                    controller.buildTextInput(
+                      'Email',
+                      context,
+                      emailController,
+                      !_isLoading,
+                      onChanged: (value) {
+                        setState(() {
+                          controller.updateEmailNotifier(value);
+                        });
+                      },
+                    ),
+                    controller.buildTextInput(
+                      'Telefone',
+                      context,
+                      telefoneController,
+                      !_isLoading,
+                    ),
+                    controller.buildTextInput(
+                      'DataNascimento',
+                      context,
+                      dataNascimentoController,
+                      !_isLoading,
+                    ),
+                  ],
+                ),
+                CustomExpansionCard(
+                  formKey: colaboradorDocumentosFormKey,
+                  title: 'Documentos',
+                  icon: Icons.file_copy,
+                  initiallyExpanded: isDocumentosExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isDocumentosExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    controller.buildTextInput(
+                      'CPF',
+                      context,
+                      cpfController,
+                      !_isLoading,
+                      onChanged: (value) {
+                        setState(() {
+                          controller.updateCpfNotifier(value);
+                        });
+                      },
+                    ),
+                    controller.buildTextInput(
+                      'RG',
+                      context,
+                      rgController,
+                      !_isLoading,
+                    ),
+                    controller.buildTextInput(
+                      'TituloEleitor',
+                      context,
+                      tituloEleitorController,
+                      !_isLoading,
+                    ),
+                    controller.buildDropdown(
+                      'EstadoCivil',
+                      context,
+                      !_isLoading,
+                      (newValue) {
+                        setState(() {
+                          controller.dropdownValues['EstadoCivil'] = newValue;
+                        });
+                      },
+                    ),
+                    controller.buildDropdown(
+                      'Nacionalidade',
+                      context,
+                      !_isLoading,
+                      (newValue) {
+                        setState(() {
+                          controller.dropdownValues['Nacionalidade'] = newValue;
+                        });
+                      },
+                    ),
+                    controller.buildDropdown(
+                      'Cor/Raca/Etnia',
+                      context,
+                      !_isLoading,
+                      (newValue) {
+                        setState(() {
+                          controller.dropdownValues['Cor/Raca/Etnia'] =
+                              newValue;
+                        });
+                      },
+                    ),
+                    controller.buildDropdown(
+                      'Escolaridade',
+                      context,
+                      !_isLoading,
+                      (newValue) {
+                        setState(() {
+                          controller.dropdownValues['Escolaridade'] = newValue;
+                        });
+                      },
+                    ),
+                  ],
+                ),
+                CustomExpansionCard(
+                  title: 'Informações dos Pais',
+                  icon: Icons.family_restroom,
+                  initiallyExpanded: isInformacoesPaisExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isInformacoesPaisExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    controller.buildTextInput(
+                      'NomePai',
+                      context,
+                      nomePaiController,
+                      !_isLoading,
+                      disabled: naoConstaPai,
+                      customPadding: const EdgeInsets.only(bottom: 0),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: const EdgeInsets.only(left: 0),
+                      value: naoConstaPai,
+                      onChanged: (value) {
+                        setState(() {
+                          naoConstaPai = value ?? false;
+                          if (naoConstaPai) {
+                            controller.controllers['NomePai']?.clear();
+                          }
+                        });
+                      },
+                      title: const Text('Não consta'),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: AppColors.buttonColor,
+                    ),
+                    controller.buildTextInput(
+                      'NomeMae',
+                      context,
+                      nomeMaeController,
+                      !_isLoading,
+                      disabled: naoConstaMae,
+                      customPadding: const EdgeInsets.only(bottom: 0),
+                    ),
+                    CheckboxListTile(
+                      contentPadding: const EdgeInsets.only(left: 0),
+                      value: naoConstaMae,
+                      onChanged: (value) {
+                        setState(() {
+                          naoConstaMae = value ?? false;
+                          if (naoConstaMae) {
+                            controller.controllers['NomeMae']?.clear();
+                          }
+                        });
+                      },
+                      title: const Text('Não consta'),
+                      controlAffinity: ListTileControlAffinity.leading,
+                      activeColor: AppColors.buttonColor,
+                    ),
+                  ],
+                ),
+                CustomExpansionCard(
+                  formKey: colaboradorCargoFormKey,
+                  title: 'Cargo',
+                  icon: Icons.work_outlined,
+                  initiallyExpanded: isCargoExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isCargoExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          flex: 4,
+                          child: controller.buildTextInput(
+                            'NumeroRegistro',
+                            context,
+                            numeroRegistroController,
+                            false,
+                            radius: const BorderRadius.only(
+                              bottomRight: Radius.zero,
+                              topRight: Radius.zero,
+                              bottomLeft: Radius.circular(10),
+                              topLeft: Radius.circular(10),
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          flex: 1,
+                          child: Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Container(
+                              height: 58,
+                              decoration: const BoxDecoration(
+                                color: AppColors.buttonColor,
+                                borderRadius: BorderRadius.only(
+                                  bottomRight: Radius.circular(10),
+                                  topRight: Radius.circular(10),
+                                ),
+                              ),
+                              child: IconButton(
+                                alignment: Alignment.center,
+                                icon: Icon(
+                                  numeroRegistroController.text.isNotEmpty
+                                      ? Icons.check
+                                      : Icons.refresh,
+                                  color: AppColors.lightGreyColor,
+                                ),
+                                onPressed: () {
+                                  if (numeroRegistroController.text.isEmpty) {
+                                    setState(() {
+                                      numeroRegistroController.text =
+                                          controller.generateRandomMatricula(
+                                              'NumeroRegistro');
+                                    });
+                                  } else {
+                                    CustomSnackbar.show(
+                                      context,
+                                      'O número já foi gerado!',
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    controller.buildDropdown('Cargo', context, !_isLoading,
+                        (newValue) {
+                      setState(() {
+                        controller.dropdownValues['Cargo'] = newValue;
+                      });
+                      print('Cargo selecionado: $newValue');
+                    }),
+                    if (controller.dropdownValues['Cargo'] == 0 && !_isLoading)
+                      controller.buildCamposFaculdadeECurso(
+                          context, _isLoading),
+                    controller.buildTextInput(
+                      'DataAdmissao',
+                      context,
+                      dataAdmissaoController,
+                      !_isLoading,
+                    ),
+                  ],
+                ),
+                CustomExpansionCard(
+                  formKey: enderecoFormKey,
+                  title: 'Endereço',
+                  icon: Icons.home,
+                  initiallyExpanded: isEnderecoExpanded,
+                  onExpansionChanged: (expanded) {
+                    setState(() {
+                      isEnderecoExpanded = expanded;
+                    });
+                  },
+                  children: [
+                    EnderecoForm(
+                      cepController: cepController,
+                      logradouroController: logradouroController,
+                      numeroController: numeroController,
+                      bairroController: bairroController,
+                      cidadeController: cidadeController,
+                      estadoController: estadoController,
+                      isLoadingNotifier: _isLoadingController,
+                      isLoading: _isLoading,
+                      onSearchPressed: () async {
+                        _isLoadingController.value = true;
+                        await controller.searchAddress(
+                          context: context,
+                          cepController: cepController,
+                          logradouroController: logradouroController,
+                          bairroController: bairroController,
+                          cidadeController: cidadeController,
+                          estadoController: estadoController,
+                          isLoading: _isLoadingController,
+                        );
+                        _isLoadingController.value = false;
+                      },
+                    ),
+                  ],
+                ),
+                CustomButton(
+                  text: _isLoading ? '' : 'Cadastar',
+                  isLoading: _isLoading,
+                  onPressed: () {
+                    if (!_isLoading) {
+                      cadastrarColaborador();
+                    }
+                  },
+                ),
+              ],
+            ),
           ),
         ),
       ),

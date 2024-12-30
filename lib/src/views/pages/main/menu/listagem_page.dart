@@ -34,48 +34,42 @@ class _ListagemPageState extends State<ListagemPage> {
   void initState() {
     super.initState();
     _controller = ListagemController();
-    _futureList = _controller.listar(widget.endpoint);
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    if (mounted) {
+      _futureList = _controller.listar(widget.endpoint);
+      setState(() {});
+    }
   }
 
   void _filterList(String query, List<dynamic> items) {
-    final lowerQuery = query.toLowerCase();
+    query = query.toLowerCase();
     setState(() {
-      filteredItems = items
-          .where((item) => (item[widget.fieldMapping['title'] ?? 'nome'] ?? '')
-              .toString()
-              .toLowerCase()
-              .contains(lowerQuery))
-          .toList();
+      if (query.isEmpty) {
+        filteredItems = List.from(items);
+      } else {
+        filteredItems = items.where((item) {
+          final nome = item['nome']?.toLowerCase() ?? '';
+          return nome.contains(query);
+        }).toList();
+      }
+
+      print('Itens depois do filtro: ${filteredItems.length}');
     });
   }
 
-  Future<void> _verDetalhes(String endpoint, String id) async {
-    print(endpoint);
-
-    try {
-      final Map<String, dynamic> dados =
-          await ApiService().listarDadosConfiguracoes(endpoint, id);
-      print('Dados retornados: $dados');
-      print('Tipo do item: ${dados['tipo']}');
-
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => DetalhesItemPage(
-            titulo: endpoint,
-            dados: dados,
-          ),
+  void _verDetalhes(String endpoint, String id) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => DetalhesItemPage(
+          endpoint: endpoint,
+          id: id,
         ),
-      );
-    } catch (e) {
-      customShowDialog(
-        context: context,
-        title: 'Erro',
-        content: 'Não foi possível carregar os detalhes. Erro: $e',
-        confirmText: 'Fechar',
-        onConfirm: () => Navigator.pop(context),
-      );
-    }
+      ),
+    );
   }
 
   @override
@@ -86,9 +80,10 @@ class _ListagemPageState extends State<ListagemPage> {
       return const Scaffold(
         backgroundColor: AppColors.backgroundWhiteColor,
         body: Center(
-            child: CircularProgressIndicator(
-          color: AppColors.buttonColor,
-        )),
+          child: CircularProgressIndicator(
+            color: AppColors.buttonColor,
+          ),
+        ),
       );
     }
 
@@ -122,15 +117,17 @@ class _ListagemPageState extends State<ListagemPage> {
             return Center(child: Text('Erro: ${snapshot.error}'));
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
             return const Center(
-                child: Text(
-              'Nenhum item encontrado.',
-              textAlign: TextAlign.center,
-            ));
+              child: Text(
+                'Nenhum item encontrado.',
+                textAlign: TextAlign.center,
+              ),
+            );
           }
 
           final items = snapshot.data!;
-          if (filteredItems.isEmpty && searchController.text.isEmpty) {
-            filteredItems = items;
+          if (filteredItems.isEmpty) {
+            filteredItems =
+                List.from(items); // Inicializa com os itens carregados
           }
 
           return Column(
@@ -139,9 +136,12 @@ class _ListagemPageState extends State<ListagemPage> {
                 color: AppColors.backgroundBlueColor,
                 padding: const EdgeInsets.all(12),
                 child: TextField(
+                  cursorColor: AppColors.backgroundBlueColor,
+                  maxLength: 50,
                   style: const TextStyle(color: Colors.black),
                   controller: searchController,
                   decoration: InputDecoration(
+                    counterText: '',
                     hintText: 'Localizar',
                     hintStyle: const TextStyle(color: AppColors.darkGreyColor),
                     filled: true,
@@ -164,7 +164,7 @@ class _ListagemPageState extends State<ListagemPage> {
                       onPressed: () {
                         searchController.clear();
                         setState(() {
-                          filteredItems = items;
+                          filteredItems = List.from(items);
                         });
                       },
                     ),
@@ -174,7 +174,8 @@ class _ListagemPageState extends State<ListagemPage> {
               ),
               Expanded(
                 child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   itemCount: filteredItems.length,
                   itemBuilder: (context, index) {
                     final item = filteredItems[index];
@@ -196,7 +197,7 @@ class _ListagemPageState extends State<ListagemPage> {
 
                     return GestureDetector(
                       onTap: () {
-                        String id = items[index]['id'].toString();
+                        String id = filteredItems[index]['id'].toString();
                         _verDetalhes(widget.endpoint, id);
                       },
                       child: Card(

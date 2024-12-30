@@ -1,18 +1,18 @@
 import 'dart:math';
-
 import 'package:campus_sync/src/models/colors/colors.dart';
 import 'package:campus_sync/src/models/enums/periodo_curso.dart';
 import 'package:campus_sync/src/services/api_service.dart';
+import 'package:campus_sync/src/services/validators/date_input_formater.dart';
+import 'package:campus_sync/src/services/validators/input_validators.dart';
 import 'package:campus_sync/src/views/components/custom_input_text_cadastro.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:campus_sync/src/views/pages/main/menu/cadastro/selecionar_faculdade_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_masked_text2/flutter_masked_text2.dart';
 import 'package:intl/intl.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class CadastroController {
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
   final bool isLoading = false;
   final List<String> cursosSelecionados = [];
   final List<int> cursosOferecidos = [];
@@ -21,10 +21,12 @@ class CadastroController {
   List<DropdownMenuItem<int>> cursosDropdownItems = [];
   Map<int, List<dynamic>> turmasPorCurso = {};
   final Map<String, TextEditingController> controllers = {};
-  final Map<String, dynamic> dropdownValues = {};
+  Map<String, dynamic> dropdownValues = {};
+  Map<String, dynamic> selectedValues = {};
   final Map<String, String> fieldNames = {
     'CapacidadeMaxima': 'Capacidade Máxima',
     'CPF': 'CPF',
+    'CNPJ': 'CNPJ',
     'Cor/Raca/Etnia': 'Cor/Raça/Etnia',
     'CursoId': 'Curso',
     'DataAdmissao': 'Data de Admissão',
@@ -37,7 +39,7 @@ class CadastroController {
     'EnderecoCidade': 'Cidade',
     'EnderecoEstado': 'Estado',
     'EnderecoLogradouro': 'Logradouro',
-    'EnderecoNumero': 'Numero',
+    'EnderecoNumero': 'Número',
     'EnderecoBairro': 'Bairro',
     'EstadoCivil': 'Estado Cívil',
     'EstudanteId': 'Estudante',
@@ -66,6 +68,23 @@ class CadastroController {
   ValueNotifier<List<DropdownMenuItem<int>>> cursosDropdownItemsNotifier =
       ValueNotifier<List<DropdownMenuItem<int>>>([]);
   ValueNotifier<int?> cursoSelecionadoNotifier = ValueNotifier<int?>(null);
+  final isCpfValid = ValueNotifier<bool>(true);
+  final isEmailValid = ValueNotifier<bool>(true);
+  final isCNPJValid = ValueNotifier<bool>(true);
+
+  // Atualizar CPF dinamicamente
+  void updateCpfNotifier(String text) {
+    isCpfValid.value = InputValidators.validateCpfLogic(text);
+  }
+
+  // Atualizar Email dinamicamente
+  void updateEmailNotifier(String text) {
+    isEmailValid.value = InputValidators.validateEmailLogic(text);
+  }
+
+  void updateCNPJNotifier(String text) {
+    isCNPJValid.value = InputValidators.validateCnpjLogic(text);
+  }
 
   void atualizarFaculdadeSelecionada(Map<String, dynamic> faculdade) {
     faculdadeSelecionadaNotifier.value = faculdade;
@@ -73,13 +92,6 @@ class CadastroController {
 
   void atualizarCursosDropdown(List<DropdownMenuItem<int>> cursos) {
     cursosDropdownItemsNotifier.value = cursos;
-  }
-
-  Future recuperarCPF() async {
-    final prefs = await SharedPreferences.getInstance();
-    String? userCPF = prefs.getString('userCPF') ?? '';
-
-    return userCPF;
   }
 
   void initControllers(Map<String, dynamic> initialData) {
@@ -131,6 +143,8 @@ class CadastroController {
     switch (field) {
       case 'Mensalidade':
         return 12;
+      case 'EnderecoEstado':
+        return 2;
       default:
         return 50;
     }
@@ -140,13 +154,21 @@ class CadastroController {
     switch (field) {
       case 'CPF':
       case 'CNPJ':
+      case 'RG':
       case 'Mensalidade':
       case 'Celular':
+      case 'EnderecoNumero':
       case 'Telefone':
       case 'EnderecoCEP':
+      case 'TituloEleitor':
         return TextInputType.number;
       case 'Email':
+      case 'EmailResponsavel':
         return TextInputType.emailAddress;
+      case 'DataNascimento':
+      case 'DataMatricula':
+      case 'DataAdmissao':
+        return TextInputType.datetime;
       default:
         return TextInputType.text;
     }
@@ -233,6 +255,7 @@ class CadastroController {
   }
   // #endregion
 
+  // #region TextInput
   String generateRandomMatricula(String field) {
     final random = Random();
     if (field == 'NumeroMatricula') {
@@ -242,111 +265,149 @@ class CadastroController {
     }
   }
 
-  // #region TextInput
+  Widget? buildSuffixIcon(
+      String field, TextEditingController customController) {
+    switch (field) {
+      case 'CPF':
+        return ValueListenableBuilder<bool>(
+          valueListenable: isCpfValid,
+          builder: (context, isValid, child) {
+            if (customController.text.isEmpty) {
+              return const Icon(
+                Icons.info,
+                color: Colors.grey,
+              );
+            }
+            return Icon(
+              isValid ? Icons.check_circle : Icons.error,
+              color: isValid ? Colors.green : Colors.red,
+            );
+          },
+        );
+      case 'Email':
+      case 'EmailResponsavel':
+        return ValueListenableBuilder<bool>(
+          valueListenable: isEmailValid,
+          builder: (context, isValid, child) {
+            if (customController.text.isEmpty) {
+              return const Icon(
+                Icons.info,
+                color: Colors.grey,
+              );
+            }
+            return Icon(
+              isValid ? Icons.check_circle : Icons.error,
+              color: isValid ? Colors.green : Colors.red,
+            );
+          },
+        );
+      case 'CNPJ':
+        return ValueListenableBuilder<bool>(
+          valueListenable: isCNPJValid,
+          builder: (context, isValid, child) {
+            if (customController.text.isEmpty) {
+              return const Icon(
+                Icons.info,
+                color: Colors.grey,
+              );
+            }
+            return Icon(
+              isValid ? Icons.check_circle : Icons.error,
+              color: isValid ? Colors.green : Colors.red,
+            );
+          },
+        );
+      default:
+        return null;
+    }
+  }
+
+  String? Function(String?)? getValidator(String field) {
+    switch (field.toLowerCase()) {
+      case 'cpf':
+        return (value) {
+          if (!InputValidators.validateCpfLogic(value!)) {
+            return 'CPF inválido';
+          }
+          return null;
+        };
+      case 'email':
+      case 'emailresponsavel':
+        return (value) {
+          if (!InputValidators.validateEmailLogic(value!)) {
+            return 'Email inválido';
+          }
+          return null;
+        };
+      case 'cnpj':
+        return (value) {
+          if (!InputValidators.validateCnpjLogic(value!)) {
+            return 'CNPJ inválido';
+          }
+          return null;
+        };
+      default:
+        return (value) {
+          if (value == null || value.isEmpty) {
+            return 'Este campo é obrigatório';
+          }
+          return null;
+        };
+    }
+  }
+
   Widget buildTextInput(
     String field,
     BuildContext context,
     TextEditingController customController,
     bool enabled, {
     bool disabled = false,
+    Widget? suffixIconEndereco,
+    BorderRadius? radius,
     EdgeInsets? customPadding,
+    Function(String)? onChanged,
+    String? Function(String?)? validator,
   }) {
-    // Determina qual controlador usar
-    final TextEditingController fieldController = customController;
-
     String labelText = fieldNames[field] ?? field;
     TextInputType keyboardType = getKeyboardType(field);
     int? maxLength = getMaxLength(field);
-    bool isDateField = field == 'DataAdmissao' ||
+
+    List<TextInputFormatter> inputFormatters = [];
+    // Utiliza o validator fornecido ou o padrão obtido de getValidator(field)
+    String? Function(String?)? effectiveValidator =
+        validator ?? getValidator(field);
+
+    Widget? suffixIcon = buildSuffixIcon(field, customController);
+
+    if (field == 'DataMatricula' ||
         field == 'DataNascimento' ||
-        field == 'DataMatricula';
-
-    // Função para mostrar o DatePicker
-    // ignore: no_leading_underscores_for_local_identifiers
-    Future<void> _showDatePicker(BuildContext context) async {
-      DateTime today = DateTime.now();
-      DateTime lastAllowedDate =
-          DateTime(today.year - 18, today.month, today.day);
-      DateTime initialDate =
-          field == 'DataNascimento' ? lastAllowedDate : today;
-
-      DateTime? selectedDate = await showDatePicker(
-        barrierDismissible: true,
-        context: context,
-        initialDate: initialDate,
-        firstDate: DateTime(1900),
-        lastDate: field == 'DataNascimento' ? lastAllowedDate : today,
-        builder: (BuildContext context, Widget? child) {
-          return Theme(
-            data: Theme.of(context).copyWith(
-              dialogBackgroundColor: AppColors.backgroundWhiteColor,
-              colorScheme: const ColorScheme.light(
-                primary: AppColors.buttonColor,
-                onPrimary: Colors.white,
-                onSurface: Colors.black,
-              ),
-              textButtonTheme: TextButtonThemeData(
-                style: TextButton.styleFrom(
-                  foregroundColor: AppColors.buttonColor,
-                ),
-              ),
-            ),
-            child: child!,
-          );
-        },
-      );
-
-      if (selectedDate != null) {
-        String formattedDate = DateFormat('dd/MM/yyyy').format(selectedDate);
-        fieldController.text = formattedDate;
-      }
-    }
-
-    // Configurações específicas
-    if (field == 'NumeroRegistro' || field == 'NumeroMatricula') {
-      fieldController.text = generateRandomMatricula(field);
-      enabled = false;
-    }
-
-    if (isDateField) {
-      return CustomInputTextCadastro(
-        controller: fieldController,
-        labelText: labelText,
-        keyboardType: TextInputType.datetime,
-        onTap: () {
-          _showDatePicker(context);
-        },
-      );
+        field == 'DataAdmissao') {
+      inputFormatters.add(DateTextInputFormatter(
+        isDataNascimento: field == 'DataNascimento',
+      ));
     }
 
     return Padding(
       padding: customPadding ?? const EdgeInsets.only(bottom: 12),
-      child: GestureDetector(
-        onTap: isDateField && enabled && !disabled
-            ? () async {
-                await _showDatePicker(context);
-              }
-            : null,
-        child: AbsorbPointer(
-          absorbing: isDateField,
-          child: CustomInputTextCadastro(
-            controller: fieldController,
-            labelText: labelText,
-            keyboardType: isDateField ? TextInputType.datetime : keyboardType,
-            maxLength: maxLength,
-            enabled: enabled && !isLoading && !disabled,
-            validator: (value) {
-              if (!disabled && (value == null || value.isEmpty)) {
-                return 'Este campo é obrigatório';
-              }
-              return null;
-            },
-          ),
-        ),
+      child: CustomInputTextCadastro(
+        inputFormatters: inputFormatters,
+        borderRadius: radius,
+        controller: customController,
+        labelText: labelText,
+        keyboardType: keyboardType,
+        maxLength: maxLength,
+        enabled: enabled && !disabled,
+        suffixIcon: suffixIcon,
+        validator: effectiveValidator,
+        onChanged: (value) {
+          if (onChanged != null) {
+            onChanged(value);
+          }
+        },
       ),
     );
   }
-// #endregion
+  // #endregion
 
   // #region Dropdown
   Widget buildDropdown(
@@ -386,7 +447,7 @@ class CadastroController {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: DropdownButtonFormField<int>(
-        value: dropdownValues[field] as int?,
+        value: selectedValues[field],
         items: items,
         iconSize: 20,
         onChanged: (newValue) {
@@ -425,20 +486,35 @@ class CadastroController {
   // #endregion
 
   // #region Faculdade
-  Widget buildCamposFaculdadeECurso(
-    BuildContext context,
-  ) {
+  Widget buildCamposFaculdadeECurso(BuildContext context, isLoading) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [buildFaculdadeInput(context), buildCursosDropdown(context, !isLoading)],
+      children: [
+        buildFaculdadeInput(context),
+        buildCursosDropdown(context, !isLoading)
+      ],
     );
   }
 
   void abrirTelaFaculdades(BuildContext context) async {
     try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return const Center(
+            child: CircularProgressIndicator(
+              color: AppColors.buttonColor,
+            ),
+          );
+        },
+      );
+
       final faculdades = (await ApiService().listarFaculdades())
           .map((faculdade) => faculdade as Map<String, dynamic>)
           .toList();
+
+      Navigator.pop(context);
 
       final selecionada = await Navigator.push<Map<String, dynamic>>(
         context,
@@ -454,13 +530,29 @@ class CadastroController {
 
       if (selecionada != null) {
         faculdadeSelecionadaNotifier.value = selecionada;
+        cursoSelecionadoNotifier.value = null;
+        cursosDropdownItemsNotifier.value = [];
         dropdownValues['Curso'] = null;
         dropdownValues['Turma'] = null;
 
         if (selecionada['id'] != null) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.buttonColor,
+                ),
+              );
+            },
+          );
+
           final cursos = await ApiService().buscarCursosPorFaculdade(
             selecionada['id'],
           );
+
+          Navigator.pop(context);
 
           if (cursos.isNotEmpty) {
             cursosDropdownItemsNotifier.value = cursos.map((curso) {
@@ -479,13 +571,11 @@ class CadastroController {
         }
       }
     } catch (e) {
+      Navigator.pop(context);
+
       print('Erro ao buscar faculdades ou cursos: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              'Erro ao carregar faculdades. Verifique se existe alguma faculdade cadastrada e tente novamente.'),
-        ),
-      );
+      CustomSnackbar.show(context,
+          'Erro ao carregar faculdades. Verifique se existe alguma faculdade cadastrada e tente novamente.');
     }
   }
 
@@ -683,12 +773,15 @@ class CadastroController {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TextField(
+          cursorColor: AppColors.backgroundBlueColor,
+          maxLength: 50,
           controller: controller,
           enabled: enabled && !isLoading && !disabled,
           onChanged: (value) {
             onFilter(value);
           },
           decoration: InputDecoration(
+            counterText: '',
             labelText: label,
             floatingLabelStyle:
                 const TextStyle(color: AppColors.backgroundBlueColor),
@@ -796,96 +889,34 @@ class CadastroController {
   }
   // #endregion
 
-  Future<void> cadastrar(BuildContext context, String endpoint) async {
-    List<String> requiredFields = [];
+  Future<void> searchAddress({
+    required BuildContext context,
+    required TextEditingController cepController,
+    required TextEditingController logradouroController,
+    required TextEditingController bairroController,
+    required TextEditingController cidadeController,
+    required TextEditingController estadoController,
+    required ValueNotifier<bool> isLoading,
+  }) async {
+    isLoading.value = true;
 
-    switch (endpoint) {
-      case 'Faculdade':
-        requiredFields = [
-          'Nome',
-          'CNPJ',
-          'Telefone',
-          'EmailResponsavel',
-          'TipoFacul',
-          'CursosOferecidos',
-        ];
-        break;
-      case 'Curso':
-        requiredFields = ['Nome', 'Descricao', 'Mensalidade', 'FaculdadeId'];
-        break;
-      case 'Estudante':
-        requiredFields = [
-          'Nome',
-          'Email',
-          'DataNascimento',
-          'EnderecoCEP',
-          'EnderecoLogradouro',
-          'EnderecoNumero',
-          'EnderecoBairro',
-          'EnderecoCidade',
-          'EnderecoEstado',
-          'userCPF'
-        ];
-        break;
-      default:
-        CustomSnackbar.show(context, 'Endpoint desconhecido!');
-        return;
+    final cep = cepController.text.replaceAll('-', '').trim();
+    if (cep.isEmpty || cep.length != 8) {
+      CustomSnackbar.show(context, 'Por favor, insira um CEP válido.');
+      isLoading.value = false;
+      return;
     }
 
-    final formData = await formatFormData(requiredFields);
-    final response = await ApiService().cadastrarDados(endpoint, formData);
-
-    if (response != null &&
-        (response.statusCode == 200 || response.statusCode == 201)) {
-      CustomSnackbar.show(context, 'Cadastro realizado com sucesso!');
-      Navigator.pop(context);
+    final address = await ApiService().fetchAddressByCep(cep);
+    if (address != null) {
+      logradouroController.text = address['logradouro'] ?? '';
+      bairroController.text = address['bairro'] ?? '';
+      cidadeController.text = address['localidade'] ?? '';
+      estadoController.text = address['uf'] ?? '';
     } else {
-      CustomSnackbar.show(
-          context, 'Erro ao cadastrar: ${response?.body ?? 'Desconhecido'}');
-    }
-  }
-
-  Future<Map<String, dynamic>> formatFormData(
-      List<String> requiredFields) async {
-    final Map<String, dynamic> formData = {};
-
-    controllers.forEach((key, controller) {
-      formData[key] = controller.text;
-    });
-
-    dropdownValues.forEach((key, value) {
-      formData[key] = value;
-    });
-
-    if (requiredFields.contains('userCPF')) {
-      formData['userCPF'] = await recuperarCPF();
+      CustomSnackbar.show(context, 'Endereço não encontrado para este CEP.');
     }
 
-    if (requiredFields.any((field) => field.startsWith('Endereco'))) {
-      formData['endereco'] = {
-        'cep': formData.remove('EnderecoCEP') ?? '',
-        'logradouro': formData.remove('EnderecoLogradouro') ?? '',
-        'numero': formData.remove('EnderecoNumero') ?? '',
-        'bairro': formData.remove('EnderecoBairro') ?? '',
-        'cidade': formData.remove('EnderecoCidade') ?? '',
-        'estado': formData.remove('EnderecoEstado') ?? '',
-      };
-    }
-
-    if (requiredFields.contains('CursosOferecidos')) {
-      formData['CursosOferecidos'] =
-          cursosOferecidos.map((curso) => curso.toString()).toList();
-    } else if (requiredFields.contains('disciplinasOferecidos')) {
-      formData['disciplinasOferecidos'] = disciplinasOferecidos
-          .map((disciplina) => disciplina.toString())
-          .toList();
-    }
-
-    // Retorna apenas os campos necessários
-    return formData..removeWhere((key, value) => value == null);
-  }
-
-  bool isEnderecoField(String field) {
-    return field.startsWith('Endereco');
+    isLoading.value = false;
   }
 }

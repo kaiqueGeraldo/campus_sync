@@ -25,7 +25,6 @@ class _AtualizarFotoUniversidadePageState
     extends State<AtualizarFotoUniversidadePage> {
   XFile? _image;
   final ImagePicker _picker = ImagePicker();
-  bool _isUploading = false;
   bool _isLoading = false;
   Uint8List? _userImageBytes;
 
@@ -39,14 +38,21 @@ class _AtualizarFotoUniversidadePageState
     setState(() {
       _isLoading = true;
     });
+
     try {
       final userData = await ApiService().fetchUserProfile(context);
 
       if (userData['urlImagem'] != null && userData['urlImagem'].isNotEmpty) {
+        if (!mounted) return;
+
         setState(() {
           _userImageBytes = base64Decode(userData['urlImagem']);
         });
+
+        await _saveUserImage(userData['urlImagem']);
       } else {
+        if (!mounted) return;
+
         setState(() {
           _userImageBytes = null;
         });
@@ -54,9 +60,21 @@ class _AtualizarFotoUniversidadePageState
     } catch (e) {
       print('Erro ao carregar dados do usuário: $e');
     } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _saveUserImage(String base64Image) async {
+    final prefs = await SharedPreferences.getInstance();
+    try {
+      await prefs.setString('userImagem', base64Image);
+      print("Imagem salva no SharedPreferences com sucesso!");
+    } catch (e) {
+      print("Erro ao salvar imagem no SharedPreferences: $e");
     }
   }
 
@@ -127,7 +145,7 @@ class _AtualizarFotoUniversidadePageState
     if (_image == null) return;
 
     setState(() {
-      _isUploading = true;
+      _isLoading = true;
     });
 
     try {
@@ -170,7 +188,7 @@ class _AtualizarFotoUniversidadePageState
           backgroundColor: AppColors.errorColor);
     } finally {
       setState(() {
-        _isUploading = false;
+        _isLoading = false;
       });
     }
   }
@@ -192,74 +210,91 @@ class _AtualizarFotoUniversidadePageState
     if (!connectivityService.isConnected) {
       return OfflinePage(onRetry: () => _loadUserData(), isLoading: false);
     }
-    
-    return Scaffold(
-      backgroundColor: AppColors.backgroundWhiteColor,
-      appBar: AppBar(
-        title: const Text('Logo da Empresa'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
-        child: Center(
-          child: Column(
-            children: [
-              if (_isLoading)
-                const LinearProgressIndicator(
-                  backgroundColor: AppColors.lightGreyColor,
-                  color: AppColors.buttonColor,
-                  valueColor: AlwaysStoppedAnimation(AppColors.buttonColor),
-                  minHeight: 8,
-                )
-              else if (_image != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(200),
-                  child: Image.file(
-                    File(_image!.path),
-                    width: 250,
-                    height: 250,
-                    fit: BoxFit.cover,
+
+    return PopScope(
+      canPop: !_isLoading,
+      onPopInvokedWithResult: (bool didPop, result) {
+        if (didPop) {
+          print('Navegação permitida.');
+        } else {
+          CustomSnackbar.show(
+            context,
+            'Navegação bloqueada! Aguarde o carregamento.',
+            duration: const Duration(seconds: 2),
+          );
+          print('Tentativa de navegação bloqueada.');
+        }
+      },
+      child: Scaffold(
+        backgroundColor: AppColors.backgroundWhiteColor,
+        appBar: AppBar(
+          title: const Text('Logo da Empresa'),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 30, horizontal: 16),
+          child: Center(
+            child: Column(
+              children: [
+                if (_isLoading)
+                  const LinearProgressIndicator(
+                    backgroundColor: AppColors.lightGreyColor,
+                    color: AppColors.buttonColor,
+                    valueColor: AlwaysStoppedAnimation(AppColors.buttonColor),
+                    minHeight: 8,
+                  )
+                else if (_image != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(200),
+                    child: Image.file(
+                      File(_image!.path),
+                      width: 250,
+                      height: 250,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                else if (_userImageBytes != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(200),
+                    child: Image.memory(
+                      _userImageBytes!,
+                      width: 250,
+                      height: 250,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                else
+                  const CircleAvatar(
+                    radius: 120,
+                    child: Icon(
+                      Icons.person,
+                      size: 120,
+                    ),
                   ),
-                )
-              else if (_userImageBytes != null)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(200),
-                  child: Image.memory(
-                    _userImageBytes!,
-                    width: 250,
-                    height: 250,
-                    fit: BoxFit.cover,
-                  ),
-                )
-              else
-                const CircleAvatar(
-                  radius: 120,
-                  child: Icon(
-                    Icons.person,
-                    size: 120,
-                  ),
-                ),
-              const SizedBox(height: 30),
-              CustomButton(
-                text: 'Escolher Imagem',
-                onPressed: () {
-                  if (!_isUploading) {
-                    _showImageSourceSheet();
-                  }
-                },
-              ),
-              if (_image != null) ...[
-                const SizedBox(height: 20),
+                const SizedBox(height: 30),
                 CustomButton(
-                  text: _isUploading ? '' : 'Atualizar Imagem',
-                  isLoading: _isUploading,
+                  text: 'Escolher Imagem',
+                  backgroundColor:
+                      _isLoading ? Colors.blue.shade300 : AppColors.buttonColor,
                   onPressed: () {
-                    if (!_isUploading) {
-                      _uploadImage();
+                    if (!_isLoading && !_isLoading) {
+                      _showImageSourceSheet();
                     }
                   },
                 ),
+                if (_image != null) ...[
+                  const SizedBox(height: 20),
+                  CustomButton(
+                    text: _isLoading ? '' : 'Atualizar Imagem',
+                    isLoading: _isLoading,
+                    onPressed: () {
+                      if (!_isLoading) {
+                        _uploadImage();
+                      }
+                    },
+                  ),
+                ],
               ],
-            ],
+            ),
           ),
         ),
       ),

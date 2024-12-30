@@ -45,15 +45,6 @@ class EntidadeController {
     fieldMapping = mappings[endpoint] ?? {};
   }
 
-  Future<List<Map<String, dynamic>>> carregarItens(String endpoint) async {
-    if (['Faculdade', 'Curso', 'Estudante', 'Colaborador'].contains(endpoint)) {
-      final List<dynamic> dados = await ApiService().listarDados(endpoint);
-      return dados.map((item) => item as Map<String, dynamic>).toList();
-    }
-
-    return [];
-  }
-
   /// Navega para a página de cadastro.
   void navigateToCadastroPage(BuildContext context, Widget cadastroPage) {
     Navigator.push(

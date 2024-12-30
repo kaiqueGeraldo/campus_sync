@@ -70,7 +70,7 @@ class _SelecionarFaculdadePageState extends State<SelecionarFaculdadePage> {
         children: [
           Container(
             color: AppColors.backgroundBlueColor,
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
             child: TextField(
               style: const TextStyle(color: Colors.black),
               controller: pesquisaController,

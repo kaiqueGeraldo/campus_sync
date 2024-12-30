@@ -7,6 +7,7 @@ class CustomExpansionCard extends StatelessWidget {
   final bool initiallyExpanded;
   final ValueChanged<bool> onExpansionChanged;
   final List<Widget> children;
+  final GlobalKey<FormState>? formKey;
 
   const CustomExpansionCard({
     super.key,
@@ -15,6 +16,7 @@ class CustomExpansionCard extends StatelessWidget {
     required this.initiallyExpanded,
     required this.onExpansionChanged,
     required this.children,
+    this.formKey,
   });
 
   @override
@@ -50,6 +52,7 @@ class CustomExpansionCard extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Form(
+              key: formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: children,
