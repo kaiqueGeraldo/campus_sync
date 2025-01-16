@@ -47,7 +47,7 @@ class _SignUpPageState extends State<SignUpPage> {
     if (!connectivityService.isConnected) {
       return OfflinePage(onRetry: () {}, isLoading: false);
     }
-    
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       backgroundColor: AppColors.backgroundBlueColor,
@@ -84,102 +84,133 @@ class _SignUpPageState extends State<SignUpPage> {
                   key: controller.formKey,
                   child: Column(
                     children: [
-                      CustomInputText(
-                        controller: controller.usernameController,
-                        hintText: 'Nome de usuário',
-                        keyboardType: TextInputType.name,
-                        maxLength: 50,
-                        validator: controller.validateUsername,
-                      ),
-                      const SizedBox(height: 20),
-                      CustomInputText(
-                        controller: controller.cpfController,
-                        hintText: 'CPF',
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          return controller.isCpfValid.value
-                              ? null
-                              : 'CPF inválido';
-                        },
-                        suffixIcon: controller.cpfController.text.isEmpty
-                            ? const Icon(
-                                Icons.info,
-                                color: Colors.grey,
-                              )
-                            : Icon(
-                                controller.isCpfValid.value
-                                    ? Icons.check_circle
-                                    : Icons.error,
-                                color: controller.isCpfValid.value
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                        onChanged: (value) {
-                          setState(() {
-                            controller.updateCpfNotifier();
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20),
-                      CustomInputText(
-                        controller: controller.emailController,
-                        hintText: 'E-mail',
-                        keyboardType: TextInputType.emailAddress,
-                        validator: (value) {
-                          return controller.isEmailValid.value
-                              ? null
-                              : 'E-mail inválido';
-                        },
-                        suffixIcon: controller.emailController.text.isEmpty
-                            ? const Icon(
-                                Icons.info,
-                                color: Colors.grey,
-                              )
-                            : Icon(
-                                controller.isEmailValid.value
-                                    ? Icons.check_circle
-                                    : Icons.error,
-                                color: controller.isEmailValid.value
-                                    ? Colors.green
-                                    : Colors.red,
-                              ),
-                        onChanged: (value) {
-                          setState(() {
-                            controller.updateEmailNotifier();
-                          });
-                        },
-                      ),
-                      const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
-                        valueListenable: controller.obscurePassword,
-                        builder: (context, obscure, _) {
+                        valueListenable: controller.isLoading,
+                        builder: (context, isLoading, _) {
                           return CustomInputText(
-                            controller: controller.passwordController,
-                            hintText: 'Senha',
-                            isPassword: true,
-                            obscureText: obscure,
-                            onSuffixIconPressed:
-                                controller.togglePasswordVisibility,
-                            keyboardType: TextInputType.text,
-                            maxLength: 30,
-                            validator: controller.validatePassword,
+                            controller: controller.usernameController,
+                            hintText: 'Nome de usuário',
+                            keyboardType: TextInputType.name,
+                            maxLength: 50,
+                            enable: !isLoading,
+                            validator: controller.validateUsername,
                           );
                         },
                       ),
                       const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
-                        valueListenable: controller.obscureConfirmPassword,
-                        builder: (context, obscure, _) {
+                        valueListenable: controller.isLoading,
+                        builder: (context, isLoading, _) {
                           return CustomInputText(
-                            controller: controller.confirmPasswordController,
-                            hintText: 'Confirme a Senha',
-                            isPassword: true,
-                            obscureText: obscure,
-                            onSuffixIconPressed:
-                                controller.toggleConfirmPasswordVisibility,
-                            keyboardType: TextInputType.text,
-                            maxLength: 30,
-                            validator: controller.validateConfirmPassword,
+                            controller: controller.cpfController,
+                            hintText: 'CPF',
+                            keyboardType: TextInputType.number,
+                            enable: !isLoading,
+                            validator: (value) {
+                              return controller.isCpfValid.value
+                                  ? null
+                                  : 'CPF inválido';
+                            },
+                            suffixIcon: controller.cpfController.text.isEmpty
+                                ? const Icon(
+                                    Icons.info,
+                                    color: Colors.grey,
+                                  )
+                                : Icon(
+                                    controller.isCpfValid.value
+                                        ? Icons.check_circle
+                                        : Icons.error,
+                                    color: controller.isCpfValid.value
+                                        ? Colors.green
+                                        : Colors.red,
+                                  ),
+                            onChanged: (value) {
+                              setState(() {
+                                controller.updateCpfNotifier();
+                              });
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: controller.isLoading,
+                        builder: (context, isLoading, _) {
+                          return CustomInputText(
+                            controller: controller.emailController,
+                            hintText: 'E-mail',
+                            keyboardType: TextInputType.emailAddress,
+                            enable: !isLoading,
+                            validator: (value) {
+                              return controller.isEmailValid.value
+                                  ? null
+                                  : 'E-mail inválido';
+                            },
+                            suffixIcon: controller.emailController.text.isEmpty
+                                ? const Icon(
+                                    Icons.info,
+                                    color: Colors.grey,
+                                  )
+                                : Icon(
+                                    controller.isEmailValid.value
+                                        ? Icons.check_circle
+                                        : Icons.error,
+                                    color: controller.isEmailValid.value
+                                        ? Colors.green
+                                        : Colors.red,
+                                  ),
+                            onChanged: (value) {
+                              setState(() {
+                                controller.updateEmailNotifier();
+                              });
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: controller.isLoading,
+                        builder: (context, isLoading, _) {
+                          return ValueListenableBuilder<bool>(
+                            valueListenable: controller.obscurePassword,
+                            builder: (context, obscure, _) {
+                              return CustomInputText(
+                                controller: controller.passwordController,
+                                hintText: 'Senha',
+                                isPassword: true,
+                                obscureText: obscure,
+                                onSuffixIconPressed:
+                                    controller.togglePasswordVisibility,
+                                keyboardType: TextInputType.text,
+                                maxLength: 30,
+                                enable: !isLoading,
+                                validator: controller.validatePassword,
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: controller.isLoading,
+                        builder: (context, isLoading, _) {
+                          return ValueListenableBuilder<bool>(
+                            valueListenable: controller.obscureConfirmPassword,
+                            builder: (context, obscure, _) {
+                              return CustomInputText(
+                                controller:
+                                    controller.confirmPasswordController,
+                                hintText: 'Confirme a Senha',
+                                isPassword: true,
+                                obscureText: obscure,
+                                onSuffixIconPressed:
+                                    controller.toggleConfirmPasswordVisibility,
+                                keyboardType: TextInputType.text,
+                                maxLength: 30,
+                                enable: !isLoading,
+                                validator: controller.validateConfirmPassword,
+                              );
+                            },
                           );
                         },
                       ),

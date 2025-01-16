@@ -79,14 +79,40 @@ class _ContaPageState extends State<ContaPage> {
   }
 
   Future<void> _deleteUser() async {
+    bool isLoading = false;
+
+    void showLoadingOverlay() {
+      isLoading = true;
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Stack(
+          alignment: Alignment.center,
+          children: [
+            Opacity(
+              opacity: 0.7,
+              child: ModalBarrier(dismissible: false, color: Colors.black),
+            ),
+            CircularProgressIndicator(color: AppColors.buttonColor),
+          ],
+        ),
+      );
+    }
+
+    void hideLoadingOverlay() {
+      if (isLoading) {
+        Navigator.of(context).pop();
+        isLoading = false;
+      }
+    }
+
     await ApiService().fetchUserProfile(context);
 
     final prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('userToken');
-    String? cpf = prefs.getString('userCpf');
     String? nome = prefs.getString('userNome');
 
-    if (token == null || cpf == null) {
+    if (token == null) {
       return _sessaoExpirada();
     }
 
@@ -94,7 +120,7 @@ class _ContaPageState extends State<ContaPage> {
       context: context,
       title: 'Excluir conta',
       content:
-          'Tem certeza que deseja excluir sua conta $nome? Não será possível recupera-lá depois',
+          'Tem certeza que deseja excluir sua conta $nome? Não será possível recuperá-la depois.',
       cancelText: 'Cancelar',
       onCancel: () => Navigator.pop(context),
       confirmText: 'Sim',
@@ -103,40 +129,43 @@ class _ContaPageState extends State<ContaPage> {
           context: context,
           title: 'Confirmação Dupla',
           content:
-              'Por favor, nos confirme novamente que deseja excluir sua conta',
+              'Por favor, confirme novamente que deseja excluir sua conta.',
           cancelText: 'Cancelar',
           onCancel: () => Navigator.pop(context),
           confirmText: 'Confirmar',
           onConfirm: () async {
+            showLoadingOverlay();
             try {
               final response = await http.delete(
-                Uri.parse('${ApiService.baseUrl}/User/$cpf'),
+                Uri.parse('${ApiService.baseUrl}/User'),
                 headers: {
                   'Authorization': 'Bearer $token',
                   'Content-Type': 'application/json',
                 },
               );
 
-              if (response.statusCode == 200 || response.statusCode == 202) {
+              hideLoadingOverlay();
+
+              if (response.statusCode == 200 || response.statusCode == 204) {
+                prefs.clear();
                 Navigator.pushAndRemoveUntil(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const SignInPage(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const SignInPage()),
                   (route) => false,
                 );
-                return CustomSnackbar.show(context,
-                    'Conta excluida com sucesso. Obrigado pelos seus serviços!!');
+                CustomSnackbar.show(context, 'Conta excluída com sucesso.');
               } else if (response.statusCode == 401) {
                 _sessaoExpirada();
-                return;
               } else {
-                throw Exception(
-                    'Erro ao obter o perfil: ${response.statusCode} - ${response.body}');
+                CustomSnackbar.show(
+                  context,
+                  'Erro ao excluir conta: ${response.statusCode} - ${response.body.replaceAll('{"message":', '').replaceAll('}', '').replaceAll('"', '')}',
+                );
               }
             } catch (e) {
-              _sessaoExpirada();
-              throw Exception('Erro ao fazer requisição: $e');
+              hideLoadingOverlay();
+              CustomSnackbar.show(
+                  context, 'Erro ao processar a requisição. Tente novamente.');
             }
           },
         );

@@ -11,6 +11,7 @@ import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
 import 'package:campus_sync/src/views/pages/main/menu/adicionar/adicionar_disciplinas_page.dart';
 import 'package:campus_sync/src/views/pages/main/menu/adicionar/adicionar_turmas_page.dart';
+import 'package:campus_sync/src/views/pages/main/menu/adicionar/excluir_itens_page.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:provider/provider.dart';
@@ -30,6 +31,7 @@ class AdicionarItemPage extends StatefulWidget {
 class _AdicionarItemPageState extends State<AdicionarItemPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late String tipoItem;
   late CadastroController controller;
   final GlobalKey<FormState> dadosFormKey = GlobalKey<FormState>();
   String cursosError = '';
@@ -197,6 +199,12 @@ class _AdicionarItemPageState extends State<AdicionarItemPage>
     super.initState();
     controller = CadastroController();
     _tabController = TabController(length: 2, vsync: this);
+    tipoItem = 'Turma';
+    _tabController.addListener(() {
+      setState(() {
+        tipoItem = _tabController.index == 0 ? 'Turma' : 'Disciplina';
+      });
+    });
   }
 
   @override
@@ -432,6 +440,24 @@ class _AdicionarItemPageState extends State<AdicionarItemPage>
             title: Text(widget.endpoint == 'Curso'
                 ? 'Adicionar Turmas e/ou Disciplinas'
                 : 'Adicionar Cursos'),
+            actions: [
+              widget.endpoint != 'Curso'
+                  ? const SizedBox.shrink()
+                  : IconButton(
+                      onPressed: () {
+                        print('NAVEGANDO PARA A EXCLUSÃO DE ITENS: $tipoItem');
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                ExcluirItensPage(tipoItem: tipoItem),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.delete),
+                    ),
+            ],
             bottom: widget.endpoint == 'Curso'
                 ? TabBar(
                     dividerColor: AppColors.textColor,

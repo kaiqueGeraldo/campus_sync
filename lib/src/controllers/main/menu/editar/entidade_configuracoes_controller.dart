@@ -67,6 +67,7 @@ class EntidadeConfiguracoesController with ChangeNotifier {
     CustomSnackbar.show(
       context,
       '${item['nome']} foi excluído.',
+      duration: const Duration(seconds: 3),
       actionLabel: 'Desfazer',
       textColor: AppColors.textColor,
       showCloseButton: false,
@@ -84,7 +85,7 @@ class EntidadeConfiguracoesController with ChangeNotifier {
       },
     );
 
-    await Future.delayed(const Duration(seconds: 6));
+    await Future.delayed(const Duration(seconds: 3));
 
     if (!desfazerClicado) {
       try {

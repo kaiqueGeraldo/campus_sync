@@ -9,12 +9,15 @@ final formKeyPassword = GlobalKey<FormState>();
 class ForgotPasswordController {
   final BuildContext context;
   final formKey = formKeyPassword;
-  final TextEditingController confirmCPFController = MaskedTextController(mask: '000.000.000-00');
+  final TextEditingController confirmCPFController =
+      MaskedTextController(mask: '000.000.000-00');
   final TextEditingController novaSenhaController = TextEditingController();
-  final TextEditingController confirmNovaSenhaController = TextEditingController();
+  final TextEditingController confirmNovaSenhaController =
+      TextEditingController();
   final ValueNotifier<bool> obscurePassword = ValueNotifier(true);
   final ValueNotifier<bool> obscureConfirmPassword = ValueNotifier(true);
   final ValueNotifier<bool> isLoading = ValueNotifier(false);
+  final ValueNotifier<bool> isCpfValid = ValueNotifier(false);
 
   ForgotPasswordController({required this.context});
 
@@ -65,6 +68,45 @@ class ForgotPasswordController {
     (context as Element).markNeedsBuild();
   }
 
+  String? validateCpf(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'O campo CPF é obrigatório';
+    } else if (!validateCpfLogic(value)) {
+      return 'CPF inválido';
+    }
+    return null;
+  }
+
+   void updateCpfNotifier() {
+    final text = confirmCPFController.text;
+    isCpfValid.value = text.isNotEmpty && validateCpfLogic(text);
+  }
+
+   bool validateCpfLogic(String value) {
+    value = value.replaceAll(RegExp(r'\D'), '');
+    if (value.length != 11 || RegExp(r'^(\d)\1*$').hasMatch(value)) {
+      return false;
+    }
+    return _isValidCpf(value);
+  }
+
+  bool _isValidCpf(String cpf) {
+    int calculateDigit(List<int> digits, int factor) {
+      int sum = 0;
+      for (final digit in digits) {
+        sum += digit * factor--;
+      }
+      int remainder = (sum * 10) % 11;
+      return remainder == 10 ? 0 : remainder;
+    }
+
+    final digits = cpf.split('').map(int.parse).toList();
+    final digit1 = calculateDigit(digits.sublist(0, 9), 10);
+    final digit2 = calculateDigit(digits.sublist(0, 10), 11);
+
+    return digit1 == digits[9] && digit2 == digits[10];
+  }
+
   void dispose() {
     confirmCPFController.dispose();
     novaSenhaController.dispose();
@@ -72,5 +114,6 @@ class ForgotPasswordController {
     obscurePassword.dispose();
     obscureConfirmPassword.dispose();
     isLoading.dispose();
+    isCpfValid.dispose();
   }
 }

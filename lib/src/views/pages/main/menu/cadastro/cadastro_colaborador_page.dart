@@ -3,6 +3,7 @@ import 'package:campus_sync/src/connectivity/connectivity_service.dart';
 import 'package:campus_sync/src/connectivity/offline_page.dart';
 import 'package:campus_sync/src/controllers/main/menu/cadastro_controller.dart';
 import 'package:campus_sync/src/models/colors/colors.dart';
+import 'package:campus_sync/src/services/api_service.dart';
 import 'package:campus_sync/src/views/components/cadastro/custom_endereco_form.dart';
 import 'package:campus_sync/src/views/components/cadastro/custom_expansion_card.dart';
 import 'package:campus_sync/src/views/components/custom_button.dart';
@@ -28,30 +29,23 @@ class CadastroColaboradorPage extends StatefulWidget {
 class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
   late CadastroController controller;
   final GlobalKey<FormState> colaboradorDadosFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> colaboradorDocumentosFormKey =
-      GlobalKey<FormState>();
+  final GlobalKey<FormState> colaboradorDocumentosFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> colaboradorCargoFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> enderecoFormKey = GlobalKey<FormState>();
-  String cursosError = '';
+  String cadastroError = '';
+  bool _isButtonClicked = false;
   bool _isLoading = false;
   final ValueNotifier<bool> _isLoadingController = ValueNotifier(false);
   final TextEditingController nomeController = TextEditingController();
-  final TextEditingController cpfController =
-      MaskedTextController(mask: '000.000.000-00');
-  final TextEditingController rgController =
-      MaskedTextController(mask: '00.000.000-0');
+  final TextEditingController cpfController = MaskedTextController(mask: '000.000.000-00');
+  final TextEditingController rgController = MaskedTextController(mask: '00.000.000-0');
   final TextEditingController emailController = TextEditingController();
   final TextEditingController cargoController = TextEditingController();
-  final TextEditingController numeroRegistroController =
-      TextEditingController();
-  final TextEditingController dataAdmissaoController =
-      MaskedTextController(mask: '00/00/0000');
-  final TextEditingController telefoneController =
-      MaskedTextController(mask: '(00) 00000-0000');
-  final TextEditingController dataNascimentoController =
-      MaskedTextController(mask: '00/00/0000');
-  final TextEditingController tituloEleitorController =
-      MaskedTextController(mask: '000 000 000 0000');
+  final TextEditingController numeroRegistroController = TextEditingController();
+  final TextEditingController dataAdmissaoController = MaskedTextController(mask: '00/00/0000');
+  final TextEditingController telefoneController = MaskedTextController(mask: '(00) 00000-0000');
+  final TextEditingController dataNascimentoController = MaskedTextController(mask: '00/00/0000');
+  final TextEditingController tituloEleitorController = MaskedTextController(mask: '000 000 000 0000');
   final TextEditingController nomePaiController = TextEditingController();
   final TextEditingController nomeMaeController = TextEditingController();
   final TextEditingController logradouroController = TextEditingController();
@@ -59,8 +53,7 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
   final TextEditingController bairroController = TextEditingController();
   final TextEditingController cidadeController = TextEditingController();
   final TextEditingController estadoController = TextEditingController();
-  final TextEditingController cepController =
-      MaskedTextController(mask: '00000-000');
+  final TextEditingController cepController = MaskedTextController(mask: '00000-000');
 
   bool isDadosColaboradorExpanded = true;
   bool isDocumentosExpanded = false;
@@ -108,17 +101,12 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
     final isColaboradorCargoValid =
         colaboradorCargoFormKey.currentState?.validate() ?? false;
     final isEnderecoValid = enderecoFormKey.currentState?.validate() ?? false;
-
-    //final hasCourses = cursosOferecidos.isNotEmpty;
-
-    // setState(() {
-    //   cursosError = (hasCourses ? null : 'Adicione ao menos um item!')!;
-    // });
+    final cpfRecuperado = await ApiService().recuperarCPF();
 
     if (!isColaboradorDadosValid ||
         !isEnderecoValid ||
         !isColaboradorDocumentosValid ||
-        !isColaboradorCargoValid /*|| !hasCourses*/) {
+        !isColaboradorCargoValid) {
       return null;
     }
 
@@ -126,12 +114,19 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
       _isLoading = true;
     });
 
+    final cleanCPF = cpfController.text.replaceAll('.', '').replaceAll('-', '');
+    final cleanRG = cpfController.text.replaceAll('.', '').replaceAll('-', '');
+    final cleanTelefone = telefoneController.text
+        .replaceAll('(', '')
+        .replaceAll(')', '')
+        .replaceAll('-', '');
+    final cleanCEP = cepController.text.replaceAll('-', '');
     int? estadoCivilValue = controller.dropdownValues['EstadoCivil'];
     int? nacionalidadeValue = controller.dropdownValues['Nacionalidade'];
     int? corRacaEtniaValue = controller.dropdownValues['Cor/Raca/Etnia'];
     int? escolaridadeValue = controller.dropdownValues['Escolaridade'];
     int? cargoValue = controller.dropdownValues['Cargo'];
-    int? cursoIdSelecionado = controller.dropdownValues['Curso'];
+    int? cursoIdSelecionado = controller.cursoSelecionadoNotifier.value;
     String? dataAdmissao = dataAdmissaoController.text.isNotEmpty
         ? DateFormat('yyyy-MM-dd')
             .format(DateFormat('dd/MM/yyyy').parse(dataAdmissaoController.text))
@@ -154,13 +149,13 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
         body: json.encode({
           "id": 0,
           "nome": nomeController.text,
-          "cpf": cpfController.text,
-          "rg": rgController.text,
+          "cpf": cleanCPF,
+          "rg": cleanRG,
           "email": emailController.text,
           "cargo": getCargoString(cargoValue),
           "numeroRegistro": numeroRegistroController.text,
           "dataAdmissao": dataAdmissao,
-          "telefone": telefoneController.text,
+          "telefone": cleanTelefone,
           "dataNascimento": dataNascimento,
           "tituloEleitor": tituloEleitorController.text,
           "estadoCivil": getEstadoCivilString(estadoCivilValue),
@@ -176,9 +171,10 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
             "bairro": bairroController.text,
             "cidade": cidadeController.text,
             "estado": estadoController.text,
-            "cep": cepController.text
+            "cep": cleanCEP
           },
           "cursoId": cursoIdSelecionado,
+          "userCPFColaboradores": cpfRecuperado
         }),
       );
 
@@ -188,8 +184,9 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
         Navigator.pop(context);
         return response;
       } else {
-        print('Erro ao cadastrar faculdade: ${response.statusCode}');
+        print('Erro ao cadastrar colaborador: ${response.statusCode}');
         print('Detalhes: ${response.body}');
+        print('Detalhes: ${response.reasonPhrase}');
         return null;
       }
     } catch (e) {
@@ -630,14 +627,23 @@ class _CadastroColaboradorPageState extends State<CadastroColaboradorPage> {
                   ],
                 ),
                 CustomButton(
-                  text: _isLoading ? '' : 'Cadastar',
+                  text: _isLoading ? '' : 'Cadastrar',
                   isLoading: _isLoading,
                   onPressed: () {
                     if (!_isLoading) {
+                      setState(() {
+                        _isButtonClicked = true;
+                      });
                       cadastrarColaborador();
                     }
                   },
                 ),
+                const SizedBox(height: 15),
+                if (_isButtonClicked && cadastroError.isNotEmpty)
+                  Text(
+                    cadastroError,
+                    style: TextStyle(color: Colors.red[900], fontSize: 13),
+                  ),
               ],
             ),
           ),

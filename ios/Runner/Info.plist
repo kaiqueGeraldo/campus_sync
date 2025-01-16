@@ -45,5 +45,27 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- Permissões de acesso -->
+    <key>NSCameraUsageDescription</key>
+    <string>Este aplicativo precisa acessar a câmera para capturar fotos e vídeos.</string>
+
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Este aplicativo precisa acessar a biblioteca de fotos para carregar e salvar imagens.</string>
+
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>Este aplicativo precisa salvar imagens na biblioteca de fotos.</string>
+
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>Este aplicativo precisa acessar o Bluetooth para conexão com dispositivos.</string>
+
+    <key>NSLocalNetworkUsageDescription</key>
+    <string>Este aplicativo precisa acessar a rede local para comunicação com dispositivos próximos.</string>
+
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+    </dict>
 </dict>
 </plist>

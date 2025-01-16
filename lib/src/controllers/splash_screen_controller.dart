@@ -44,7 +44,14 @@ class SplashScreenController {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('userToken');
 
-    if (token != null && !isTokenExpired(token)) {
+    if (token == null) {
+      await Future.delayed(const Duration(seconds: 5));
+      if (!_isDisposed) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (context) => const SignInPage()),
+        );
+      }
+    } else if (!isTokenExpired(token)) {
       await Future.delayed(const Duration(seconds: 5));
       if (!_isDisposed) {
         Navigator.of(context).pushReplacement(

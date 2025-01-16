@@ -27,11 +27,11 @@ class CadastroEstudantePage extends StatefulWidget {
 class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
   late CadastroController controller;
   final GlobalKey<FormState> estudanteDadosFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> estudanteDocumentosFormKey =
-      GlobalKey<FormState>();
+  final GlobalKey<FormState> estudanteDocumentosFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> estudanteCursoFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> enderecoFormKey = GlobalKey<FormState>();
-  String cursosError = '';
+  String cadastroError = '';
+  bool _isButtonClicked = false;
   bool _isLoading = false;
   final ValueNotifier<bool> _isLoadingController = ValueNotifier(false);
   Map<String, dynamic>? faculdadeSelecionada;
@@ -39,21 +39,14 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
   List<DropdownMenuItem<int>> turmasDropdownItems = [];
   Map<int, List<dynamic>> turmasPorCurso = {};
   final TextEditingController nomeController = TextEditingController();
-  final TextEditingController cpfController =
-      MaskedTextController(mask: '000.000.000-00');
-  final TextEditingController rgController =
-      MaskedTextController(mask: '00.000.000-0');
+  final TextEditingController cpfController = MaskedTextController(mask: '000.000.000-00');
+  final TextEditingController rgController = MaskedTextController(mask: '00.000.000-0');
   final TextEditingController emailController = TextEditingController();
-  final TextEditingController numeroMatriculaController =
-      TextEditingController();
-  final TextEditingController dataMatriculaController =
-      MaskedTextController(mask: '00/00/0000');
-  final TextEditingController telefoneController =
-      MaskedTextController(mask: '(00) 00000-0000');
-  final TextEditingController dataNascimentoController =
-      MaskedTextController(mask: '00/00/0000');
-  final TextEditingController tituloEleitorController =
-      MaskedTextController(mask: '000 000 000 0000');
+  final TextEditingController numeroMatriculaController = TextEditingController();
+  final TextEditingController dataMatriculaController = MaskedTextController(mask: '00/00/0000');
+  final TextEditingController telefoneController = MaskedTextController(mask: '(00) 00000-0000');
+  final TextEditingController dataNascimentoController = MaskedTextController(mask: '00/00/0000');
+  final TextEditingController tituloEleitorController = MaskedTextController(mask: '000 000 000 0000');
   final TextEditingController nomePaiController = TextEditingController();
   final TextEditingController nomeMaeController = TextEditingController();
   final TextEditingController logradouroController = TextEditingController();
@@ -61,8 +54,7 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
   final TextEditingController bairroController = TextEditingController();
   final TextEditingController cidadeController = TextEditingController();
   final TextEditingController estadoController = TextEditingController();
-  final TextEditingController cepController =
-      MaskedTextController(mask: '00000-000');
+  final TextEditingController cepController = MaskedTextController(mask: '00000-000');
 
   bool isDadosEstudanteExpanded = true;
   bool isDocumentosExpanded = false;
@@ -112,16 +104,10 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
         estudanteCursoFormKey.currentState?.validate() ?? false;
     final isEnderecoValid = enderecoFormKey.currentState?.validate() ?? false;
 
-    //final hasCourses = cursosOferecidos.isNotEmpty;
-
-    // setState(() {
-    //   cursosError = (hasCourses ? null : 'Adicione ao menos um item!')!;
-    // });
-
     if (!isEstudanteDadosValid ||
         !isEnderecoValid ||
         !isEstudanteDocumentosValid ||
-        !isEstudanteCargoValid /*|| !hasCourses*/) {
+        !isEstudanteCargoValid) {
       return null;
     }
 
@@ -129,6 +115,13 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
       _isLoading = true;
     });
 
+    final cleanCPF = cpfController.text.replaceAll('.', '').replaceAll('-', '');
+    final cleanRG = cpfController.text.replaceAll('.', '').replaceAll('-', '');
+    final cleanTelefone = telefoneController.text
+        .replaceAll('(', '')
+        .replaceAll(')', '')
+        .replaceAll('-', '');
+    final cleanCEP = cepController.text.replaceAll('-', '');
     int? estadoCivilValue = controller.dropdownValues['EstadoCivil'];
     int? nacionalidadeValue = controller.dropdownValues['Nacionalidade'];
     int? corRacaEtniaValue = controller.dropdownValues['Cor/Raca/Etnia'];
@@ -156,12 +149,12 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
         body: json.encode({
           "id": 0,
           "nome": nomeController.text,
-          "cpf": cpfController.text,
-          "rg": rgController.text,
+          "cpf": cleanCPF,
+          "rg": cleanRG,
           "email": emailController.text,
           "numeroMatricula": numeroMatriculaController.text,
           "dataMatricula": dataMatricula,
-          "telefone": telefoneController.text,
+          "telefone": cleanTelefone,
           "dataNascimento": dataNascimento,
           "tituloEleitor": tituloEleitorController.text,
           "estadoCivil": getEstadoCivilString(estadoCivilValue),
@@ -177,7 +170,7 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
             "bairro": bairroController.text,
             "cidade": cidadeController.text,
             "estado": estadoController.text,
-            "cep": cepController.text
+            "cep": cleanCEP
           },
           "turmaId": turmaIdSelecionada
         }),
@@ -653,10 +646,19 @@ class _CadastroEstudantePageState extends State<CadastroEstudantePage> {
                   isLoading: _isLoading,
                   onPressed: () {
                     if (!_isLoading) {
+                      setState(() {
+                        _isButtonClicked = true;
+                      });
                       cadastrarEstudante();
                     }
                   },
-                )
+                ),
+                const SizedBox(height: 15),
+                if (_isButtonClicked && cadastroError.isNotEmpty)
+                  Text(
+                    cadastroError,
+                    style: TextStyle(color: Colors.red[900], fontSize: 13),
+                  ),
               ],
             ),
           ),

@@ -232,6 +232,7 @@ class DetalhesItemPage extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        if (!isEstudante) _buildDetailTile('Cargo', dados['cargo']),
         if (!isEstudante && dados['cargo'] == 'Docente')
           _buildDetailTile('Curso', dados['cursoNome']),
         const SizedBox(height: 16),

@@ -22,6 +22,7 @@ class AdicionarTurmasPage extends StatefulWidget {
 
 class _AdicionarTurmasPageState extends State<AdicionarTurmasPage> {
   late CadastroController controller;
+  late Future<Map<String, dynamic>> turmasFuture;
   final GlobalKey<FormState> turmasFormKey = GlobalKey<FormState>();
   String cursosError = '';
   late Future<int> quantidadeTurmasExistentes;
@@ -41,6 +42,14 @@ class _AdicionarTurmasPageState extends State<AdicionarTurmasPage> {
     super.initState();
     controller = CadastroController();
     controller.dropdownValues['Turmas'] = 0;
+    turmasFuture = carregarTurmas();
+  }
+
+  Future<Map<String, dynamic>> carregarTurmas([int? cursoSelecionado]) async {
+    if (cursoSelecionado != null) {
+      return await ApiService().buscarTurmasPorCurso(cursoSelecionado);
+    }
+    return Future.value({});
   }
 
   @override
@@ -66,10 +75,6 @@ class _AdicionarTurmasPageState extends State<AdicionarTurmasPage> {
     if (!isTurmasDadosValid /*|| !hasCourses*/) {
       return null;
     }
-
-    setState(() {
-      _isLoading = true;
-    });
 
     int quantidadeTurmasValue =
         controller.dropdownValues['Turmas'] as int? ?? 0;
@@ -120,6 +125,10 @@ class _AdicionarTurmasPageState extends State<AdicionarTurmasPage> {
     }
 
     try {
+      setState(() {
+        _isLoading = true;
+      });
+      
       final response = await http.put(
         Uri.parse('${ApiService.baseUrl}/Curso/$cursoId/turmas'),
         headers: {'Content-Type': 'application/json'},
@@ -371,19 +380,16 @@ class _AdicionarTurmasPageState extends State<AdicionarTurmasPage> {
                       valueListenable: controller.cursoSelecionadoNotifier,
                       builder: (context, cursoSelecionado, child) {
                         if (cursoSelecionado != null) {
-                          if (controller.cursoSelecionadoNotifier.value !=
-                                  null &&
-                              !cursosDropdownItems.any((item) =>
-                                  item.value ==
-                                  controller.cursoSelecionadoNotifier.value)) {
-                            controller.cursoSelecionadoNotifier.value = null;
+                          // Atualize o Future apenas se o curso mudar.
+                          if (cursoSelecionado !=
+                              controller.dropdownValues['Curso']) {
+                            controller.dropdownValues['Curso'] =
+                                cursoSelecionado;
+                            turmasFuture = carregarTurmas(cursoSelecionado);
                           }
-
                           return FutureBuilder<Map<String, dynamic>>(
-                            future: ApiService()
-                                .buscarTurmasPorCurso(cursoSelecionado),
+                            future: turmasFuture,
                             builder: (context, snapshot) {
-                              print('RETORNO: ${snapshot.data}');
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
                                 return const Padding(
@@ -408,6 +414,7 @@ class _AdicionarTurmasPageState extends State<AdicionarTurmasPage> {
                                           'turmas'] as List)
                                       .map((turma) => turma['periodo'] as int)
                                       .toList();
+
                                   if (turmasPeriodoValues.isEmpty) {
                                     turmasPeriodoValues = periodosCadastrados;
                                   }

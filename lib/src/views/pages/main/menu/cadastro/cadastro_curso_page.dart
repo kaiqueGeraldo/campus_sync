@@ -29,7 +29,8 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
   late CadastroController controller;
   final GlobalKey<FormState> cursoFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> turmasFormKey = GlobalKey<FormState>();
-  String cursosError = '';
+  String cadastroError = '';
+  bool _isButtonClicked = false;
   bool _isLoading = false;
   Map<String, dynamic>? faculdadeSelecionada;
   bool isDadosCursoExpanded = true;
@@ -162,13 +163,7 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
     final isCursoValid = cursoFormKey.currentState?.validate() ?? false;
     final isTurmasValid = turmasFormKey.currentState?.validate() ?? false;
 
-    // final hasCourses = cursosOferecidos.isNotEmpty;
-
-    // setState(() {
-    //   cursosError = (hasCourses ? null : 'Adicione ao menos um item!')!;
-    // });
-
-    if (!isCursoValid || !isTurmasValid /*|| !hasCourses*/) {
+    if (!isCursoValid || !isTurmasValid) {
       return null;
     }
     print('disciplinas: $disciplinasOferecidos');
@@ -564,10 +559,19 @@ class _CadastroCursoPageState extends State<CadastroCursoPage> {
                   isLoading: _isLoading,
                   onPressed: () {
                     if (!_isLoading) {
+                      setState(() {
+                        _isButtonClicked = true;
+                      });
                       cadastrarCurso();
                     }
                   },
-                )
+                ),
+                const SizedBox(height: 15),
+                if (_isButtonClicked && cadastroError.isNotEmpty)
+                  Text(
+                    cadastroError,
+                    style: TextStyle(color: Colors.red[900], fontSize: 13),
+                  ),
               ],
             ),
           ),

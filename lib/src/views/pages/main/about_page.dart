@@ -48,23 +48,32 @@ class _AboutPageState extends State<AboutPage> {
       'title': 'VERSÃO WEB',
       'icon': Icons.laptop,
       'content': [
-        const Text(
-          'Acesse sua conta de qualquer computador',
-          style: TextStyle(fontSize: 15),
-        ),
-        const Text(
-          'Entre no site',
-          style: TextStyle(fontSize: 15),
-        ),
-        GestureDetector(
-          child: TextButton(
-            onPressed: () {},
-            child: const Text(
-              'https://youtube.com',
-              style: TextStyle(color: AppColors.buttonColor, fontSize: 15),
-            ),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Acesse sua conta de qualquer computador',
+                style: TextStyle(fontSize: 15),
+              ),
+              SizedBox(height: 5),
+              Text(
+                'Site em Desenvolvimento. Aguarde atualizações',
+                style: TextStyle(fontSize: 15),
+              ),
+              // Text(
+              //   'Entre no site',
+              //   style: TextStyle(fontSize: 15),
+              // ),
+              // SizedBox(height: 5),
+              // Text(
+              //   'https://youtube.com',
+              //   style: TextStyle(color: AppColors.buttonColor, fontSize: 15),
+              // ),
+            ],
           ),
-        ),
+        )
       ],
     },
   ];

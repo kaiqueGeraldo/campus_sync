@@ -177,15 +177,23 @@ class ApiService {
 
   // listar entidades
   Future<List<dynamic>> listarDados(String endpoint) async {
-    final cpf = await recuperarCPF();
+    try {
+      final cpf = await recuperarCPF();
+      final url = Uri.parse('$baseUrl/$endpoint?cpf=$cpf');
+      final response = await http.get(url);
 
-    final url = Uri.parse('$baseUrl/$endpoint?cpf=$cpf');
-    final response = await http.get(url);
-
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Nenhuma faculdade encontrada para o CPF informado.');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = json.decode(response.body);
+        if (data.isEmpty) {
+          throw Exception('Nenhum item encontrado.');
+        }
+        return data;
+      } else {
+        throw Exception('Erro ao carregar os dados.');
+      }
+    } catch (e) {
+      print('Erro: $e');
+      throw Exception('Nenhum item encontrado.');
     }
   }
 

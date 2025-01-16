@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:campus_sync/src/routes/route_generate.dart';
+import 'package:campus_sync/src/services/api_service.dart';
 import 'package:campus_sync/src/services/auth_service.dart';
 import 'package:campus_sync/src/views/components/custom_show_dialog.dart';
 import 'package:campus_sync/src/views/components/custom_snackbar.dart';
@@ -31,6 +32,7 @@ class SignInController {
     try {
       final response = await AuthService()
           .login(emailController.text, passwordController.text);
+      print('${response.statusCode}');
       await _handleResponse(response);
     } catch (e) {
       CustomSnackbar.show(context, 'Erro ao realizar login: $e');
@@ -50,12 +52,30 @@ class SignInController {
         usuarioEncontrado['token'],
         usuarioEncontrado['urlImagem'],
       );
+    } else if (response.statusCode == 401) {
+      await _handleInvalidCredentials();
     } else if (response.statusCode == 404) {
       _showAccountNotFoundDialog();
-    } else if (response.statusCode == 401) {
-      _showAccountNotFoundDialog();
     } else {
-      CustomSnackbar.show(context, 'Dados inválidos. Tente Novamente!');
+      CustomSnackbar.show(context, 'Dados inválidos. Tente novamente!');
+    }
+  }
+
+  Future<void> _handleInvalidCredentials() async {
+    try {
+      final emailExists =
+          await ApiService().checkEmailExists(emailController.text);
+
+      if (emailExists) {
+        CustomSnackbar.show(
+          context,
+          'Usuário ou senha incorretos. Por favor, tente novamente.',
+        );
+      } else {
+        _showAccountNotFoundDialog();
+      }
+    } catch (e) {
+      CustomSnackbar.show(context, 'Erro ao verificar e-mail: $e');
     }
   }
 
@@ -66,9 +86,12 @@ class SignInController {
     await prefs.setString('userEmail', usuario['email'] ?? '');
     await prefs.setString('userToken', usuario['token'] ?? '');
     await prefs.setString('userImagem', usuario['urlImagem'] ?? '');
-    await prefs.setString('userUniversidadeNome', usuario['universidadeNome'] ?? '');
-    await prefs.setString('userUniversidadeCNPJ', usuario['universidadeCNPJ'] ?? '');
-    await prefs.setString('userUniversidadeContatoInfo', usuario['universidadeContatoInfo'] ?? '');
+    await prefs.setString(
+        'userUniversidadeNome', usuario['universidadeNome'] ?? '');
+    await prefs.setString(
+        'userUniversidadeCNPJ', usuario['universidadeCNPJ'] ?? '');
+    await prefs.setString('userUniversidadeContatoInfo',
+        usuario['universidadeContatoInfo'] ?? '');
   }
 
   void _showSuccessDialog(
@@ -80,7 +103,8 @@ class SignInController {
     customShowDialog(
       context: context,
       title: 'Sucesso no Login!',
-      content: 'Bem-vindo de volta ao app $nome. Clique em Entrar para continuar.',
+      content:
+          'Bem-vindo de volta ao app $nome. Clique em Entrar para continuar.',
       confirmText: 'Entrar',
       onConfirm: () {
         Navigator.pushAndRemoveUntil(
@@ -109,11 +133,13 @@ class SignInController {
     customShowDialog(
       context: context,
       title: 'Conta não encontrada',
-      content: 'Não existe uma conta com esse e-mail registrada em nosso App. Deseja criar uma nova conta?',
+      content:
+          'Não existe uma conta com esse e-mail registrada em nosso App. Deseja criar uma nova conta?',
       confirmText: 'Criar Conta',
       cancelText: 'Cancelar',
       onConfirm: () {
-        Navigator.of(context).pushNamed(RouteGenerate.routeSignUp, 
+        Navigator.of(context).pushNamed(
+          RouteGenerate.routeSignUp,
           arguments: {'userEmail': emailController.text},
         );
       },

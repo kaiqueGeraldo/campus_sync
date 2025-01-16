@@ -34,24 +34,22 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
   final GlobalKey<FormState> faculdadeFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> enderecoFormKey = GlobalKey<FormState>();
   String cursosError = '';
+  String cadastroError = '';
+  bool _isButtonClicked = false;
   bool _isLoading = false;
   final ValueNotifier<bool> _isLoadingController = ValueNotifier(false);
   final TextEditingController courseController = TextEditingController();
   final TextEditingController nomeController = TextEditingController();
-  final TextEditingController cnpjController =
-      MaskedTextController(mask: '00.000.000/0001-00');
-  final TextEditingController telefoneController =
-      MaskedTextController(mask: '(00) 00000-0000');
-  final TextEditingController emailResponsavelController =
-      TextEditingController();
+  final TextEditingController cnpjController = MaskedTextController(mask: '00.000.000/0001-00');
+  final TextEditingController telefoneController = MaskedTextController(mask: '(00) 00000-0000');
+  final TextEditingController emailResponsavelController = TextEditingController();
   final TextEditingController tipoFaculController = TextEditingController();
   final TextEditingController logradouroController = TextEditingController();
   final TextEditingController numeroController = TextEditingController();
   final TextEditingController bairroController = TextEditingController();
   final TextEditingController cidadeController = TextEditingController();
   final TextEditingController estadoController = TextEditingController();
-  final TextEditingController cepController =
-      MaskedTextController(mask: '00000-000');
+  final TextEditingController cepController = MaskedTextController(mask: '00000-000');
   final ValueNotifier<bool> isCnpjValid = ValueNotifier<bool>(false);
   final List<String> cursosOferecidos = [];
   List<String> filteredCursos = [];
@@ -238,7 +236,9 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
     final hasCourses = cursosOferecidos.isNotEmpty;
 
     setState(() {
-      cursosError = (hasCourses ? null : 'Adicione ao menos um item!')!;
+      cursosError = (hasCourses ? '' : 'Adicione ao menos um item!');
+      cadastroError =
+          'OBS: Se teve algum problema verifique se todos os cards estão abertos!';
     });
 
     if (!isFaculdadeValid || !isEnderecoValid || !hasCourses) {
@@ -250,6 +250,13 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
     });
 
     int tipoFaculValue = controller.dropdownValues['TipoFacul'] as int? ?? 0;
+    final cleanCNPJ =
+        cnpjController.text.replaceAll('.', '').replaceAll('-', '');
+    final cleanTelefone = telefoneController.text
+        .replaceAll('(', '')
+        .replaceAll(')', '')
+        .replaceAll('-', '');
+    final cleanCEP = cepController.text.replaceAll('-', '');
 
     try {
       const url =
@@ -262,8 +269,8 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
         },
         body: json.encode({
           "nome": nomeController.text,
-          "cnpj": cnpjController.text,
-          "telefone": telefoneController.text,
+          "cnpj": cleanCNPJ,
+          "telefone": cleanTelefone,
           "emailResponsavel": emailResponsavelController.text,
           "endereco": {
             "logradouro": logradouroController.text,
@@ -271,7 +278,7 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
             "bairro": bairroController.text,
             "cidade": cidadeController.text,
             "estado": estadoController.text,
-            "cep": cepController.text
+            "cep": cleanCEP,
           },
           "tipo": tipoFaculValue,
           "cursosOferecidos": cursosOferecidos,
@@ -466,8 +473,7 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
                     _buildCourseInput(),
                     if (cursosOferecidos.isNotEmpty) _buildCursosOferecidos(),
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                          vertical: 3, horizontal: 15),
+                      padding: const EdgeInsets.only(top: 5, left: 15),
                       child: Text(
                         cursosError,
                         style: TextStyle(color: Colors.red[900], fontSize: 13),
@@ -516,10 +522,19 @@ class _CadastroFaculdadePageState extends State<CadastroFaculdadePage> {
                   isLoading: _isLoading,
                   onPressed: () {
                     if (!_isLoading) {
+                      setState(() {
+                        _isButtonClicked = true;
+                      });
                       cadastrarFaculdade();
                     }
                   },
-                )
+                ),
+                const SizedBox(height: 15),
+                if (_isButtonClicked && cadastroError.isNotEmpty)
+                  Text(
+                    cadastroError,
+                    style: TextStyle(color: Colors.red[900], fontSize: 13),
+                  ),
               ],
             ),
           ),

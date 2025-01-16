@@ -40,7 +40,7 @@ class _EditarItemPageState extends State<EditarItemPage> {
   final ValueNotifier<bool> _isLoadingController = ValueNotifier(false);
 
   bool isCampoExpanded = true;
-  bool isEnderecoExpanded = false;
+  bool isEnderecoExpanded = true;
 
   Future<void> updateEntity(String endpoint, int id,
       Map<String, TextEditingController> controllers) async {
@@ -180,7 +180,6 @@ class _EditarItemPageState extends State<EditarItemPage> {
     ],
     'Colaborador': [
       {'label': 'Nome', 'key': 'nome', 'type': 'text'},
-      {'label': 'Cargo', 'key': 'cargo', 'type': 'dropdown'},
       {'label': 'E-mail', 'key': 'email', 'type': 'text'},
       {'label': 'Telefone', 'key': 'telefone', 'type': 'text'},
       {'label': 'CEP', 'key': 'EnderecoCEP', 'type': 'text'},

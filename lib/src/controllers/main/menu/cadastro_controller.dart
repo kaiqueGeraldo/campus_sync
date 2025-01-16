@@ -530,8 +530,6 @@ class CadastroController {
 
       if (selecionada != null) {
         faculdadeSelecionadaNotifier.value = selecionada;
-        cursoSelecionadoNotifier.value = null;
-        cursosDropdownItemsNotifier.value = [];
         dropdownValues['Curso'] = null;
         dropdownValues['Turma'] = null;
 

@@ -46,7 +46,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     if (!connectivityService.isConnected) {
       return OfflinePage(onRetry: () {}, isLoading: false);
     }
-    
+
     return Scaffold(
       backgroundColor: AppColors.backgroundBlueColor,
       appBar: AppBar(
@@ -85,56 +85,95 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                 key: controller.formKey,
                 child: Column(
                   children: [
-                    CustomInputText(
-                      controller: controller.confirmCPFController,
-                      hintText: 'CPF',
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Por favor, insira seu CPF';
-                        }
-                        return null;
-                      },
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 20),
-                    ValueListenableBuilder(
-                      valueListenable: controller.obscurePassword,
-                      builder: (context, value, child) {
+                    ValueListenableBuilder<bool>(
+                      valueListenable: controller.isLoading,
+                      builder: (context, isLoading, _) {
                         return CustomInputText(
-                          controller: controller.novaSenhaController,
-                          obscureText: value,
-                          hintText: 'Nova Senha',
-                          isPassword: true,
-                          onSuffixIconPressed:
-                              controller.togglePasswordVisibility,
+                          controller: controller.confirmCPFController,
+                          hintText: 'CPF',
+                          keyboardType: TextInputType.number,
+                          enable: !isLoading,
                           validator: (value) {
                             if (value == null || value.isEmpty) {
-                              return 'Por favor, insira uma nova senha';
+                              return 'Por favor, insira seu CPF';
+                            } else if (!controller.isCpfValid.value) {
+                              return 'Por favor, insira um COF válido';
                             }
                             return null;
                           },
-                          keyboardType: TextInputType.text,
+                          suffixIcon:
+                              controller.confirmCPFController.text.isEmpty
+                                  ? const Icon(
+                                      Icons.info,
+                                      color: Colors.grey,
+                                    )
+                                  : Icon(
+                                      controller.isCpfValid.value
+                                          ? Icons.check_circle
+                                          : Icons.error,
+                                      color: controller.isCpfValid.value
+                                          ? Colors.green
+                                          : Colors.red,
+                                    ),
+                          onChanged: (value) {
+                            setState(() {
+                              controller.updateCpfNotifier();
+                            });
+                          },
                         );
                       },
                     ),
                     const SizedBox(height: 20),
-                    ValueListenableBuilder(
-                      valueListenable: controller.obscureConfirmPassword,
-                      builder: (context, value, child) {
-                        return CustomInputText(
-                          controller: controller.confirmNovaSenhaController,
-                          obscureText: value,
-                          hintText: 'Confirmar Nova Senha',
-                          isPassword: true,
-                          onSuffixIconPressed:
-                              controller.toggleConfirmPasswordVisibility,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor, confirme a nova senha';
-                            }
-                            return null;
+                    ValueListenableBuilder<bool>(
+                      valueListenable: controller.isLoading,
+                      builder: (context, isLoading, _) {
+                        return ValueListenableBuilder<bool>(
+                          valueListenable: controller.obscurePassword,
+                          builder: (context, obscure, _) {
+                            return CustomInputText(
+                              controller: controller.novaSenhaController,
+                              obscureText: obscure,
+                              hintText: 'Nova Senha',
+                              isPassword: true,
+                              onSuffixIconPressed:
+                                  controller.togglePasswordVisibility,
+                              enable: !isLoading,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Por favor, insira uma nova senha';
+                                }
+                                return null;
+                              },
+                              keyboardType: TextInputType.text,
+                            );
                           },
-                          keyboardType: TextInputType.text,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 20),
+                    ValueListenableBuilder<bool>(
+                      valueListenable: controller.isLoading,
+                      builder: (context, isLoading, _) {
+                        return ValueListenableBuilder<bool>(
+                          valueListenable: controller.obscureConfirmPassword,
+                          builder: (context, obscure, _) {
+                            return CustomInputText(
+                              controller: controller.confirmNovaSenhaController,
+                              obscureText: obscure,
+                              hintText: 'Confirmar Nova Senha',
+                              isPassword: true,
+                              onSuffixIconPressed:
+                                  controller.toggleConfirmPasswordVisibility,
+                              enable: !isLoading,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Por favor, confirme a nova senha';
+                                }
+                                return null;
+                              },
+                              keyboardType: TextInputType.text,
+                            );
+                          },
                         );
                       },
                     ),

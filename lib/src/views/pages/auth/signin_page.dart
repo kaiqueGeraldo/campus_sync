@@ -47,7 +47,7 @@ class _SignInPageState extends State<SignInPage> {
     if (!connectivityService.isConnected) {
       return OfflinePage(onRetry: () {}, isLoading: false);
     }
-    
+
     return Scaffold(
       backgroundColor: AppColors.backgroundBlueColor,
       body: Center(
@@ -82,25 +82,49 @@ class _SignInPageState extends State<SignInPage> {
                   key: controller.formKey,
                   child: Column(
                     children: [
-                      CustomInputText(
-                        controller: controller.emailController,
-                        hintText: 'E-mail',
-                        keyboardType: TextInputType.emailAddress,
-                        maxLength: 50,
+                      ValueListenableBuilder<bool>(
+                        valueListenable: controller.isLoading,
+                        builder: (context, isLoading, _) {
+                          return CustomInputText(
+                            controller: controller.emailController,
+                            hintText: 'E-mail',
+                            enable: !isLoading,
+                            keyboardType: TextInputType.emailAddress,
+                            maxLength: 50,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Por favor, insira um valor válido';
+                              }
+                              return null;
+                            },
+                          );
+                        },
                       ),
                       const SizedBox(height: 20),
                       ValueListenableBuilder<bool>(
                         valueListenable: controller.obscurePassword,
                         builder: (context, obscure, _) {
-                          return CustomInputText(
-                            controller: controller.passwordController,
-                            hintText: 'Senha',
-                            isPassword: true,
-                            obscureText: obscure,
-                            onSuffixIconPressed:
-                                controller.togglePasswordVisibility,
-                            keyboardType: TextInputType.text,
-                            maxLength: 30,
+                          return ValueListenableBuilder<bool>(
+                            valueListenable: controller.isLoading,
+                            builder: (context, isLoading, _) {
+                              return CustomInputText(
+                                controller: controller.passwordController,
+                                hintText: 'Senha',
+                                enable: !isLoading,
+                                isPassword: true,
+                                obscureText: obscure,
+                                onSuffixIconPressed:
+                                    controller.togglePasswordVisibility,
+                                keyboardType: TextInputType.text,
+                                maxLength: 30,
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return 'Por favor, insira um valor válido';
+                                  }
+                                  return null;
+                                },
+                              );
+                            },
                           );
                         },
                       ),

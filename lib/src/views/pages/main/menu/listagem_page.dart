@@ -114,8 +114,14 @@ class _ListagemPageState extends State<ListagemPage> {
               ),
             );
           } else if (snapshot.hasError) {
-            return Center(child: Text('Erro: ${snapshot.error}'));
+            return Center(
+              child: Text(
+                snapshot.error.toString().replaceAll('Exception: ', ''),
+                textAlign: TextAlign.center,
+              ),
+            );
           } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            filteredItems = [];
             return const Center(
               child: Text(
                 'Nenhum item encontrado.',
@@ -125,9 +131,8 @@ class _ListagemPageState extends State<ListagemPage> {
           }
 
           final items = snapshot.data!;
-          if (filteredItems.isEmpty) {
-            filteredItems =
-                List.from(items); // Inicializa com os itens carregados
+          if (filteredItems.isEmpty && items.isNotEmpty) {
+            filteredItems = List.from(items);
           }
 
           return Column(

@@ -121,7 +121,6 @@ class _SelecionarFaculdadePageState extends State<SelecionarFaculdadePage> {
                             faculdade['nome'],
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
-                          subtitle: Text('ID: ${faculdade['id']}'),
                           trailing: const Icon(Icons.arrow_forward_ios),
                           onTap: () {
                             widget.onSelecionar(faculdade);
