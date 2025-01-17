@@ -7,12 +7,12 @@ CampusSync é um aplicativo para facilitar a gestão de universidades, oferecend
 ## Demonstração
 
 <div style="display: flex; gap: 10px;">
-  <img src="https://github.com/user-attachments/assets/723395c5-da26-4772-b340-71063bd29aa0" style="width: 48%;"/>
-  <img src="https://github.com/user-attachments/assets/50ff004e-c57e-4bca-afbf-edac1310cf1d" style="width: 48%;"/>
+  <img src="https://github.com/user-attachments/assets/723395c5-da26-4772-b340-71063bd29aa0" style="width: 20%;"/>
+  <img src="https://github.com/user-attachments/assets/50ff004e-c57e-4bca-afbf-edac1310cf1d" style="width: 20%;"/>
 </div>
 <div style="display: flex; gap: 10px;">
-  <img src="https://github.com/user-attachments/assets/857f6a30-7dce-4123-8c06-18a98166f03e" style="width: 48%;"/>
-  <img src="https://github.com/user-attachments/assets/172f34b0-1679-4011-916f-7b7a6379bf90" style="width: 48%;"/>
+  <img src="https://github.com/user-attachments/assets/857f6a30-7dce-4123-8c06-18a98166f03e" style="width: 20%;"/>
+  <img src="https://github.com/user-attachments/assets/172f34b0-1679-4011-916f-7b7a6379bf90" style="width: 20%;"/>
 </div>
 
 ---
@@ -36,7 +36,9 @@ CampusSync é um aplicativo para facilitar a gestão de universidades, oferecend
 
 ## Instalação
 
-👉 [Baixe o apk aqui](https://drive.google.com/file/d/1iP9mJ-msTHCCpeSH5SEV5JsNTtKAEqN0/view?usp=drive_link)
+👉 [Baixe o apk aqui](https://drive.google.com/file/d/1iP9mJ-msTHCCpeSH5SEV5JsNTtKAEqN0/view?usp=drive_link) - Seguro e confiável.
+
+-- ou rode localmente--
 
 ### Pré-requisitos:
 - Flutter instalado (>= versão 3.24.3).
