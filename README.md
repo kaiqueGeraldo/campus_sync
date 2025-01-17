@@ -6,10 +6,14 @@ CampusSync é um aplicativo para facilitar a gestão de universidades, oferecend
 
 ## Demonstração
 
-![login-page](https://github.com/user-attachments/assets/723395c5-da26-4772-b340-71063bd29aa0)
-![cadastro_page](https://github.com/user-attachments/assets/50ff004e-c57e-4bca-afbf-edac1310cf1d)
-![home-page](https://github.com/user-attachments/assets/857f6a30-7dce-4123-8c06-18a98166f03e)
-![cadastro-entidade-page](https://github.com/user-attachments/assets/172f34b0-1679-4011-916f-7b7a6379bf90)
+<div style="display: flex; gap: 10px;">
+  <img src="https://github.com/user-attachments/assets/723395c5-da26-4772-b340-71063bd29aa0" style="width: 48%;"/>
+  <img src="https://github.com/user-attachments/assets/50ff004e-c57e-4bca-afbf-edac1310cf1d" style="width: 48%;"/>
+</div>
+<div style="display: flex; gap: 10px;">
+  <img src="https://github.com/user-attachments/assets/857f6a30-7dce-4123-8c06-18a98166f03e" style="width: 48%;"/>
+  <img src="https://github.com/user-attachments/assets/172f34b0-1679-4011-916f-7b7a6379bf90" style="width: 48%;"/>
+</div>
 
 ---
 
@@ -42,7 +46,7 @@ CampusSync é um aplicativo para facilitar a gestão de universidades, oferecend
 
 1. Clone o repositório:
    ```
-   git clone https://github.com/kaiqueGeraldo/seu-repositorio.git
+   git clone https://github.com/kaiqueGeraldo/campus_sync.git
    ```
 
 2. Navegue para a pasta do app Flutter:
