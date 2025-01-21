@@ -373,8 +373,8 @@ class DetalhesItemPage extends StatelessWidget {
         return '${field.substring(0, 2)}.${field.substring(2, 5)}.${field.substring(5, 8)}/${field.substring(8, 12)}-${field.substring(12)}';
       case 'telefone':
         return field.length == 11
-            ? '(${field.substring(0, 2)}) ${field.substring(2, 7)}-${field.substring(7)}'
-            : '(${field.substring(0, 2)}) ${field.substring(2, 6)}-${field.substring(6)}';
+            ? '(${field.substring(0, 2)})${field.substring(2, 7)}-${field.substring(7)}'
+            : '(${field.substring(0, 2)})${field.substring(2, 6)}-${field.substring(6)}';
       default:
         return field;
     }

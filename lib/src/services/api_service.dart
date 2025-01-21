@@ -296,16 +296,10 @@ class ApiService {
       try {
         return jsonDecode(response.body) ?? Map<String, dynamic>;
       } catch (e) {
-        throw Exception(Text(
-          'Erro ao decodificar resposta: $e',
-          textAlign: TextAlign.center,
-        ));
+        throw Exception('Erro ao decodificar resposta: $e');
       }
     } else {
-      throw Exception(Text(
-        'Erro ao carregar dados: ${response.statusCode}',
-        textAlign: TextAlign.center,
-      ));
+      throw Exception('Erro ao carregar dados: ${response.statusCode}');
     }
   }
 
