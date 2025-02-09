@@ -34,7 +34,7 @@ CampusSync é um aplicativo para facilitar a gestão de universidades, oferecend
 
 ## Instalação
 
-<a href="https://drive.google.com/file/d/1iP9mJ-msTHCCpeSH5SEV5JsNTtKAEqN0/view?usp=drive_link" target="_blank">👉 Baixe o apk aqui - Seguro e confiável (drive)</a>
+👉 [Baixe o apk aqui - Seguro e confiável (drive)](https://drive.google.com/file/d/1iP9mJ-msTHCCpeSH5SEV5JsNTtKAEqN0/view?usp=drive_link)
 
 -- ou rode localmente --
 
